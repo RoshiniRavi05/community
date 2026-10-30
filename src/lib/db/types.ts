@@ -203,6 +203,17 @@ export interface AntiSpamSettings {
   emergencyPauseActive: boolean;
 }
 
+export interface WhatsAppCommunityGroup {
+  id: string;
+  name: string;
+  description?: string;
+  inviteLink: string; // e.g. "https://chat.whatsapp.com/G..."
+  category: 'announcement' | 'senior_care' | 'camps_tiruppur' | 'tech_youth' | 'general';
+  targetAudience?: string;
+  memberCount?: number;
+  isPrimary?: boolean;
+}
+
 export interface WhatsAppConfig {
   phoneNumberId: string;
   businessAccountId: string;
@@ -212,6 +223,12 @@ export interface WhatsAppConfig {
   qualityScore: 'GREEN' | 'YELLOW' | 'RED';
   dailyLimit: number;
   usedToday: number;
+  // Real WhatsApp Community & Group Integration fields
+  integrationMode?: 'community_group' | 'cloud_api' | 'hybrid';
+  communityName?: string;
+  mainInviteLink?: string;
+  communityGroups?: WhatsAppCommunityGroup[];
+  defaultDispatchMethod?: 'whatsapp_web' | 'direct_chat' | 'cloud_api';
 }
 
 export interface AuditLog {

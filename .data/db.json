@@ -1258,7 +1258,41 @@
     "connectionStatus": "connected",
     "qualityScore": "GREEN",
     "dailyLimit": 1000,
-    "usedToday": 142
+    "usedToday": 142,
+    "communityGroups": [
+      {
+        "id": "grp_main",
+        "name": "CommUnity Main Announcements",
+        "description": "Official announcements, event updates, and news broadcast channel for all members.",
+        "inviteLink": "https://chat.whatsapp.com/sampleMainCommunityLink",
+        "category": "announcement",
+        "targetAudience": "All Community Members",
+        "memberCount": 248,
+        "isPrimary": true
+      },
+      {
+        "id": "grp_senior_care",
+        "name": "Senior Care & Daily Medication Reminders",
+        "description": "Elderly community care circle for morning/night medicine, diet, and vitals check.",
+        "inviteLink": "https://chat.whatsapp.com/sampleSeniorCareGroup",
+        "category": "senior_care",
+        "targetAudience": "Elderly Members (50+ yrs)",
+        "memberCount": 42,
+        "isPrimary": false
+      },
+      {
+        "id": "grp_tiruppur_camps",
+        "name": "Tiruppur District Health & Tech Camps",
+        "description": "Attendees and registered leads for Tiruppur camps (Avinashi, Palladam, Dharapuram, Udumalpet).",
+        "inviteLink": "https://chat.whatsapp.com/sampleTiruppurCamps",
+        "category": "camps_tiruppur",
+        "targetAudience": "Tiruppur District Residents",
+        "memberCount": 89,
+        "isPrimary": false
+      }
+    ],
+    "mainInviteLink": "https://chat.whatsapp.com/sampleMainCommunityLink",
+    "communityName": "CommUnity Health & Operations"
   },
   "auditLogs": [
     {
@@ -1294,7 +1328,9 @@
       "isActive": true,
       "targetAgeMin": 50,
       "targetAudienceLabel": "Elderly Community (50+ yrs)",
-      "repeatDays": ["Daily"],
+      "repeatDays": [
+        "Daily"
+      ],
       "audioTone": "gentle_chime",
       "totalDeliveredCount": 16,
       "createdAt": "2026-10-25T08:00:00Z",
@@ -1310,7 +1346,9 @@
       "isActive": true,
       "targetAgeMin": 50,
       "targetAudienceLabel": "Elderly Community (50+ yrs)",
-      "repeatDays": ["Daily"],
+      "repeatDays": [
+        "Daily"
+      ],
       "audioTone": "gentle_chime",
       "totalDeliveredCount": 12,
       "createdAt": "2026-10-25T13:00:00Z",
@@ -1326,7 +1364,9 @@
       "isActive": true,
       "targetAgeMin": 50,
       "targetAudienceLabel": "Elderly Community (50+ yrs)",
-      "repeatDays": ["Daily"],
+      "repeatDays": [
+        "Daily"
+      ],
       "audioTone": "gentle_chime",
       "totalDeliveredCount": 14,
       "createdAt": "2026-10-25T20:30:00Z",
@@ -1342,7 +1382,9 @@
       "isActive": false,
       "targetAgeMin": 60,
       "targetAudienceLabel": "Senior Citizens (60+ yrs)",
-      "repeatDays": ["Daily"],
+      "repeatDays": [
+        "Daily"
+      ],
       "audioTone": "digital_beep",
       "totalDeliveredCount": 4,
       "createdAt": "2026-10-25T17:00:00Z",

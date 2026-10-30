@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   XCircle,
   ArrowUpDown,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import { Member, AudienceSegment, MessageLog } from '@/lib/db/types';
 import { formatWhatsAppDate, formatPhoneNumber } from '@/lib/utils';
@@ -589,6 +590,15 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-right whitespace-nowrap space-x-1">
+                    <a
+                      href={`https://wa.me/${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Namaste ${member.name}, greeting from CommUnity Operations!`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block p-1.5 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/15 transition align-middle"
+                      title={`Open WhatsApp chat with ${member.name} (${member.phone})`}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </a>
                     <button
                       onClick={() => setSelectedMember(member)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a253a] transition"

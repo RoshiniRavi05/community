@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { AppState, Member, Campaign, MessageLog, AudienceSegment, SocialMediaPost, CampEvent, DiscountOffer, AutomationError, AntiSpamSettings, WhatsAppConfig, AuditLog, CareAlarm } from './types';
+import { AppState, Member, Campaign, MessageLog, AudienceSegment, SocialMediaPost, CampEvent, DiscountOffer, AutomationError, AntiSpamSettings, WhatsAppConfig, WhatsAppCommunityGroup, AuditLog, CareAlarm } from './types';
 
 const DATA_DIR = path.join(process.cwd(), '.data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -1085,6 +1085,39 @@ const INITIAL_SETTINGS: AntiSpamSettings = {
   emergencyPauseActive: false
 };
 
+const INITIAL_COMMUNITY_GROUPS: WhatsAppCommunityGroup[] = [
+  {
+    id: 'grp_main',
+    name: 'CommUnity Main Announcements',
+    description: 'Official announcements, event updates, and news broadcast channel for all members.',
+    inviteLink: 'https://chat.whatsapp.com/sampleMainCommunityLink',
+    category: 'announcement',
+    targetAudience: 'All Community Members',
+    memberCount: 248,
+    isPrimary: true
+  },
+  {
+    id: 'grp_senior_care',
+    name: 'Senior Care & Daily Medication Reminders',
+    description: 'Elderly community care circle for morning/night medicine, diet, and vitals check.',
+    inviteLink: 'https://chat.whatsapp.com/sampleSeniorCareGroup',
+    category: 'senior_care',
+    targetAudience: 'Elderly Members (50+ yrs)',
+    memberCount: 42,
+    isPrimary: false
+  },
+  {
+    id: 'grp_tiruppur_camps',
+    name: 'Tiruppur District Health & Tech Camps',
+    description: 'Attendees and registered leads for Tiruppur camps (Avinashi, Palladam, Dharapuram, Udumalpet).',
+    inviteLink: 'https://chat.whatsapp.com/sampleTiruppurCamps',
+    category: 'camps_tiruppur',
+    targetAudience: 'Tiruppur District Residents',
+    memberCount: 89,
+    isPrimary: false
+  }
+];
+
 const INITIAL_WHATSAPP: WhatsAppConfig = {
   phoneNumberId: '109845728495021',
   businessAccountId: '204918274910283',
@@ -1093,7 +1126,12 @@ const INITIAL_WHATSAPP: WhatsAppConfig = {
   connectionStatus: 'connected',
   qualityScore: 'GREEN',
   dailyLimit: 1000,
-  usedToday: 142
+  usedToday: 142,
+  integrationMode: 'community_group',
+  communityName: 'CommUnity Health & Operations',
+  mainInviteLink: 'https://chat.whatsapp.com/sampleMainCommunityLink',
+  communityGroups: INITIAL_COMMUNITY_GROUPS,
+  defaultDispatchMethod: 'whatsapp_web'
 };
 
 const INITIAL_AUDIT_LOGS: AuditLog[] = [
@@ -1204,6 +1242,15 @@ export function getDatabase(): AppState {
     if (!memoryState.careAlarms) {
       memoryState.careAlarms = INITIAL_CARE_ALARMS;
     }
+    if (!memoryState.whatsappConfig.communityGroups || memoryState.whatsappConfig.communityGroups.length === 0) {
+      memoryState.whatsappConfig.communityGroups = INITIAL_COMMUNITY_GROUPS;
+      if (!memoryState.whatsappConfig.mainInviteLink) {
+        memoryState.whatsappConfig.mainInviteLink = 'https://chat.whatsapp.com/sampleMainCommunityLink';
+      }
+      if (!memoryState.whatsappConfig.communityName) {
+        memoryState.whatsappConfig.communityName = 'CommUnity Health & Operations';
+      }
+    }
     return memoryState;
   }
 
@@ -1213,8 +1260,22 @@ export function getDatabase(): AppState {
     if (fs.existsSync(DB_FILE)) {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
       memoryState = JSON.parse(data) as AppState;
+      let shouldSave = false;
       if (!memoryState.careAlarms || memoryState.careAlarms.length === 0) {
         memoryState.careAlarms = INITIAL_CARE_ALARMS;
+        shouldSave = true;
+      }
+      if (!memoryState.whatsappConfig.communityGroups || memoryState.whatsappConfig.communityGroups.length === 0) {
+        memoryState.whatsappConfig.communityGroups = INITIAL_COMMUNITY_GROUPS;
+        if (!memoryState.whatsappConfig.mainInviteLink) {
+          memoryState.whatsappConfig.mainInviteLink = 'https://chat.whatsapp.com/sampleMainCommunityLink';
+        }
+        if (!memoryState.whatsappConfig.communityName) {
+          memoryState.whatsappConfig.communityName = 'CommUnity Health & Operations';
+        }
+        shouldSave = true;
+      }
+      if (shouldSave) {
         saveDatabase(memoryState);
       }
       return memoryState;

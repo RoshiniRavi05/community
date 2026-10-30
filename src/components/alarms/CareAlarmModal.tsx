@@ -21,7 +21,8 @@ import {
   Smartphone,
   Eye,
   AlertCircle,
-  Copy
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 import { CareAlarm, AlarmType, Member } from '@/lib/db/types';
 import { WhatsAppChatPreview } from '../preview/WhatsAppChatPreview';
@@ -399,6 +400,19 @@ export const CareAlarmModal: React.FC<CareAlarmModalProps> = ({
                     </button>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const encoded = encodeURIComponent(alarm.customMessage);
+                          window.open(`https://web.whatsapp.com/send?text=${encoded}`, '_blank');
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-1 transition"
+                        title="Open this reminder in WhatsApp Web to broadcast into your senior care group"
+                      >
+                        <ExternalLink className="w-3 h-3 text-emerald-400" />
+                        <span>Open in WhatsApp</span>
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => handleTriggerTest(alarm)}

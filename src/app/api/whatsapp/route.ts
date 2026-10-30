@@ -68,6 +68,77 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, optOutHandled, statusHandled });
     }
 
+    if (action === 'UPDATE_COMMUNITY_CONFIG') {
+      const { communityName, mainInviteLink, integrationMode, defaultDispatchMethod } = body;
+      if (communityName !== undefined) db.whatsappConfig.communityName = communityName;
+      if (mainInviteLink !== undefined) db.whatsappConfig.mainInviteLink = mainInviteLink;
+      if (integrationMode !== undefined) db.whatsappConfig.integrationMode = integrationMode;
+      if (defaultDispatchMethod !== undefined) db.whatsappConfig.defaultDispatchMethod = defaultDispatchMethod;
+
+      saveDatabase(db);
+      logAuditAction(user, 'COMMUNITY_CONFIG_UPDATED', `Updated WhatsApp Community settings: ${communityName || 'Main'}`);
+      return NextResponse.json({ success: true, config: db.whatsappConfig });
+    }
+
+    if (action === 'SAVE_COMMUNITY_GROUP') {
+      const { group } = body;
+      if (!group || !group.name || !group.inviteLink) {
+        return NextResponse.json({ error: 'Group name and invite link are required' }, { status: 400 });
+      }
+
+      if (!db.whatsappConfig.communityGroups) {
+        db.whatsappConfig.communityGroups = [];
+      }
+
+      const existingIndex = db.whatsappConfig.communityGroups.findIndex(g => g.id === group.id);
+      if (existingIndex >= 0) {
+        db.whatsappConfig.communityGroups[existingIndex] = {
+          ...db.whatsappConfig.communityGroups[existingIndex],
+          ...group
+        };
+      } else {
+        const newGroup = {
+          id: group.id || `grp_${Date.now()}`,
+          name: group.name,
+          description: group.description || '',
+          inviteLink: group.inviteLink,
+          category: group.category || 'general',
+          targetAudience: group.targetAudience || 'All Members',
+          memberCount: group.memberCount || 0,
+          isPrimary: !!group.isPrimary
+        };
+        db.whatsappConfig.communityGroups.push(newGroup);
+      }
+
+      saveDatabase(db);
+      logAuditAction(user, 'COMMUNITY_GROUP_SAVED', `Saved WhatsApp Community group: ${group.name}`);
+      return NextResponse.json({ success: true, config: db.whatsappConfig });
+    }
+
+    if (action === 'DELETE_COMMUNITY_GROUP') {
+      const { groupId } = body;
+      if (db.whatsappConfig.communityGroups) {
+        db.whatsappConfig.communityGroups = db.whatsappConfig.communityGroups.filter(g => g.id !== groupId);
+        saveDatabase(db);
+        logAuditAction(user, 'COMMUNITY_GROUP_DELETED', `Deleted WhatsApp Community group ID: ${groupId}`);
+      }
+      return NextResponse.json({ success: true, config: db.whatsappConfig });
+    }
+
+    if (action === 'UPDATE_CLOUD_API_CONFIG') {
+      const { phoneNumberId, businessAccountId, apiAccessToken, webhookVerifyToken } = body;
+      if (phoneNumberId !== undefined) db.whatsappConfig.phoneNumberId = phoneNumberId;
+      if (businessAccountId !== undefined) db.whatsappConfig.businessAccountId = businessAccountId;
+      if (apiAccessToken !== undefined && apiAccessToken && !apiAccessToken.startsWith('••••')) {
+        db.whatsappConfig.apiAccessToken = apiAccessToken;
+      }
+      if (webhookVerifyToken !== undefined) db.whatsappConfig.webhookVerifyToken = webhookVerifyToken;
+
+      saveDatabase(db);
+      logAuditAction(user, 'CLOUD_API_CONFIG_UPDATED', `Updated WhatsApp Cloud API credentials`);
+      return NextResponse.json({ success: true, config: db.whatsappConfig });
+    }
+
     if (action === 'TEST_CONNECTION') {
       // Simulate verifying token against Meta Graph API
       db.whatsappConfig.connectionStatus = 'connected';

@@ -333,6 +333,51 @@ export default function Home() {
     return res.json();
   };
 
+  // WhatsApp Community & Group Actions
+  const handleUpdateCommunityConfig = async (cfg: any) => {
+    const res = await fetch('/api/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'UPDATE_COMMUNITY_CONFIG', ...cfg })
+    });
+    const json = await res.json();
+    await fetchData();
+    return json;
+  };
+
+  const handleSaveCommunityGroup = async (group: any) => {
+    const res = await fetch('/api/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SAVE_COMMUNITY_GROUP', group })
+    });
+    const json = await res.json();
+    await fetchData();
+    return json;
+  };
+
+  const handleDeleteCommunityGroup = async (groupId: string) => {
+    const res = await fetch('/api/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'DELETE_COMMUNITY_GROUP', groupId })
+    });
+    const json = await res.json();
+    await fetchData();
+    return json;
+  };
+
+  const handleUpdateCloudApiConfig = async (cfg: any) => {
+    const res = await fetch('/api/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'UPDATE_CLOUD_API_CONFIG', ...cfg })
+    });
+    const json = await res.json();
+    await fetchData();
+    return json;
+  };
+
   // Settings update
   const handleUpdateSettings = async (newSettings: Partial<AntiSpamSettings>) => {
     await fetch('/api/data', {
@@ -520,6 +565,10 @@ export default function Home() {
               onSendTestMessage={handleSendTestMessage}
               onTestConnection={handleTestConnection}
               onSimulateWebhook={handleSimulateWebhook}
+              onUpdateCommunityConfig={handleUpdateCommunityConfig}
+              onSaveCommunityGroup={handleSaveCommunityGroup}
+              onDeleteCommunityGroup={handleDeleteCommunityGroup}
+              onUpdateCloudApiConfig={handleUpdateCloudApiConfig}
             />
           )}
 

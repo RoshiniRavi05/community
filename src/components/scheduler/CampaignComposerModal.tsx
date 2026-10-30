@@ -7,7 +7,8 @@ import {
   ShieldAlert, 
   Send,
   Repeat,
-  Clock
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 import { Campaign, AudienceSegment, Member, AntiSpamSettings, CampaignCategory, RecurrenceCadence } from '@/lib/db/types';
 import { WhatsAppChatPreview } from '../preview/WhatsAppChatPreview';
@@ -529,13 +530,33 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
 
         {/* Modal Actions Footer */}
         <div className="px-6 py-4 border-t border-[#1b2537] flex items-center justify-between bg-[#0c121e]/80">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition"
-          >
-            Cancel
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!message.trim()) {
+                  alert('Please enter a message before launching WhatsApp.');
+                  return;
+                }
+                const encoded = encodeURIComponent(message);
+                navigator.clipboard.writeText(message);
+                window.open(`https://web.whatsapp.com/send?text=${encoded}`, '_blank');
+              }}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center gap-1.5"
+              title="Copy message and open WhatsApp Web"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Launch in WhatsApp</span>
+            </button>
+          </div>
 
           <div className="flex items-center gap-2.5">
             <button
