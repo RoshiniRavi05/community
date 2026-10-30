@@ -1,0 +1,166 @@
+import { NextResponse } from 'next/server';
+import { getDatabase, saveDatabase, logAuditAction } from '@/lib/db/storage';
+import { Campaign } from '@/lib/db/types';
+
+export async function GET() {
+  const db = getDatabase();
+  return NextResponse.json(db.campaigns);
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { action, campaign, campaignId, user = 'Admin' } = body;
+    const db = getDatabase();
+
+    if (action === 'CREATE') {
+      const cadence = campaign.cadence || 'none';
+      let intervalDays = 1;
+      if (cadence === 'daily') intervalDays = 1;
+      else if (cadence === 'every_3_days') intervalDays = 3;
+      else if (cadence === 'every_5_days') intervalDays = 5;
+      else if (cadence === 'weekly') intervalDays = 7;
+      else if (cadence === 'custom_days') intervalDays = Math.max(1, campaign.cadenceIntervalDays || 1);
+
+      const occurrences = (cadence !== 'none')
+        ? Math.min(30, Math.max(2, campaign.cadenceOccurrences || (cadence === 'daily' ? 7 : 5)))
+        : 1;
+
+      const baseTimestamp = new Date(campaign.scheduledAt || Date.now()).getTime();
+      const parentId = `camp_${Date.now()}`;
+      const createdCampaigns: Campaign[] = [];
+
+      for (let i = 0; i < occurrences; i++) {
+        const occurrenceId = i === 0 ? parentId : `camp_${Date.now()}_${i}`;
+        const scheduledTime = new Date(baseTimestamp + (i * intervalDays * 24 * 60 * 60 * 1000)).toISOString();
+        
+        const instanceTitle = (cadence !== 'none' && occurrences > 1)
+          ? `${campaign.title} [Occurrence ${i + 1}/${occurrences}]`
+          : campaign.title;
+
+        const newCampaign: Campaign = {
+          ...campaign,
+          id: occurrenceId,
+          title: instanceTitle,
+          scheduledAt: scheduledTime,
+          cadence,
+          cadenceIntervalDays: intervalDays,
+          cadenceOccurrences: occurrences,
+          parentCampaignId: parentId,
+          seriesIndex: i + 1,
+          status: campaign.requiresApproval ? 'pending_approval' : 'scheduled',
+          totalRecipients: campaign.totalRecipients || db.members.length,
+          sentCount: 0,
+          deliveredCount: 0,
+          readCount: 0,
+          failedCount: 0,
+          blockedCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        db.campaigns.unshift(newCampaign);
+        createdCampaigns.push(newCampaign);
+      }
+
+      logAuditAction(
+        user, 
+        'CAMPAIGN_CREATED', 
+        `Created campaign: "${campaign.title}" (${cadence !== 'none' ? `Cadence: ${cadence}, ${occurrences} occurrences scheduled` : 'Single broadcast'})`
+      );
+      saveDatabase(db);
+      return NextResponse.json({ success: true, campaign: createdCampaigns[0], allCreated: createdCampaigns });
+    }
+
+    if (action === 'CANCEL_SERIES') {
+      const target = db.campaigns.find(c => c.id === campaignId);
+      if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+      const seriesRootId = target.parentCampaignId || target.id;
+      
+      let cancelledCount = 0;
+      db.campaigns.forEach(c => {
+        if ((c.parentCampaignId === seriesRootId || c.id === seriesRootId) && c.status === 'scheduled') {
+          c.status = 'cancelled';
+          c.updatedAt = new Date().toISOString();
+          cancelledCount++;
+        }
+      });
+
+      logAuditAction(user, 'SERIES_CANCELLED', `Cancelled ${cancelledCount} occurrences in cadence series "${target.title}"`);
+      saveDatabase(db);
+      return NextResponse.json({ success: true, cancelledCount });
+    }
+
+    if (action === 'APPROVE') {
+      const target = db.campaigns.find(c => c.id === campaignId);
+      if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+
+      target.status = 'scheduled';
+      target.approvedBy = user;
+      target.approvedAt = new Date().toISOString();
+      target.updatedAt = new Date().toISOString();
+
+      logAuditAction(user, 'CAMPAIGN_APPROVED', `Approved campaign: "${target.title}" for sending.`);
+      saveDatabase(db);
+      return NextResponse.json({ success: true, campaign: target });
+    }
+
+    if (action === 'CANCEL') {
+      const target = db.campaigns.find(c => c.id === campaignId);
+      if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+
+      target.status = 'cancelled';
+      target.updatedAt = new Date().toISOString();
+
+      logAuditAction(user, 'CAMPAIGN_CANCELLED', `Cancelled scheduled campaign: "${target.title}"`);
+      saveDatabase(db);
+      return NextResponse.json({ success: true, campaign: target });
+    }
+
+    if (action === 'DUPLICATE') {
+      const original = db.campaigns.find(c => c.id === campaignId);
+      if (!original) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+
+      const nextWeekDate = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
+      const duplicate: Campaign = {
+        ...original,
+        id: `camp_${Date.now()}`,
+        title: `${original.title} (Copy)`,
+        scheduledAt: nextWeekDate,
+        status: 'draft',
+        sentCount: 0,
+        deliveredCount: 0,
+        readCount: 0,
+        failedCount: 0,
+        blockedCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      db.campaigns.unshift(duplicate);
+      logAuditAction(user, 'CAMPAIGN_DUPLICATED', `Duplicated campaign "${original.title}"`);
+      saveDatabase(db);
+      return NextResponse.json({ success: true, campaign: duplicate });
+    }
+
+    if (action === 'SEND_NOW') {
+      const target = db.campaigns.find(c => c.id === campaignId);
+      if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+
+      // Move scheduled time to right now so scheduler picks it up immediately
+      target.scheduledAt = new Date().toISOString();
+      target.status = 'scheduled';
+      target.requiresApproval = false;
+      saveDatabase(db);
+
+      const { runSchedulerExecution } = await import('@/lib/scheduler/engine');
+      const execResult = await runSchedulerExecution();
+
+      return NextResponse.json({ success: true, result: execResult, campaign: target });
+    }
+
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal error' }, { status: 500 });
+  }
+}
