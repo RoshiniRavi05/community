@@ -8,11 +8,16 @@ import {
   Send,
   Repeat,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Tent,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Campaign, AudienceSegment, Member, AntiSpamSettings, CampaignCategory, RecurrenceCadence } from '@/lib/db/types';
 import { WhatsAppChatPreview } from '../preview/WhatsAppChatPreview';
-import { validateMessageAgainstAntiSpam } from '@/lib/scheduler/antispam';
+import { isWithinQuietHours, isAllowedDay } from '@/lib/scheduler/antispam';
 
 interface CampaignComposerModalProps {
   isOpen: boolean;
@@ -26,41 +31,40 @@ interface CampaignComposerModalProps {
 
 const TEMPLATES: Record<CampaignCategory, { label: string; text: string; mediaType: 'image' | 'video' | 'none'; sampleMedia?: string }> = {
   announcement: {
-    label: 'Community Announcement',
+    label: 'Community Briefing',
     text: "*Community Briefing: Key Updates for This Week*\n\nHighlights, schedule modifications, and workshops are now published.\n\nRead the complete schedule: https://example.com/announcements\n\nReply STOP to opt out of updates.",
     mediaType: 'none'
   },
   camp_event: {
-    label: 'Camp & Workshop',
-    text: "*Winter Hands-on Camp 2026: Registration Open*\n\nRegistrations are officially open for our week-long intensive workshop (Ages 9-15).\n\nDates: Nov 14 – Nov 20\nVenue: Innovation Hub, Bangalore\nPerk: 20% discount with code CAMPCOMM20\n\nRegister: https://example.com/camps\n\nLimited to 30 participants. Reply STOP to opt out.",
+    label: 'Camp Announcement',
+    text: "*Free Blood Test & Health Screening Camp: Tiruppur*\n\nComprehensive blood diagnostic, diabetic screening, and vitals checkup for community residents.\n\nDates: Nov 6 – Nov 8, 2026\nVenue: Tiruppur Central Community Hall, Kumaran Road\nTarget: All Community & Seniors\n\nRegistration: https://example.com/camps/tiruppur\n\nReply STOP to opt out.",
     mediaType: 'image',
-    sampleMedia: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80'
+    sampleMedia: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&auto=format&fit=crop&q=80'
   },
   event_reminder: {
     label: 'Event Reminder',
-    text: "*Reminder: Tomorrow's Masterclass*\n\nOur interactive session starts tomorrow at 6:00 PM IST.\n\nRoom link: https://zoom.us/j/community123\nPasscode: COMMUNITY\n\nPlease join 5 minutes early.",
+    text: "*Reminder: Upcoming Health & Tech Camp*\n\nOur interactive session starts tomorrow at 7:00 PM IST.\n\nVenue: Community Outreach Hub\n\nPlease arrive 10 minutes early. Reply STOP to opt out.",
     mediaType: 'none'
   },
   reel_video: {
-    label: 'Video Release',
-    text: "*New Video Resource for the Community*\n\nWatch our walkthrough on building AI agents with TypeScript:\n\nLink: https://www.instagram.com/reel/DA123456789/\n\nReply STOP to opt out of notifications.",
+    label: 'Social Reel Release',
+    text: "*New Health & Care Reel for our Community*\n\nWatch our new practical guide on daily elder care and nutrition:\n\nLink: https://www.instagram.com/reel/sample123/\n\nReply STOP to opt out of notifications.",
     mediaType: 'image',
     sampleMedia: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'
   },
   discount_offer: {
-    label: 'Discount & Perk',
-    text: "*Exclusive Community Flash Offer*\n\nEnjoy 25% off on upcoming bootcamp passes this weekend.\n\nCode: COMMUNITY25\nValid until Sunday midnight.\n\nClaim here: https://example.com/perks\n\nReply STOP to opt out.",
-    mediaType: 'image',
-    sampleMedia: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop&q=80'
+    label: 'Camp Discount Perk',
+    text: "*Community Perk: 20% Health Workshop Waiver*\n\nExclusive concession voucher for Tiruppur community members.\n\nCode: TIRUPPUR20\n\nClaim here: https://example.com/perks\n\nReply STOP to opt out.",
+    mediaType: 'none'
   },
   registration_deadline: {
     label: 'Registration Deadline',
-    text: "*Final Notice: Registration Closes Today*\n\nThis is the last call to secure a seat for this weekend's session.\n\nLink: https://example.com/register\n\nReply STOP to opt out.",
+    text: "*Final Notice: Camp Registration Closes Today at 7:00 PM*\n\nThis is the last call to secure a slot for this week's diagnostic camp.\n\nLink: https://example.com/register\n\nReply STOP to opt out.",
     mediaType: 'none'
   },
   general_update: {
     label: 'General Notice',
-    text: "*Community Tip: Channel Organization*\n\nYou can organize your community channels by topic tabs. Read our quick documentation here: https://example.com/guide\n\nReply STOP to opt out.",
+    text: "*Community Tip: WhatsApp Channel Updates*\n\nPlease add our official desk to your contacts to ensure timely delivery of community alerts.\n\nReply STOP to opt out.",
     mediaType: 'none'
   }
 };
@@ -81,7 +85,9 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
   const [mediaType, setMediaType] = useState<'image' | 'video' | 'document' | 'none'>(initialData?.mediaType || 'none');
   const [linkPreviewUrl, setLinkPreviewUrl] = useState(initialData?.linkPreviewUrl || '');
   const [targetSegmentId, setTargetSegmentId] = useState(initialData?.targetSegmentId || 'seg_all');
-  
+  const [selectedCamp, setSelectedCamp] = useState('All Camps');
+
+  // Default to 7:00 PM as specified in wireframe 3
   const getInitialDateTime = () => {
     if (initialData?.scheduledAt) {
       const d = new Date(initialData.scheduledAt);
@@ -89,13 +95,13 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
     }
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    d.setHours(10, 0, 0, 0);
+    d.setHours(19, 0, 0, 0); // 7:00 PM as drawn in wireframe
     return d.toISOString().slice(0, 16);
   };
 
   const [scheduledAt, setScheduledAt] = useState(getInitialDateTime());
   const [timezone, setTimezone] = useState(initialData?.timezone || 'Asia/Kolkata');
-  const [requiresApproval, setRequiresApproval] = useState(initialData?.requiresApproval ?? true);
+  const [requiresApproval, setRequiresApproval] = useState(initialData?.requiresApproval ?? false);
   const [internalNotes, setInternalNotes] = useState(initialData?.internalNotes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -103,6 +109,46 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
   const [cadence, setCadence] = useState<RecurrenceCadence>(initialData?.cadence || 'none');
   const [cadenceIntervalDays, setCadenceIntervalDays] = useState<number>(initialData?.cadenceIntervalDays || 1);
   const [cadenceOccurrences, setCadenceOccurrences] = useState<number>(initialData?.cadenceOccurrences || 5);
+  // Local ISO string helper (avoids UTC timezone shift)
+  const toLocalISOString = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const formatDisplayDateTime = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      return d.toLocaleString('en-IN', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const DAY_NAMES = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  // Little Calendar Modal State
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [calViewDate, setCalViewDate] = useState(() => {
+    return initialData?.scheduledAt ? new Date(initialData.scheduledAt) : new Date(Date.now() + 86400000);
+  });
+
 
   const handleCadenceSelect = (newCadence: RecurrenceCadence) => {
     setCadence(newCadence);
@@ -118,152 +164,135 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
     } else if (newCadence === 'weekly') {
       setCadenceIntervalDays(7);
       setCadenceOccurrences(4);
-    } else if (newCadence === 'custom_days') {
-      setCadenceIntervalDays(2);
-      setCadenceOccurrences(5);
     }
   };
 
-  const getProjectedDates = () => {
-    if (cadence === 'none') return [];
-    const base = new Date(scheduledAt || Date.now()).getTime();
-    if (isNaN(base)) return [];
-    const dates: Date[] = [];
-    const count = Math.min(8, Math.max(2, cadenceOccurrences));
-    const interval = cadence === 'daily' ? 1 
-      : cadence === 'every_3_days' ? 3 
-      : cadence === 'every_5_days' ? 5 
-      : cadence === 'weekly' ? 7 
-      : Math.max(1, cadenceIntervalDays);
-
-    for (let i = 0; i < count; i++) {
-      dates.push(new Date(base + (i * interval * 24 * 3600 * 1000)));
-    }
-    return dates;
+  // Set time to 7:00 PM preset
+  const set7PMTime = () => {
+    const d = new Date(scheduledAt || Date.now());
+    d.setHours(19, 0, 0, 0);
+    setScheduledAt(toLocalISOString(d));
   };
 
-  if (!isOpen) return null;
+  // Anti-Spam validation check
+  const [validationResult, setValidationResult] = useState<any>(null);
+  useEffect(() => {
+    const scheduledDateObj = scheduledAt ? new Date(scheduledAt) : new Date();
+    const inQuiet = isWithinQuietHours(settings, scheduledDateObj);
+    const dayAllowed = isAllowedDay(settings, scheduledDateObj);
+    setValidationResult({
+      inQuietHours: inQuiet,
+      disallowedDay: !dayAllowed
+    });
+  }, [scheduledAt, category, message, members.length, settings]);
 
-  const targetMembers = members.filter(m => {
-    if (targetSegmentId === 'all' || targetSegmentId === 'seg_all') return true;
-    const seg = segments.find(s => s.id === targetSegmentId);
-    if (!seg) return true;
-    if (seg.filters.consentOnly && m.consentStatus !== 'opted_in') return false;
-    if (seg.filters.interests && seg.filters.interests.length > 0) {
-      return m.interests.some(i => seg.filters.interests!.includes(i));
+  
+  const handleScheduleClick = () => {
+    if (!title.trim()) {
+      alert('Campaign Title is required before scheduling.');
+      return;
     }
-    return true;
-  });
-
-  const mockCampaign: Campaign = {
-    id: 'mock_test',
-    title: title || 'Test',
-    message,
-    category,
-    mediaUrl,
-    mediaType,
-    targetSegmentId,
-    scheduledAt: new Date(scheduledAt).toISOString(),
-    timezone,
-    status: 'scheduled',
-    requiresApproval,
-    totalRecipients: targetMembers.length,
-    sentCount: 0,
-    deliveredCount: 0,
-    readCount: 0,
-    failedCount: 0,
-    blockedCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    if (!message.trim()) {
+      alert('Message Content cannot be empty.');
+      return;
+    }
+    // Sync calendar view month to currently scheduled date
+    const d = new Date(scheduledAt || Date.now());
+    if (!isNaN(d.getTime())) {
+      setCalViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+    setShowCalendarModal(true);
   };
-
-  const eligibleCount = targetMembers.filter(m => {
-    const val = validateMessageAgainstAntiSpam(m, mockCampaign, [], settings, new Date(scheduledAt));
-    return val.allowed;
-  }).length;
-
-  const blockedOptOut = targetMembers.filter(m => m.isUnsubscribed || m.consentStatus !== 'opted_in').length;
-  const blockedFrequency = targetMembers.length - eligibleCount - blockedOptOut;
 
   const handleApplyTemplate = (cat: CampaignCategory) => {
     setCategory(cat);
     const tmpl = TEMPLATES[cat];
     setMessage(tmpl.text);
     setMediaType(tmpl.mediaType);
-    if (tmpl.sampleMedia) {
-      setMediaUrl(tmpl.sampleMedia);
-    } else {
-      setMediaUrl('');
-    }
-    if (!title) {
-      setTitle(tmpl.label);
-    }
+    if (tmpl.sampleMedia) setMediaUrl(tmpl.sampleMedia);
   };
 
-  const handleSubmit = async (saveAsDraft: boolean = false) => {
+  const handleSubmit = async (isDraft: boolean = false, sendImmediately: boolean = false) => {
     if (!title.trim()) {
-      alert('Please enter a campaign name');
+      alert('Campaign Title is required');
       return;
     }
     if (!message.trim()) {
-      alert('Please enter message text');
+      alert('Message Content cannot be empty');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      let finalStatus = initialData?.status || 'scheduled';
+      let finalScheduledAt = scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString();
+
+      if (sendImmediately) {
+        finalStatus = 'processing';
+        finalScheduledAt = new Date().toISOString();
+      } else if (isDraft) {
+        finalStatus = 'draft';
+      } else if (requiresApproval) {
+        finalStatus = 'pending_approval';
+      }
+
       await onSave({
-        title,
+        ...initialData,
+        title: title.trim(),
+        message: message.trim(),
         category,
-        message,
-        mediaUrl: mediaUrl || undefined,
+        mediaUrl: mediaType !== 'none' ? mediaUrl.trim() : undefined,
         mediaType,
-        linkPreviewUrl: linkPreviewUrl || undefined,
+        linkPreviewUrl: linkPreviewUrl.trim() || undefined,
         targetSegmentId,
-        scheduledAt: new Date(scheduledAt).toISOString(),
+        scheduledAt: finalScheduledAt,
         timezone,
-        status: saveAsDraft ? 'draft' : requiresApproval ? 'pending_approval' : 'scheduled',
-        requiresApproval,
-        internalNotes,
+        status: finalStatus,
+        requiresApproval: sendImmediately ? false : requiresApproval,
+        internalNotes: `${internalNotes} ${selectedCamp !== 'All Camps' ? `[Camp: ${selectedCamp}]` : ''}`.trim(),
         cadence,
-        cadenceIntervalDays: cadence === 'daily' ? 1 : cadence === 'every_3_days' ? 3 : cadence === 'every_5_days' ? 5 : cadence === 'weekly' ? 7 : cadenceIntervalDays,
+        cadenceIntervalDays: cadence !== 'none' ? cadenceIntervalDays : 1,
         cadenceOccurrences: cadence !== 'none' ? cadenceOccurrences : 1
       });
       onClose();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to schedule campaign');
+      alert(err instanceof Error ? err.message : 'Failed to save campaign');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-[#101726] border border-[#1b2537] rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-[#111726] border border-[#1e293b] rounded-lg w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#1b2537] flex items-center justify-between bg-[#0c121e]/80">
+        <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between bg-[#0d121f]">
           <div>
-            <h2 className="text-sm font-bold text-white tracking-tight">
-              Campaign Composer & Message Scheduler
+            <h2 className="text-sm font-semibold text-slate-100">
+              Message Composer & Scheduler
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Plan and validate upcoming WhatsApp community broadcasts</p>
+            <p className="text-[11px] text-slate-400">
+              Create, validate against anti-spam policies, and schedule community dispatches
+            </p>
           </div>
           <button 
             onClick={onClose} 
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1a253a]"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body grid: Form on left, WhatsApp live preview on right */}
-        <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="p-5 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Left Form: 7 cols */}
-          <div className="lg:col-span-7 space-y-3.5">
+          <div className="lg:col-span-7 space-y-3.5 text-xs">
             {/* Quick Templates Selector */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Standard templates
+              <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                Standard Category Template
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {(Object.keys(TEMPLATES) as CampaignCategory[]).map(cat => (
@@ -271,10 +300,10 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
                     key={cat}
                     type="button"
                     onClick={() => handleApplyTemplate(cat)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${
+                    className={`px-2 py-1 rounded text-[11px] font-medium border transition ${
                       category === cat
-                        ? 'bg-[#c2f83a] text-black border-[#c2f83a] shadow-[0_0_8px_rgba(194,248,58,0.4)]'
-                        : 'bg-[#141c2c] text-slate-300 border-[#1e2a3c] hover:bg-[#1f2b40]'
+                        ? 'bg-[#16a34a] text-white border-[#16a34a]'
+                        : 'bg-[#162032] text-slate-300 border-[#273549] hover:bg-[#1e2c45]'
                     }`}
                   >
                     {TEMPLATES[cat].label}
@@ -285,237 +314,182 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
 
             {/* Campaign Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Campaign Title *</label>
+              <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                Message Title *
+              </label>
               <input
                 type="text"
+                required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Winter Robotics Camp Registration Open"
-                className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#c2f83a]/60"
+                placeholder="e.g. Tiruppur Health Camp Announcement"
+                className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
               />
             </div>
 
-            {/* Message Body */}
+            {/* Message Content */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-300">WhatsApp Message Content *</label>
-                <span className="text-[10px] text-slate-500">
-                  Formatting: *bold*, _italics_
+                <label className="block text-[11px] font-medium text-slate-300">
+                  Message Content *
+                </label>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {message.length} chars • *bold*, _italics_ supported
                 </span>
               </div>
               <textarea
-                rows={6}
+                required
+                rows={5}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your WhatsApp message..."
-                className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl p-3 text-xs text-white font-sans focus:outline-none focus:border-[#c2f83a]/60 leading-relaxed"
+                className="w-full p-2.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
               />
-              <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1">
-                <span>{message.length} characters</span>
-                <span>Include opt-out notice (e.g. Reply STOP to unsubscribe)</span>
-              </div>
             </div>
 
-            {/* Media Attachment */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Audience Selection */}
+            <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Attachment Type</label>
-                <select
-                  value={mediaType}
-                  onChange={(e) => setMediaType(e.target.value as 'image' | 'video' | 'document' | 'none')}
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
-                >
-                  <option value="none">Text Only (No Attachment)</option>
-                  <option value="image">Image (PNG, JPG)</option>
-                  <option value="video">Video (MP4)</option>
-                  <option value="document">Document (PDF)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Media URL</label>
-                <input
-                  type="text"
-                  value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
-                  placeholder="https://..."
-                  disabled={mediaType === 'none'}
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#c2f83a]/60 disabled:opacity-40"
-                />
-              </div>
-            </div>
-
-            {/* Target Segment & Schedule Date */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Audience Segment</label>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  Select Audience
+                </label>
                 <select
                   value={targetSegmentId}
                   onChange={(e) => setTargetSegmentId(e.target.value)}
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
+                  className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
                 >
-                  <option value="seg_all">All Opted-in Members ({members.filter(m => m.consentStatus === 'opted_in').length})</option>
-                  {segments.filter(s => s.id !== 'seg_all').map(s => (
-                    <option key={s.id} value={s.id}>{s.name} (~{s.memberCount})</option>
-                  ))}
+                  <option value="seg_all">All Community (Consent Opted-In)</option>
+                  <option value="seg_parents">Parents & Youth Camp Leads</option>
+                  <option value="seg_tech">STEM & Coding Enthusiasts</option>
+                  <option value="seg_elderly">Elderly & Senior Care Members</option>
+                  <option value="seg_tiruppur">Tiruppur District Residents</option>
                 </select>
+              </div>
+            </div>
+
+            {/* Media Upload & Link */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  Media Attachment
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={mediaType}
+                    onChange={(e) => setMediaType(e.target.value as any)}
+                    className="w-24 px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                  >
+                    <option value="none">None</option>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                  {mediaType !== 'none' && (
+                    <input
+                      type="text"
+                      value={mediaUrl}
+                      onChange={(e) => setMediaUrl(e.target.value)}
+                      placeholder="Image / Video URL"
+                      className="flex-1 px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    />
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Scheduled Time *</label>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  Add Link Preview (Optional)
+                </label>
                 <input
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#c2f83a]/60"
+                  type="text"
+                  value={linkPreviewUrl}
+                  onChange={(e) => setLinkPreviewUrl(e.target.value)}
+                  placeholder="https://example.com/camps"
+                  className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
                 />
               </div>
             </div>
 
-            {/* Repetitive / Cadence Scheduling Section */}
-            <div className="p-3.5 rounded-xl bg-[#0c121e] border border-[#1b2537] space-y-3">
+            {/* Scheduling Controls: Date, Time (with 7:00 PM preset!), Timezone */}
+            <div className="p-3 rounded bg-[#090d16] border border-[#1e293b] space-y-2">
               <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#22c55e]" />
+                  <span>Scheduled Date & Time</span>
+                </span>
                 <div className="flex items-center gap-2">
-                  <Repeat className={`w-4 h-4 ${cadence !== 'none' ? 'text-[#c2f83a]' : 'text-slate-400'}`} />
-                  <span className="text-xs font-bold text-white tracking-tight">Repetitive Message Cadence</span>
+                  <button
+                    type="button"
+                    onClick={handleScheduleClick}
+                    className="text-[10px] px-2 py-0.5 rounded bg-[#16a34a]/20 text-[#22c55e] border border-[#16a34a]/40 hover:bg-[#16a34a]/30 transition font-medium flex items-center gap-1"
+                  >
+                    <Calendar className="w-3 h-3" />
+                    <span>Open Calendar</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={set7PMTime}
+                    className="text-[10px] px-2 py-0.5 rounded bg-[#162032] text-slate-300 border border-[#273549] hover:bg-[#1e2c45] transition font-mono font-medium"
+                  >
+                    7:00 PM Default
+                  </button>
                 </div>
-                {cadence !== 'none' && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#c2f83a]/15 text-[#c2f83a] border border-[#c2f83a]/30 font-semibold">
-                    {cadence === 'daily' ? 'Repeats Daily' : cadence === 'every_3_days' ? 'Every 3 Days' : cadence === 'every_5_days' ? 'Every 5 Days' : cadence === 'weekly' ? 'Weekly' : `Every ${cadenceIntervalDays} Days`}
-                  </span>
-                )}
               </div>
 
-              {/* Cadence Preset Buttons */}
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs">
-                {[
-                  { id: 'none', label: 'One-off', icon: '1x' },
-                  { id: 'daily', label: 'Daily', icon: '⚡' },
-                  { id: 'every_3_days', label: '3 Days Once', icon: '🔁' },
-                  { id: 'every_5_days', label: '5 Days Once', icon: '🚀' },
-                  { id: 'weekly', label: 'Weekly', icon: '📅' },
-                  { id: 'custom_days', label: 'Custom', icon: '⏱️' }
-                ].map((item) => {
-                  const isActive = cadence === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleCadenceSelect(item.id as RecurrenceCadence)}
-                      className={`px-2 py-2 rounded-xl text-center transition flex flex-col items-center gap-0.5 border ${
-                        isActive
-                          ? 'bg-[#182738] border-[#c2f83a] text-[#c2f83a] shadow-[0_0_10px_rgba(194,248,58,0.2)] font-bold'
-                          : 'bg-[#141c2c] border-[#1e2a3c] text-slate-400 hover:text-white hover:bg-[#1a253a]'
-                      }`}
-                    >
-                      <span className="text-xs">{item.icon}</span>
-                      <span className="text-[10px] leading-tight">{item.label}</span>
-                    </button>
-                  );
-                })}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={handleScheduleClick}
+                  className="w-full px-2.5 py-1.5 rounded bg-[#111726] border border-[#1e293b] hover:border-[#16a34a] text-slate-100 text-xs font-mono text-left flex items-center justify-between transition group"
+                >
+                  <span className="truncate">{formatDisplayDateTime(scheduledAt)}</span>
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#22c55e] shrink-0 ml-1" />
+                </button>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full px-2 py-1.5 rounded bg-[#111726] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="UTC">UTC (Universal Time)</option>
+                </select>
               </div>
-
-              {/* Cadence Settings & Projected Dates Preview */}
-              {cadence !== 'none' && (
-                <div className="space-y-2.5 pt-2 border-t border-[#1b2537]">
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    {cadence === 'custom_days' && (
-                      <div>
-                        <label className="block text-slate-300 font-semibold mb-1">Repeat Every (Days)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="90"
-                          value={cadenceIntervalDays}
-                          onChange={(e) => setCadenceIntervalDays(Math.max(1, Number(e.target.value)))}
-                          className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-1.5 text-white font-mono focus:outline-none focus:border-[#c2f83a]/60"
-                        />
-                      </div>
-                    )}
-                    <div className={cadence === 'custom_days' ? '' : 'col-span-2'}>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-slate-300 font-semibold">Total Occurrences to Schedule</label>
-                        <span className="font-mono text-[#c2f83a] font-bold">{cadenceOccurrences} messages</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="range"
-                          min="2"
-                          max="15"
-                          value={cadenceOccurrences}
-                          onChange={(e) => setCadenceOccurrences(Number(e.target.value))}
-                          className="w-full accent-[#c2f83a] cursor-pointer"
-                        />
-                        <span className="text-[11px] font-mono text-slate-400 w-8 text-right">{cadenceOccurrences}x</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Projected Occurrence Dates */}
-                  <div className="bg-[#101726] border border-[#1b2537] rounded-xl p-2.5 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
-                      <span className="font-semibold text-slate-300 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-[#c2f83a]" />
-                        Projected Dispatch Timeline:
-                      </span>
-                      <span className="text-[10px] font-mono">Showing next {getProjectedDates().length}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {getProjectedDates().map((d, idx) => (
-                        <div
-                          key={idx}
-                          className="px-2 py-1 rounded-lg bg-[#141c2c] border border-[#1e2a3c] text-[10px] font-mono text-slate-300 flex items-center gap-1.5"
-                        >
-                          <span className="w-4 h-4 rounded-full bg-[#c2f83a]/20 text-[#c2f83a] text-[9px] font-bold flex items-center justify-center">
-                            {idx + 1}
-                          </span>
-                          <span>{d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}</span>
-                          <span className="text-slate-500">{d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Anti-Spam Safety Check */}
-            <div className="p-3.5 rounded-xl bg-[#0c121e] border border-[#1b2537] space-y-2 text-xs">
-              <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+            {/* Daily / Recurrence Options */}
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400">Recurrence:</span>
+                {(['none', 'daily', 'every_3_days', 'weekly'] as const).map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => handleCadenceSelect(c)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium border capitalize transition ${
+                      cadence === c
+                        ? 'bg-[#16a34a] text-white border-[#16a34a]'
+                        : 'bg-[#162032] text-slate-400 border-[#273549] hover:text-slate-200'
+                    }`}
+                  >
+                    {c === 'none' ? 'Once' : c.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+
+              <label className="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={requiresApproval}
                   onChange={(e) => setRequiresApproval(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded text-[#c2f83a] border-[#1e2a3c]"
+                  className="rounded bg-[#090d16] border-[#1e293b] text-[#16a34a] focus:ring-0"
                 />
-                <span className="font-semibold">Require administrative review before dispatch</span>
+                <span>Requires Admin Approval</span>
               </label>
-
-              <div className="pt-2 border-t border-[#1b2537] flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Frequency limit check:</span>
-                <span className="font-mono text-[#c2f83a]">
-                  {eligibleCount} eligible · {blockedOptOut > 0 ? `${blockedOptOut} opted-out · ` : ''}{blockedFrequency > 0 ? `${blockedFrequency} capped` : ''}
-                </span>
-              </div>
-            </div>
-
-            {/* Internal Notes */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Internal Notes (Optional)</label>
-              <input
-                type="text"
-                value={internalNotes}
-                onChange={(e) => setInternalNotes(e.target.value)}
-                placeholder="e.g. Approved by lead"
-                className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#c2f83a]/60"
-              />
             </div>
           </div>
 
           {/* Right Column: Live Mobile WhatsApp Simulator (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center bg-[#0c121e] rounded-2xl p-4 border border-[#1b2537]">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-              Delivery Preview
+          <div className="lg:col-span-5 flex flex-col items-center justify-center bg-[#090d16] rounded-md p-4 border border-[#1e293b]">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              WhatsApp Message Preview
             </div>
 
             <WhatsAppChatPreview
@@ -529,12 +503,12 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
         </div>
 
         {/* Modal Actions Footer */}
-        <div className="px-6 py-4 border-t border-[#1b2537] flex items-center justify-between bg-[#0c121e]/80">
+        <div className="px-5 py-3 border-t border-[#1e293b] flex items-center justify-between bg-[#0d121f]">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition"
+              className="px-3 py-1.5 rounded text-xs font-medium text-slate-400 hover:text-white transition"
             >
               Cancel
             </button>
@@ -550,35 +524,279 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
                 navigator.clipboard.writeText(message);
                 window.open(`https://web.whatsapp.com/send?text=${encoded}`, '_blank');
               }}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center gap-1.5"
-              title="Copy message and open WhatsApp Web"
+              className="px-3 py-1.5 rounded text-xs font-medium bg-[#162032] hover:bg-[#1e2c45] border border-[#273549] text-slate-300 transition flex items-center gap-1.5"
             >
               <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
               <span>Launch in WhatsApp</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleSubmit(true)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#141c2c] hover:bg-[#1f2b40] text-slate-200 border border-[#1e2a3c] transition"
+              onClick={() => handleSubmit(true, false)}
+              className="px-3.5 py-1.5 rounded text-xs font-medium bg-[#162032] hover:bg-[#1e2c45] text-slate-300 border border-[#273549] transition"
             >
-              Save draft
+              Save Draft
             </button>
 
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleSubmit(false)}
-              className="px-5 py-2 rounded-xl text-xs font-extrabold bg-[#c2f83a] hover:bg-[#b0e82e] text-black transition flex items-center gap-2 shadow-[0_0_15px_rgba(194,248,58,0.3)] disabled:opacity-50 active:scale-95"
+              onClick={() => handleSubmit(false, true)}
+              className="px-3.5 py-1.5 rounded text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-1.5 shadow-xs"
             >
-              <Send className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>{requiresApproval ? 'Submit for review' : 'Schedule message'}</span>
+              <Send className="w-3.5 h-3.5" />
+              <span>Send Now</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleScheduleClick}
+              className="px-4 py-1.5 rounded text-xs font-medium bg-[#16a34a] hover:bg-[#15803d] text-white transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>{requiresApproval ? 'Submit for Review' : 'Schedule Message'}</span>
             </button>
           </div>
         </div>
+        {/* Little Calendar Picker Popup */}
+        {showCalendarModal && (() => {
+          const calYear = calViewDate.getFullYear();
+          const calMonth = calViewDate.getMonth();
+          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+          const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
+          const activeDate = new Date(scheduledAt || Date.now());
+
+          const isSelected = (day: number) => {
+            return (
+              activeDate.getFullYear() === calYear &&
+              activeDate.getMonth() === calMonth &&
+              activeDate.getDate() === day
+            );
+          };
+
+          const isToday = (day: number) => {
+            const now = new Date();
+            return (
+              now.getFullYear() === calYear &&
+              now.getMonth() === calMonth &&
+              now.getDate() === day
+            );
+          };
+
+          const isPast = (day: number) => {
+            const endOfDay = new Date(calYear, calMonth, day, 23, 59, 59);
+            return endOfDay.getTime() < Date.now();
+          };
+
+          const handleSelectDay = (day: number) => {
+            const current = new Date(scheduledAt || Date.now());
+            const newDate = new Date(calYear, calMonth, day, current.getHours(), current.getMinutes(), 0);
+            setScheduledAt(toLocalISOString(newDate));
+          };
+
+          const handleTimeValChange = (val: string) => {
+            if (!val) return;
+            const [h, m] = val.split(':').map(Number);
+            const current = new Date(scheduledAt || Date.now());
+            current.setHours(h, m, 0, 0);
+            setScheduledAt(toLocalISOString(current));
+          };
+
+          const getTimeString = () => {
+            const d = new Date(scheduledAt || Date.now());
+            const h = String(d.getHours()).padStart(2, '0');
+            const m = String(d.getMinutes()).padStart(2, '0');
+            return `${h}:${m}`;
+          };
+
+          return (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
+              <div className="bg-[#111726] border border-[#1e293b] rounded-xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
+                {/* Calendar Header */}
+                <div className="px-4 py-3 border-b border-[#1e293b] flex items-center justify-between bg-[#0d121f]">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-[#16a34a]" />
+                    <div>
+                      <h3 className="text-xs font-semibold text-slate-100">Schedule Dispatch</h3>
+                      <p className="text-[10px] text-slate-400">Select date and time</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendarModal(false)}
+                    className="text-slate-400 hover:text-slate-200 p-1 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-4 space-y-3.5">
+                  {/* Month Navigation */}
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-semibold text-slate-200">
+                      {MONTH_NAMES[calMonth]} {calYear}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setCalViewDate(new Date(calYear, calMonth - 1, 1))}
+                        className="p-1 rounded bg-[#162032] hover:bg-[#1e2c45] text-slate-300 border border-[#273549] transition"
+                        title="Previous Month"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCalViewDate(new Date(calYear, calMonth + 1, 1))}
+                        className="p-1 rounded bg-[#162032] hover:bg-[#1e2c45] text-slate-300 border border-[#273549] transition"
+                        title="Next Month"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Calendar Grid */}
+                  <div className="bg-[#090d16] border border-[#1e293b] rounded-lg p-2.5">
+                    {/* Day Names */}
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-slate-400 mb-1.5">
+                      {DAY_NAMES.map(d => (
+                        <div key={d} className="py-0.5">{d}</div>
+                      ))}
+                    </div>
+
+                    {/* Day Cells */}
+                    <div className="grid grid-cols-7 gap-1 text-xs">
+                      {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                        <div key={`empty-${i}`} className="h-7" />
+                      ))}
+                      {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const sel = isSelected(day);
+                        const today = isToday(day);
+                        const past = isPast(day);
+
+                        return (
+                          <button
+                            key={day}
+                            type="button"
+                            disabled={past}
+                            onClick={() => handleSelectDay(day)}
+                            className={`h-7 rounded flex items-center justify-center text-xs font-medium transition relative ${
+                              sel
+                                ? 'bg-[#16a34a] text-white font-semibold shadow-xs'
+                                : past
+                                ? 'text-slate-600 cursor-not-allowed opacity-40'
+                                : today
+                                ? 'text-[#22c55e] border border-[#16a34a]/50 hover:bg-[#162032]'
+                                : 'text-slate-200 hover:bg-[#162032]'
+                            }`}
+                          >
+                            <span>{day}</span>
+                            {today && !sel && (
+                              <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-[#22c55e]" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Time Section */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-medium text-slate-300">
+                      Dispatch Time
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={getTimeString()}
+                        onChange={(e) => handleTimeValChange(e.target.value)}
+                        className="flex-1 px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                      />
+                      <button
+                        type="button"
+                        onClick={set7PMTime}
+                        className="px-2.5 py-1.5 rounded bg-[#16a34a]/20 border border-[#16a34a]/40 text-[#22c55e] text-xs font-medium hover:bg-[#16a34a]/30 transition shrink-0"
+                      >
+                        7:00 PM Preset
+                      </button>
+                    </div>
+
+                    {/* Quick Time Presets */}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {[
+                        { label: '9:00 AM', val: '09:00' },
+                        { label: '1:00 PM', val: '13:00' },
+                        { label: '5:00 PM', val: '17:00' },
+                        { label: '7:00 PM', val: '19:00' },
+                        { label: '8:30 PM', val: '20:30' }
+                      ].map(preset => (
+                        <button
+                          key={preset.val}
+                          type="button"
+                          onClick={() => handleTimeValChange(preset.val)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-mono border transition ${
+                            getTimeString() === preset.val
+                              ? 'bg-[#16a34a] text-white border-[#16a34a]'
+                              : 'bg-[#162032] text-slate-300 border-[#273549] hover:bg-[#1e2c45]'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Scheduled Summary Badge */}
+                  <div className="p-2.5 rounded bg-[#162032]/80 border border-[#273549] text-[11px] text-slate-300 flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                    <div className="truncate">
+                      <span>Scheduled: </span>
+                      <strong className="text-white">{formatDisplayDateTime(scheduledAt)}</strong>
+                    </div>
+                  </div>
+
+                  {/* Anti-spam caution if in quiet hours */}
+                  {validationResult?.inQuietHours && (
+                    <div className="p-2 rounded bg-amber-950/40 border border-amber-800 text-amber-300 text-[10px] flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>Falls inside quiet hours (9:00 PM - 8:00 AM). Delivery may be delayed.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="px-4 py-3 border-t border-[#1e293b] flex items-center justify-end gap-2 bg-[#0d121f]">
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendarModal(false)}
+                    className="px-3 py-1.5 rounded text-xs text-slate-400 hover:text-white transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={async () => {
+                      setShowCalendarModal(false);
+                      await handleSubmit(false, false);
+                    }}
+                    className="px-3.5 py-1.5 rounded text-xs font-medium bg-[#16a34a] hover:bg-[#15803d] text-white transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Confirm & Schedule</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
       </div>
     </div>
   );

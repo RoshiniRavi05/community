@@ -12,6 +12,7 @@ import { CampsView } from '@/components/camps/CampsView';
 import { DiscountsView } from '@/components/discounts/DiscountsView';
 import { AutomationMonitorView } from '@/components/monitor/AutomationMonitorView';
 import { WhatsAppIntegrationView } from '@/components/whatsapp/WhatsAppIntegrationView';
+import { AnalyticsView } from '@/components/analytics/AnalyticsView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { CampaignComposerModal } from '@/components/scheduler/CampaignComposerModal';
 import { CareAlarmModal } from '@/components/alarms/CareAlarmModal';
@@ -68,6 +69,28 @@ export default function Home() {
       await fetchData();
     } catch (err: any) {
       showToast(`Scheduler error: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Emergency Stop: Cancel all scheduled and activate kill-switch
+  const handleStopAllScheduled = async () => {
+    if (!confirm('Are you sure you want to trigger an Emergency Stop? This will halt outbound dispatch and cancel all currently scheduled messages.')) {
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'CANCEL_ALL_SCHEDULED' })
+      });
+      const json = await res.json();
+      showToast(`Emergency stop executed: ${json.cancelledCount || 0} scheduled messages cancelled and dispatches paused.`);
+      await fetchData();
+    } catch (err: any) {
+      showToast(`Error: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -173,6 +196,20 @@ export default function Home() {
     await fetchData();
   };
 
+  const handleRemoveMember = async (memberId: string) => {
+    const res = await fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'DELETE', memberId })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to remove member');
+    }
+    showToast('Member removed from database.');
+    await fetchData();
+  };
+
   const handleImportCsv = async (membersList: Partial<Member>[]) => {
     const res = await fetch('/api/members', {
       method: 'POST',
@@ -256,7 +293,7 @@ export default function Home() {
     });
     const json = await res.json();
     if (json.alarm) {
-      showToast(json.alarm.isActive 
+      showToast(json.alarm.isActive
         ? `Alarm "${json.alarm.title}" is ON (Rings daily at ${json.alarm.time}).`
         : `Alarm "${json.alarm.title}" turned OFF.`);
     }
@@ -422,11 +459,11 @@ export default function Home() {
   }).length;
 
   return (
-    <div className="flex min-h-screen bg-[#0b0f19] text-slate-100 font-sans antialiased">
+    <div className="flex min-h-screen bg-[#090d16] text-slate-100 font-sans antialiased">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#121826] text-white text-xs font-medium px-4 py-3 rounded-xl shadow-2xl border border-[#1f2b3e] flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#c2f83a] animate-pulse"></span>
+        <div className="fixed bottom-5 right-5 z-50 bg-[#111726] text-white text-xs font-medium px-4 py-2.5 rounded-md shadow-2xl border border-[#1e293b] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -438,6 +475,7 @@ export default function Home() {
         emergencyPauseActive={data.antiSpamSettings.emergencyPauseActive}
         unresolvedErrorsCount={unresolvedErrorsCount}
         scheduledNext7DaysCount={scheduledNext7DaysCount}
+        membersCount={data.members.length}
         onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
         activeCareAlarmsCount={data.careAlarms?.filter(a => a.isActive).length ?? 0}
       />
@@ -456,8 +494,8 @@ export default function Home() {
           activeAlarmsCount={data.careAlarms?.filter(a => a.isActive).length ?? 0}
         />
 
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
-          {activeTab === 'overview' && (
+        <main className="flex-1 p-5 max-w-7xl w-full mx-auto space-y-5">
+          {(activeTab === 'overview' || activeTab === 'dashboard') && (
             <OverviewView
               data={data}
               onOpenScheduleModal={openScheduleComposer}
@@ -475,11 +513,12 @@ export default function Home() {
               segments={data.segments}
               messageLogs={data.messageLogs}
               onSaveMember={handleSaveMember}
+              onRemoveMember={handleRemoveMember}
               onImportCsv={handleImportCsv}
             />
           )}
 
-          {activeTab === 'scheduler' && (
+          {(activeTab === 'messages' || activeTab === 'scheduler') && (
             <SchedulerView
               campaigns={data.campaigns}
               segments={data.segments}
@@ -489,7 +528,7 @@ export default function Home() {
               onCancelCampaign={handleCancelCampaign}
               onDuplicateCampaign={handleDuplicateCampaign}
               onSendNow={handleSendNow}
-              defaultView="agenda"
+              defaultView="table"
               onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
             />
           )}
@@ -504,7 +543,7 @@ export default function Home() {
               onCancelCampaign={handleCancelCampaign}
               onDuplicateCampaign={handleDuplicateCampaign}
               onSendNow={handleSendNow}
-              defaultView="calendar"
+              defaultView="weekly_calendar"
               onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
             />
           )}
@@ -543,6 +582,14 @@ export default function Home() {
               onOpenScheduleModal={openScheduleComposer}
               onAddDiscount={handleAddDiscount}
               onDeleteDiscount={handleDeleteDiscount}
+            />
+          )}
+
+          {activeTab === 'analytics' && (
+            <AnalyticsView
+              data={data}
+              onToggleEmergencyPause={handleToggleEmergencyPause}
+              onStopAllScheduled={handleStopAllScheduled}
             />
           )}
 

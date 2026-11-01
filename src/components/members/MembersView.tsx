@@ -1,27 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Upload, 
-  Download, 
-  Filter, 
-  Eye, 
-  EyeOff, 
-  FileEdit, 
-  History, 
-  X, 
-  ChevronLeft, 
+import React, { useState, useMemo } from 'react';
+import {
+  Search,
+  Plus,
+  Upload,
+  Download,
+  Filter,
+  Eye,
+  EyeOff,
+  Edit2,
+  Trash2,
+  X,
+  ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   CheckCircle2,
   XCircle,
-  ArrowUpDown,
+  AlertTriangle,
   MapPin,
-  MessageSquare
+  MessageCircle,
+  Clock,
+  Tent,
+  Copy,
+  Check
 } from 'lucide-react';
-import { Member, AudienceSegment, MessageLog } from '@/lib/db/types';
+import { Member, AudienceSegment, MessageLog, MembershipStatus } from '@/lib/db/types';
 import { formatWhatsAppDate, formatPhoneNumber } from '@/lib/utils';
 
 interface MembersViewProps {
@@ -29,6 +32,7 @@ interface MembersViewProps {
   segments: AudienceSegment[];
   messageLogs: MessageLog[];
   onSaveMember: (member: Partial<Member>) => Promise<void>;
+  onRemoveMember?: (memberId: string) => Promise<void>;
   onImportCsv: (members: Partial<Member>[]) => Promise<void>;
 }
 
@@ -37,629 +41,728 @@ export const MembersView: React.FC<MembersViewProps> = ({
   segments,
   messageLogs,
   onSaveMember,
+  onRemoveMember,
   onImportCsv
 }) => {
+  // Top Filter States (Recreating Wireframe 2)
   const [search, setSearch] = useState('');
+  const [selectedCamp, setSelectedCamp] = useState<string>('all');
+  const [selectedAge, setSelectedAge] = useState<string>('all');
   const [selectedGender, setSelectedGender] = useState<string>('all');
-  const [selectedAgeRange, setSelectedAgeRange] = useState<string>('all');
-  const [selectedCampLocation, setSelectedCampLocation] = useState<string>('all');
-  const [selectedConsent, setSelectedConsent] = useState<string>('all');
-  const [selectedVerification, setSelectedVerification] = useState<string>('all');
-  const [sortField, setSortField] = useState<'name' | 'age' | 'gender' | 'campLocation' | 'lastMessageDate'>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>('all');
+  const [selectedMembershipStatus, setSelectedMembershipStatus] = useState<string>('all');
+
+  // UI state
   const [maskPhones, setMaskPhones] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingMember, setEditingMember] = useState<Partial<Member>>({});
+  // Selection state
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+
+  // Modals state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [viewingMember, setViewingMember] = useState<Member | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [csvText, setCsvText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  // Helper to detect if a member was generated from Tiruppur district
-  const isTiruppurDistrict = (m: Member) => {
-    const d = (m.district || '').toLowerCase();
-    const c = (m.campLocation || '').toLowerCase();
-    const l = (m.location || '').toLowerCase();
-    const tiruppurKeywords = [
-      'tiruppur', 
-      'thirupur', 
-      'tirupur', 
-      'palladam', 
-      'avinashi', 
-      'dharapuram', 
-      'kangeyam', 
-      'udumalpet', 
-      'uthukuli', 
-      'vellakoil', 
-      'madathukulam'
-    ];
-    return tiruppurKeywords.some(k => d.includes(k) || c.includes(k) || l.includes(k));
-  };
+  // Form State for Add / Edit
+  const [formName, setFormName] = useState('');
+  const [formPhone, setFormPhone] = useState('+91');
+  const [formAge, setFormAge] = useState<number | ''>('');
+  const [formGender, setFormGender] = useState<'male' | 'female' | 'other' | 'prefer_not_to_say'>('prefer_not_to_say');
+  const [formLocation, setFormLocation] = useState('');
+  const [formPreferredCamp, setFormPreferredCamp] = useState('Tiruppur Central Hub');
+  const [formInterests, setFormInterests] = useState('');
+  const [formPreferences, setFormPreferences] = useState('WhatsApp Announcements');
+  const [formMembershipStatus, setFormMembershipStatus] = useState<MembershipStatus>('invitation_sent');
+  const [formConsent, setFormConsent] = useState<'opted_in' | 'opted_out' | 'unspecified'>('opted_in');
+  const [formNotes, setFormNotes] = useState('');
+  const [formFilterMode, setFormFilterMode] = useState<'camp' | 'referral'>('camp');
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Filter members by search, gender, age, camp location (Tirupur District), consent, and verification status
-  const filteredMembers = members.filter(m => {
-    if (search) {
-      const q = search.toLowerCase();
-      const match = m.name.toLowerCase().includes(q) || 
-                    m.phone.includes(q) || 
-                    m.location.toLowerCase().includes(q) ||
-                    (m.campLocation && m.campLocation.toLowerCase().includes(q)) ||
-                    (m.district && m.district.toLowerCase().includes(q)) ||
-                    (m.leadSource && m.leadSource.toLowerCase().includes(q)) ||
-                    m.interests.some(i => i.toLowerCase().includes(q));
-      if (!match) return false;
-    }
-
-    // Gender filter
-    if (selectedGender !== 'all' && m.gender !== selectedGender) {
-      return false;
-    }
-
-    // Age filter
-    if (selectedAgeRange !== 'all') {
-      const age = m.age;
-      const range = m.ageRange;
-      if (selectedAgeRange === 'under_18') {
-        const match = (age !== undefined && age < 18) || range === '<18' || range === 'under_18';
-        if (!match) return false;
-      } else if (selectedAgeRange === '18_25') {
-        const match = (age !== undefined && age >= 18 && age <= 25) || range === '18-25';
-        if (!match) return false;
-      } else if (selectedAgeRange === '26_35') {
-        const match = (age !== undefined && age >= 26 && age <= 35) || range === '26-35';
-        if (!match) return false;
-      } else if (selectedAgeRange === '36_50') {
-        const match = (age !== undefined && age >= 36 && age <= 50) || range === '36-50';
-        if (!match) return false;
-      } else if (selectedAgeRange === '50_plus') {
-        const match = (age !== undefined && age > 50) || range === '50+' || range === '50_plus';
-        if (!match) return false;
-      }
-    }
-
-    // Camp Location in Tirupur District filter
-    if (selectedCampLocation !== 'all') {
-      if (selectedCampLocation === 'tiruppur_all') {
-        if (!isTiruppurDistrict(m)) return false;
-      } else if (selectedCampLocation === 'palladam') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('palladam')) return false;
-      } else if (selectedCampLocation === 'avinashi') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('avinashi')) return false;
-      } else if (selectedCampLocation === 'tiruppur_central') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('central') && !text.includes('kumaran') && !text.includes('tiruppur city')) return false;
-      } else if (selectedCampLocation === 'dharapuram') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('dharapuram')) return false;
-      } else if (selectedCampLocation === 'kangeyam') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('kangeyam')) return false;
-      } else if (selectedCampLocation === 'udumalpet') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('udumalpet')) return false;
-      } else if (selectedCampLocation === 'uthukuli') {
-        const text = `${m.campLocation || ''} ${m.location || ''}`.toLowerCase();
-        if (!text.includes('uthukuli')) return false;
-      } else if (selectedCampLocation === 'non_tiruppur') {
-        if (isTiruppurDistrict(m)) return false;
-      }
-    }
-
-    if (selectedConsent !== 'all' && m.consentStatus !== selectedConsent) return false;
-    if (selectedVerification !== 'all' && m.verificationStatus !== selectedVerification) return false;
-    return true;
-  });
-
-  // Sort members
-  const sortedMembers = [...filteredMembers].sort((a, b) => {
-    if (sortField === 'age') {
-      const ageA = a.age ?? 0;
-      const ageB = b.age ?? 0;
-      return sortOrder === 'asc' ? ageA - ageB : ageB - ageA;
-    }
-    if (sortField === 'gender') {
-      return sortOrder === 'asc' 
-        ? a.gender.localeCompare(b.gender) 
-        : b.gender.localeCompare(a.gender);
-    }
-    if (sortField === 'campLocation') {
-      const locA = a.campLocation || a.location || '';
-      const locB = b.campLocation || b.location || '';
-      return sortOrder === 'asc' ? locA.localeCompare(locB) : locB.localeCompare(locA);
-    }
-    if (sortField === 'lastMessageDate') {
-      const dateA = a.lastMessageDate ? new Date(a.lastMessageDate).getTime() : 0;
-      const dateB = b.lastMessageDate ? new Date(b.lastMessageDate).getTime() : 0;
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-    return sortOrder === 'asc'
-      ? a.name.localeCompare(b.name)
-      : b.name.localeCompare(a.name);
-  });
-
-  const totalPages = Math.ceil(sortedMembers.length / pageSize) || 1;
-  const paginatedMembers = sortedMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const hasActiveFilters = 
-    search !== '' || 
-    selectedGender !== 'all' || 
-    selectedAgeRange !== 'all' || 
-    selectedCampLocation !== 'all' || 
-    selectedConsent !== 'all' || 
-    selectedVerification !== 'all';
-
-  const resetFilters = () => {
-    setSearch('');
-    setSelectedGender('all');
-    setSelectedAgeRange('all');
-    setSelectedCampLocation('all');
-    setSelectedConsent('all');
-    setSelectedVerification('all');
-    setCurrentPage(1);
-  };
-
-  const handleSort = (field: 'name' | 'age' | 'gender' | 'campLocation' | 'lastMessageDate') => {
-    if (sortField === field) {
-      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
-
-  const formatDisplayPhone = (phone: string) => {
-    if (!maskPhones) return phone;
-    // Mask middle digits: +91 98765 ••••
-    if (phone.length > 8) {
-      return phone.slice(0, 8) + ' ••••';
-    }
-    return phone;
-  };
-
-  const handleOpenAdd = () => {
-    setEditingMember({
-      name: '',
-      phone: '+91',
-      gender: 'prefer_not_to_say',
-      age: 25,
-      location: '',
-      interests: [],
-      preferredCategories: ['announcement'],
-      verificationStatus: 'verified',
-      consentStatus: 'opted_in',
-      preferredChannel: 'whatsapp'
+  // Extract distinct camp locations from existing records for the dropdown filter
+  const availableCamps = useMemo(() => {
+    const set = new Set<string>();
+    members.forEach(m => {
+      if (m.campLocation) set.add(m.campLocation);
+      if (m.preferredCamp) set.add(m.preferredCamp);
     });
-    setIsEditing(true);
+    set.add('Tiruppur Central Hub');
+    set.add('Palladam Camp Hub');
+    set.add('Avinashi STEM Center');
+    set.add('Uthukuli Camp Hub');
+    set.add('Kangeyam Outreach Center');
+    return Array.from(set).sort();
+  }, [members]);
+
+  // Filtering Logic
+  const filteredMembers = useMemo(() => {
+    const now = new Date();
+    return members.filter(m => {
+      // Search
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matches = 
+          m.name.toLowerCase().includes(q) ||
+          m.phone.includes(q) ||
+          m.location.toLowerCase().includes(q) ||
+          (m.campLocation && m.campLocation.toLowerCase().includes(q)) ||
+          (m.preferredCamp && m.preferredCamp.toLowerCase().includes(q)) ||
+          (m.interests && m.interests.some(i => i.toLowerCase().includes(q)));
+        if (!matches) return false;
+      }
+
+      // Camp filter
+      if (selectedCamp !== 'all') {
+        const c1 = (m.campLocation || '').toLowerCase();
+        const c2 = (m.preferredCamp || '').toLowerCase();
+        const target = selectedCamp.toLowerCase();
+        if (!c1.includes(target) && !c2.includes(target)) return false;
+      }
+
+      // Age filter
+      if (selectedAge !== 'all') {
+        const age = m.age;
+        if (selectedAge === 'under_18' && (age === undefined || age >= 18)) return false;
+        if (selectedAge === '18_25' && (age === undefined || age < 18 || age > 25)) return false;
+        if (selectedAge === '26_35' && (age === undefined || age < 26 || age > 35)) return false;
+        if (selectedAge === '36_50' && (age === undefined || age < 36 || age > 50)) return false;
+        if (selectedAge === '50_plus' && (age === undefined || age <= 50)) return false;
+      }
+
+      // Gender filter
+      if (selectedGender !== 'all' && m.gender !== selectedGender) {
+        return false;
+      }
+
+      // Membership Status filter
+      if (selectedMembershipStatus !== 'all' && m.membershipStatus !== selectedMembershipStatus) {
+        return false;
+      }
+
+      // Date filter
+      if (selectedDateFilter !== 'all') {
+        const added = new Date(m.dateAdded).getTime();
+        const diffDays = (now.getTime() - added) / (1000 * 3600 * 24);
+        if (selectedDateFilter === '7_days' && diffDays > 7) return false;
+        if (selectedDateFilter === '30_days' && diffDays > 30) return false;
+        if (selectedDateFilter === '90_days' && diffDays > 90) return false;
+      }
+
+      return true;
+    });
+  }, [members, search, selectedCamp, selectedAge, selectedGender, selectedMembershipStatus, selectedDateFilter]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredMembers.length / pageSize) || 1;
+  const paginatedMembers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredMembers.slice(start, start + pageSize);
+  }, [filteredMembers, currentPage, pageSize]);
+
+  // Selection handlers
+  const handleToggleSelectAll = () => {
+    if (selectedMemberIds.size === filteredMembers.length) {
+      setSelectedMemberIds(new Set());
+    } else {
+      setSelectedMemberIds(new Set(filteredMembers.map(m => m.id)));
+    }
   };
 
-  const handleOpenEdit = (m: Member) => {
-    setEditingMember({ ...m });
-    setIsEditing(true);
+  const handleToggleSelectOne = (id: string) => {
+    const next = new Set(selectedMemberIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedMemberIds(next);
   };
 
-  const handleSaveSubmit = async (e: React.FormEvent) => {
+  // Open Add Modal
+  const openAddModal = () => {
+    setEditingMember(null);
+    setFormName('');
+    setFormPhone('+91');
+    setFormAge('');
+    setFormGender('prefer_not_to_say');
+    setFormLocation('Tiruppur');
+    setFormPreferredCamp('Tiruppur Central Hub');
+    setFormInterests('Community, Health');
+    setFormPreferences('WhatsApp Announcements');
+    setFormMembershipStatus('invitation_sent');
+    setFormConsent('opted_in');
+    setFormNotes('');
+    setFormFilterMode('camp');
+    setFormError(null);
+    setIsAddModalOpen(true);
+  };
+
+  // Open Edit Modal
+  const openEditModal = (m: Member) => {
+    setEditingMember(m);
+    setFormName(m.name);
+    setFormPhone(m.phone);
+    setFormAge(m.age || '');
+    setFormGender(m.gender);
+    setFormLocation(m.location);
+    setFormPreferredCamp(m.preferredCamp || m.campLocation || 'Tiruppur Central Hub');
+    setFormInterests(m.interests.join(', '));
+    setFormPreferences(m.communicationPreferences?.join(', ') || 'WhatsApp Announcements');
+    setFormMembershipStatus(m.membershipStatus || 'registered');
+    setFormConsent(m.consentStatus);
+    setFormNotes(m.notes || '');
+    setFormFilterMode(m.preferredCamp === 'Referral' || m.campLocation === 'Referral' ? 'referral' : 'camp');
+    setFormError(null);
+    setIsAddModalOpen(true);
+  };
+
+  // Submit Member Form
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingMember.name || !editingMember.phone) {
-      alert('Name and Phone number are required.');
+    setFormError(null);
+
+    if (!formName.trim()) {
+      setFormError('Full name is required');
       return;
     }
-    const age = editingMember.age !== undefined && editingMember.age !== null && String(editingMember.age).trim() !== ''
-      ? Number(editingMember.age) 
-      : undefined;
-    let computedRange = editingMember.ageRange;
-    if (age !== undefined && !isNaN(age)) {
-      if (age < 18) computedRange = '<18';
-      else if (age <= 25) computedRange = '18-25';
-      else if (age <= 35) computedRange = '26-35';
-      else if (age <= 50) computedRange = '36-50';
-      else computedRange = '50+';
+    const cleanPhone = formPhone.replace(/\s+/g, '');
+    if (cleanPhone.length < 10) {
+      setFormError('Please enter a valid WhatsApp phone number (with country code)');
+      return;
     }
-    await onSaveMember({ ...editingMember, age, ageRange: computedRange });
-    setIsEditing(false);
+
+    // Check duplicate phone if creating
+    if (!editingMember) {
+      const isDup = members.some(m => m.phone.replace(/\D/g, '') === cleanPhone.replace(/\D/g, ''));
+      if (isDup) {
+        setFormError('A member with this WhatsApp phone number already exists.');
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    try {
+      const interestsArray = formInterests
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const prefArray = formPreferences
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const payload: Partial<Member> = {
+        id: editingMember?.id,
+        name: formName.trim(),
+        phone: cleanPhone,
+        age: formAge === '' ? undefined : Number(formAge),
+        ageRange: formAge === '' ? undefined : Number(formAge) < 18 ? '<18' : Number(formAge) <= 25 ? '18-25' : Number(formAge) <= 35 ? '26-35' : Number(formAge) <= 50 ? '36-50' : '50+',
+        gender: formGender,
+        location: formLocation.trim() || 'Unknown',
+        preferredCamp: formFilterMode === 'camp' ? formPreferredCamp : 'Referral',
+        campLocation: formFilterMode === 'camp' ? formPreferredCamp : 'Referral',
+        interests: interestsArray.length > 0 ? interestsArray : ['General Community'],
+        communicationPreferences: prefArray,
+        membershipStatus: formMembershipStatus,
+        consentStatus: formConsent,
+        verificationStatus: formMembershipStatus === 'joined_community' ? 'verified' : editingMember?.verificationStatus || 'unverified',
+        notes: formNotes.trim()
+      };
+
+      await onSaveMember(payload);
+      setIsAddModalOpen(false);
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to save member record');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleExportCsv = () => {
-    const headers = ['Name', 'Phone', 'Age', 'Gender', 'Location', 'Camp Location', 'District', 'Lead Source', 'Consent Status', 'Verification', 'Last Contacted'];
-    const rows = sortedMembers.map(m => [
-      `"${m.name}"`,
-      `"${m.phone}"`,
-      m.age || '',
-      m.gender,
-      `"${m.location || ''}"`,
-      `"${m.campLocation || ''}"`,
-      `"${m.district || ''}"`,
-      `"${m.leadSource || ''}"`,
-      m.consentStatus,
-      m.verificationStatus,
-      m.lastMessageDate || ''
-    ]);
+  // Remove Member Confirm
+  const handleConfirmDelete = async () => {
+    if (!memberToDelete) return;
+    setIsSubmitting(true);
+    try {
+      if (onRemoveMember) {
+        await onRemoveMember(memberToDelete.id);
+      } else {
+        await onSaveMember({ id: memberToDelete.id, isUnsubscribed: true, membershipStatus: 'left_community' });
+      }
+      setMemberToDelete(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to remove member');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+  // Export to CSV
+  const handleExportCsv = () => {
+    const headers = [
+      'ID', 'Name', 'Phone', 'Age', 'Gender', 'Location', 'Camp', 'MembershipStatus', 'ConsentStatus', 'DateAdded'
+    ];
+    const rows = filteredMembers.map(m => [
+      m.id,
+      `"${m.name.replace(/"/g, '""')}"`,
+      m.phone,
+      m.age ?? '',
+      m.gender,
+      `"${m.location.replace(/"/g, '""')}"`,
+      `"${(m.preferredCamp || m.campLocation || '').replace(/"/g, '""')}"`,
+      m.membershipStatus || 'registered',
+      m.consentStatus,
+      m.dateAdded
+    ]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `community_members_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = `community_members_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Import CSV Submit
+  const handleImportCsvSubmit = async () => {
+    if (!csvText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const lines = csvText.split('\n').filter(l => l.trim().length > 0);
+      const parsed: Partial<Member>[] = [];
+      const isHeader = lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('phone');
+      const dataLines = isHeader ? lines.slice(1) : lines;
+
+      for (const line of dataLines) {
+        const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+        if (parts.length >= 2) {
+          const name = parts[0];
+          const phone = parts[1];
+          if (name && phone) {
+            parsed.push({
+              name,
+              phone: phone.startsWith('+') ? phone : `+${phone}`,
+              age: parts[2] ? Number(parts[2]) : undefined,
+              gender: (parts[3] as any) || 'prefer_not_to_say',
+              location: parts[4] || 'Tiruppur',
+              preferredCamp: parts[5] || 'Tiruppur Central Hub',
+              membershipStatus: 'invitation_sent',
+              consentStatus: 'opted_in'
+            });
+          }
+        }
+      }
+
+      await onImportCsv(parsed);
+      setIsCsvModalOpen(false);
+      setCsvText('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to import CSV');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper for Status Badges
+  const renderMembershipStatusBadge = (status?: MembershipStatus) => {
+    switch (status) {
+      case 'joined_community':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30">
+            Joined Community
+          </span>
+        );
+      case 'invitation_sent':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            Invitation Sent
+          </span>
+        );
+      case 'registered':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/15 text-blue-300 border border-blue-500/30">
+            Registered
+          </span>
+        );
+      case 'not_joined':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-slate-300 border border-slate-600/50">
+            Not Joined
+          </span>
+        );
+      case 'left_community':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-500/15 text-orange-300 border border-orange-500/30">
+            Left Community
+          </span>
+        );
+      case 'unverified':
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700">
+            Unverified
+          </span>
+        );
+    }
   };
 
   return (
     <div className="space-y-4">
-      {/* Compact Toolbar in Dark Theme */}
-      <div className="bg-[#121826] border border-[#1b2537] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
-        {/* Search & Filters */}
-        <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
+      {/* 1. TOP CONTROLS (Wireframe 2) */}
+      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5 space-y-3">
+        {/* Top search & Add Button Row */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Search bar */}
+          <div className="relative flex-1 max-w-md">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              placeholder="Search members by name, phone, location, camp, or interests..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="Filter by name, phone, camp location..."
-              className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#c2f83a]/60 transition-colors"
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[#090d16] border border-[#1e293b] text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#16a34a]"
             />
           </div>
 
-          {/* Camp Location (Tirupur District Leads) Filter */}
-          <div className="relative">
-            <select
-              value={selectedCampLocation}
-              onChange={(e) => { setSelectedCampLocation(e.target.value); setCurrentPage(1); }}
-              className={`border rounded-xl px-3 py-1.5 text-xs focus:outline-none transition-all font-medium cursor-pointer ${
-                selectedCampLocation !== 'all'
-                  ? 'bg-[#182738] border-[#c2f83a]/60 text-[#c2f83a] shadow-[0_0_10px_rgba(194,248,58,0.15)]'
-                  : 'bg-[#141c2c] border-[#1e2a3c] text-slate-200 focus:border-[#c2f83a]/60'
-              }`}
+          {/* Action buttons: Export, Import, Add */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMaskPhones(!maskPhones)}
+              title={maskPhones ? 'Show unmasked phone numbers' : 'Mask phone numbers for privacy'}
+              className="p-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-400 hover:text-slate-200 transition text-xs"
             >
-              <option value="all">📍 All Camp Locations</option>
-              <optgroup label="Tirupur District Camps (Lead Sources)">
-                <option value="tiruppur_all">★ All Tirupur District Leads</option>
-                <option value="palladam">Palladam Camp Hub</option>
-                <option value="avinashi">Avinashi STEM Center</option>
-                <option value="tiruppur_central">Tiruppur Central Hub</option>
-                <option value="dharapuram">Dharapuram Camp Hub</option>
-                <option value="kangeyam">Kangeyam Tech Camp</option>
-                <option value="udumalpet">Udumalpet Innovation Camp</option>
-                <option value="uthukuli">Uthukuli Camp Hub</option>
-              </optgroup>
-              <optgroup label="Other Regional Camps">
-                <option value="non_tiruppur">Outside Tirupur District</option>
-              </optgroup>
+              {maskPhones ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+
+            <button
+              onClick={handleExportCsv}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export</span>
+            </button>
+
+            <button
+              onClick={() => setIsCsvModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Import</span>
+            </button>
+
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Member</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Filters Row: By Camp, By Age, By Gender, By Date, By Status */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[#1e293b] text-xs">
+          {/* Filter by Camp */}
+          <div>
+            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+              By Camp
+            </label>
+            <select
+              value={selectedCamp}
+              onChange={(e) => {
+                setSelectedCamp(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+            >
+              <option value="all">All Camps</option>
+              {availableCamps.map(camp => (
+                <option key={camp} value={camp}>{camp}</option>
+              ))}
             </select>
           </div>
 
-          {/* Gender Filter */}
-          <select
-            value={selectedGender}
-            onChange={(e) => { setSelectedGender(e.target.value); setCurrentPage(1); }}
-            className="bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
-          >
-            <option value="all">All genders</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-            <option value="prefer_not_to_say">Prefer not to say</option>
-          </select>
-
-          {/* Age Filter */}
-          <select
-            value={selectedAgeRange}
-            onChange={(e) => { setSelectedAgeRange(e.target.value); setCurrentPage(1); }}
-            className="bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
-          >
-            <option value="all">All ages</option>
-            <option value="under_18">Under 18</option>
-            <option value="18_25">18 – 25 yrs</option>
-            <option value="26_35">26 – 35 yrs</option>
-            <option value="36_50">36 – 50 yrs</option>
-            <option value="50_plus">50+ yrs</option>
-          </select>
-
-          {/* Consent Filter */}
-          <select
-            value={selectedConsent}
-            onChange={(e) => { setSelectedConsent(e.target.value); setCurrentPage(1); }}
-            className="bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
-          >
-            <option value="all">All consent</option>
-            <option value="opted_in">Opted in</option>
-            <option value="opted_out">Opted out (STOP)</option>
-            <option value="unspecified">Unspecified</option>
-          </select>
-
-          {/* Verification Filter */}
-          <select
-            value={selectedVerification}
-            onChange={(e) => { setSelectedVerification(e.target.value); setCurrentPage(1); }}
-            className="bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
-          >
-            <option value="all">All verification</option>
-            <option value="verified">Verified only</option>
-            <option value="unverified">Unverified</option>
-          </select>
-
-          {/* Reset Filters Button */}
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-[#1a253a] transition"
-              title="Reset all active filters"
+          {/* Filter by Age */}
+          <div>
+            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+              By Age
+            </label>
+            <select
+              value={selectedAge}
+              onChange={(e) => {
+                setSelectedAge(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
             >
-              <X className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          )}
+              <option value="all">All Ages</option>
+              <option value="under_18">&lt; 18 yrs</option>
+              <option value="18_25">18 – 25 yrs</option>
+              <option value="26_35">26 – 35 yrs</option>
+              <option value="36_50">36 – 50 yrs</option>
+              <option value="50_plus">50+ yrs (Seniors)</option>
+            </select>
+          </div>
 
-          {/* Privacy Toggle */}
-          <button
-            onClick={() => setMaskPhones(!maskPhones)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs transition ${
-              maskPhones 
-                ? 'bg-[#1a253a] border-[#253650] text-[#c2f83a]' 
-                : 'bg-[#141c2c] border-[#1e2a3c] text-slate-400 hover:bg-[#1a253a] hover:text-white'
-            }`}
-            title="Privacy mask for telephone numbers"
-          >
-            {maskPhones ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            <span>{maskPhones ? 'Masked' : 'Plain'}</span>
-          </button>
+          {/* Filter by Gender */}
+          <div>
+            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+              By Gender
+            </label>
+            <select
+              value={selectedGender}
+              onChange={(e) => {
+                setSelectedGender(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+            >
+              <option value="all">All Genders</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Unspecified</option>
+            </select>
+          </div>
+
+          {/* Filter by Date */}
+          <div>
+            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+              By Date
+            </label>
+            <select
+              value={selectedDateFilter}
+              onChange={(e) => {
+                setSelectedDateFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+            >
+              <option value="all">All Dates</option>
+              <option value="7_days">Past 7 Days</option>
+              <option value="30_days">Past 30 Days</option>
+              <option value="90_days">Past 90 Days</option>
+            </select>
+          </div>
+
+          {/* Filter by Status */}
+          <div>
+            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+              Membership Status
+            </label>
+            <select
+              value={selectedMembershipStatus}
+              onChange={(e) => {
+                setSelectedMembershipStatus(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+            >
+              <option value="all">All Statuses</option>
+              <option value="joined_community">Joined Community</option>
+              <option value="invitation_sent">Invitation Sent</option>
+              <option value="registered">Registered</option>
+              <option value="left_community">Left Community</option>
+              <option value="unverified">Unverified</option>
+            </select>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsCsvModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141c2c] hover:bg-[#1a253a] border border-[#1e2a3c] text-slate-200 text-xs font-semibold transition shadow-xs"
-          >
-            <Upload className="w-3.5 h-3.5 text-slate-400" />
-            <span>Import CSV</span>
-          </button>
-
-          <button
-            onClick={handleExportCsv}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141c2c] hover:bg-[#1a253a] border border-[#1e2a3c] text-slate-200 text-xs font-semibold transition shadow-xs"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export</span>
-          </button>
-
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#c2f83a] hover:bg-[#b0e82e] text-black text-xs font-extrabold transition shadow-[0_0_15px_rgba(194,248,58,0.3)] active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Add member</span>
-          </button>
-        </div>
+        {/* Selection Bar */}
+        {selectedMemberIds.size > 0 && (
+          <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between text-xs bg-[#162032]/60 px-3 py-1.5 rounded">
+            <span className="text-slate-300 font-medium">
+              {selectedMemberIds.size} of {filteredMembers.length} members selected for targeted audience
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedMemberIds(new Set())}
+                className="text-slate-400 hover:text-slate-200 underline text-[11px]"
+              >
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Camp Location / Tirupur District Filter Banner */}
-      {selectedCampLocation !== 'all' && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-[#121f2d] border border-[#233d59] text-xs shadow-md">
-          <div className="flex items-center gap-2 text-[#c2f83a]">
-            <MapPin className="w-4 h-4 text-[#c2f83a] shrink-0" />
-            <span className="font-bold">
-              {selectedCampLocation === 'tiruppur_all' 
-                ? 'Tirupur District Camp Leads Filter'
-                : `Camp Lead Location: ${selectedCampLocation.toUpperCase()}`}
-            </span>
-            <span className="text-slate-300">
-              — {filteredMembers.length} {filteredMembers.length === 1 ? 'lead identified' : 'leads identified'} from this outreach camp location
-            </span>
-          </div>
-          <button
-            onClick={() => setSelectedCampLocation('all')}
-            className="text-slate-400 hover:text-white text-xs underline font-medium"
-          >
-            Clear Location Filter
-          </button>
-        </div>
-      )}
-
-      {/* Proper Data Table in Dark Theme */}
-      <div className="bg-[#121826] border border-[#1b2537] rounded-2xl shadow-xl overflow-hidden">
+      {/* 2. MEMBERS TABLE (Wireframe 2) */}
+      <div className="bg-[#111726] border border-[#1e293b] rounded-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-[#1b2537] bg-[#0c121e]/80 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-                <th 
-                  onClick={() => handleSort('name')}
-                  className="py-3 px-4 cursor-pointer hover:text-white select-none transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Name</span>
-                    <ArrowUpDown className={`w-3 h-3 ${sortField === 'name' ? 'text-[#c2f83a]' : 'text-slate-600'}`} />
-                  </div>
+            <thead className="bg-[#090d16] text-[10px] text-slate-400 uppercase font-semibold border-b border-[#1e293b]">
+              <tr>
+                <th className="py-2.5 px-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={selectedMemberIds.size === filteredMembers.length && filteredMembers.length > 0}
+                    onChange={handleToggleSelectAll}
+                    className="rounded bg-[#0d121f] border-[#273549] text-[#16a34a] focus:ring-0"
+                  />
                 </th>
-                <th className="py-3 px-4">Phone number</th>
-                <th 
-                  onClick={() => handleSort('age')}
-                  className="py-3 px-4 cursor-pointer hover:text-white select-none transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Age</span>
-                    <ArrowUpDown className={`w-3 h-3 ${sortField === 'age' ? 'text-[#c2f83a]' : 'text-slate-600'}`} />
-                  </div>
-                </th>
-                <th 
-                  onClick={() => handleSort('gender')}
-                  className="py-3 px-4 cursor-pointer hover:text-white select-none transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Gender</span>
-                    <ArrowUpDown className={`w-3 h-3 ${sortField === 'gender' ? 'text-[#c2f83a]' : 'text-slate-600'}`} />
-                  </div>
-                </th>
-                <th 
-                  onClick={() => handleSort('campLocation')}
-                  className="py-3 px-4 cursor-pointer hover:text-white select-none transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-[#c2f83a]" />
-                    <span>Camp / Lead Origin</span>
-                    <ArrowUpDown className={`w-3 h-3 ${sortField === 'campLocation' ? 'text-[#c2f83a]' : 'text-slate-600'}`} />
-                  </div>
-                </th>
-                <th className="py-3 px-4">Membership</th>
-                <th className="py-3 px-4">Messaging consent</th>
-                <th 
-                  onClick={() => handleSort('lastMessageDate')}
-                  className="py-3 px-4 cursor-pointer hover:text-white select-none transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Last contacted</span>
-                    <ArrowUpDown className={`w-3 h-3 ${sortField === 'lastMessageDate' ? 'text-[#c2f83a]' : 'text-slate-600'}`} />
-                  </div>
-                </th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-2.5 px-3">Name</th>
+                <th className="py-2.5 px-3">WhatsApp Number</th>
+                <th className="py-2.5 px-3">Age</th>
+                <th className="py-2.5 px-3">Gender</th>
+                <th className="py-2.5 px-3">Location</th>
+                <th className="py-2.5 px-3">Camp</th>
+                <th className="py-2.5 px-3">Membership Status</th>
+                <th className="py-2.5 px-3">Consent</th>
+                <th className="py-2.5 px-3">Date Added</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1b2537] text-slate-300">
-              {paginatedMembers.map(member => (
-                <tr 
-                  key={member.id} 
-                  className={`hover:bg-[#162032]/70 transition-colors ${
-                    member.isUnsubscribed ? 'opacity-60 bg-rose-950/20' : ''
-                  }`}
-                >
-                  <td className="py-3 px-4 whitespace-nowrap font-semibold text-white">
-                    <div>{member.name}</div>
-                    {member.location && (
-                      <div className="text-[10px] text-slate-500 font-normal">{member.location}</div>
-                    )}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap font-mono text-slate-300 text-[11px]">
-                    {formatDisplayPhone(member.phone)}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap text-slate-300 font-mono">
-                    {member.age ? `${member.age}` : '—'}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap text-slate-300 capitalize">
-                    {member.gender.replace('_', ' ')}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-slate-200 text-xs">
-                        {member.campLocation || member.location || 'Direct Lead'}
-                      </span>
-                      {isTiruppurDistrict(member) && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#c2f83a]/20 text-[#c2f83a] border border-[#c2f83a]/40 tracking-tight uppercase">
-                          Tirupur
-                        </span>
-                      )}
-                    </div>
-                    {member.leadSource && (
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        Lead: {member.leadSource}
-                      </div>
-                    )}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    {member.verificationStatus === 'verified' ? (
-                      <span className="text-[#38bdf8] text-[11px] font-medium">Verified</span>
-                    ) : (
-                      <span className="text-slate-500 text-[11px]">Unverified</span>
-                    )}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    {member.consentStatus === 'opted_in' ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#c2f83a]/15 text-[#c2f83a] border border-[#c2f83a]/30">
-                        Opted in
-                      </span>
-                    ) : member.consentStatus === 'opted_out' || member.isUnsubscribed ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                        Opted out
-                      </span>
-                    ) : (
-                      <span className="text-slate-500 text-[11px]">Unspecified</span>
-                    )}
-                  </td>
-
-                  <td className="py-3 px-4 whitespace-nowrap font-mono text-[11px] text-slate-400">
-                    {member.lastMessageDate ? formatWhatsAppDate(member.lastMessageDate) : 'Never'}
-                  </td>
-
-                  <td className="py-3 px-4 text-right whitespace-nowrap space-x-1">
-                    <a
-                      href={`https://wa.me/${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Namaste ${member.name}, greeting from CommUnity Operations!`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block p-1.5 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/15 transition align-middle"
-                      title={`Open WhatsApp chat with ${member.name} (${member.phone})`}
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                    </a>
-                    <button
-                      onClick={() => setSelectedMember(member)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a253a] transition"
-                      title="View history"
-                    >
-                      <History className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleOpenEdit(member)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-[#c2f83a] hover:bg-[#1a253a] transition"
-                      title="Edit member"
-                    >
-                      <FileEdit className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-
-              {paginatedMembers.length === 0 && (
+            <tbody className="divide-y divide-[#1e293b]/60">
+              {paginatedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <div>No community members found matching current filters.</div>
-                    {hasActiveFilters && (
-                      <button
-                        onClick={resetFilters}
-                        className="mt-2 inline-flex items-center gap-1 text-xs text-[#c2f83a] hover:underline"
-                      >
-                        Reset active filters
-                      </button>
-                    )}
+                  <td colSpan={11} className="py-12 text-center text-slate-500 text-xs">
+                    No community members found matching the selected filters.
                   </td>
                 </tr>
+              ) : (
+                paginatedMembers.map((member) => {
+                  const isSelected = selectedMemberIds.has(member.id);
+                  const displayPhone = maskPhones
+                    ? member.phone.slice(0, 5) + '••••' + member.phone.slice(-2)
+                    : member.phone;
+
+                  return (
+                    <tr
+                      key={member.id}
+                      className={`hover:bg-[#151c2c] transition-colors ${isSelected ? 'bg-[#16a34a]/5' : ''}`}
+                    >
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectOne(member.id)}
+                          className="rounded bg-[#0d121f] border-[#273549] text-[#16a34a] focus:ring-0"
+                        />
+                      </td>
+
+                      {/* Name */}
+                      <td className="py-2.5 px-3 font-medium text-slate-100 whitespace-nowrap">
+                        {member.name}
+                      </td>
+
+                      {/* Phone */}
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
+                        {displayPhone}
+                      </td>
+
+                      {/* Age */}
+                      <td className="py-2.5 px-3 text-slate-400 font-mono">
+                        {member.age ?? '—'}
+                      </td>
+
+                      {/* Gender */}
+                      <td className="py-2.5 px-3 text-slate-400 capitalize whitespace-nowrap">
+                        {member.gender.replace(/_/g, ' ')}
+                      </td>
+
+                      {/* Location */}
+                      <td className="py-2.5 px-3 text-slate-300 max-w-[120px] truncate" title={member.location}>
+                        {member.location}
+                      </td>
+
+                      {/* Camp */}
+                      <td className="py-2.5 px-3 text-slate-300 max-w-[140px] truncate" title={member.preferredCamp || member.campLocation}>
+                        <div className="flex items-center gap-1 truncate">
+                          <Tent className="w-3 h-3 text-[#22c55e] shrink-0" />
+                          <span className="truncate">{member.preferredCamp || member.campLocation || '—'}</span>
+                        </div>
+                      </td>
+
+                      {/* Membership Status */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        {renderMembershipStatusBadge(member.membershipStatus)}
+                      </td>
+
+                      {/* Consent Status */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        {member.consentStatus === 'opted_in' ? (
+                          <span className="inline-flex items-center text-[10px] text-emerald-400 gap-1 font-medium">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span>Opted In</span>
+                          </span>
+                        ) : member.consentStatus === 'opted_out' ? (
+                          <span className="inline-flex items-center text-[10px] text-rose-400 gap-1 font-medium">
+                            <XCircle className="w-3 h-3 text-rose-400" />
+                            <span>Opted Out</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500">Unspecified</span>
+                        )}
+                      </td>
+
+                      {/* Date Added */}
+                      <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400 whitespace-nowrap">
+                        {new Date(member.dateAdded).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setViewingMember(member)}
+                            title="View Details"
+                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b] transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => openEditModal(member)}
+                            title="Edit Member"
+                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b] transition"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setMemberToDelete(member)}
+                            title="Remove Member"
+                            className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Table Footer with Pagination */}
-        <div className="p-3.5 border-t border-[#1b2537] bg-[#0c121e]/50 flex items-center justify-between text-xs text-slate-400">
+        {/* Pagination bar */}
+        <div className="px-4 py-2.5 border-t border-[#1e293b] bg-[#090d16] flex items-center justify-between text-xs text-slate-400">
           <div>
-            Showing {paginatedMembers.length} of {filteredMembers.length} members
-            {filteredMembers.length !== members.length && (
-              <span className="text-slate-500 ml-1.5">({members.length} total)</span>
-            )}
+            Showing {filteredMembers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{' '}
+            {Math.min(currentPage * pageSize, filteredMembers.length)} of {filteredMembers.length} members
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-1.5 rounded-lg border border-[#1e2a3c] bg-[#141c2c] hover:bg-[#1a253a] text-slate-300 disabled:opacity-40"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="p-1 rounded bg-[#162032] border border-[#273549] text-slate-300 disabled:opacity-40 transition"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="font-mono text-[11px] text-slate-300">
-              Page {currentPage} of {totalPages}
+            <span className="font-mono text-xs px-2 text-slate-300">
+              {currentPage} / {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg border border-[#1e2a3c] bg-[#141c2c] hover:bg-[#1a253a] text-slate-300 disabled:opacity-40"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="p-1 rounded bg-[#162032] border border-[#273549] text-slate-300 disabled:opacity-40 transition"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -667,152 +770,93 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
       </div>
 
-      {/* Member History Drawer in Dark Theme */}
-      {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md h-full bg-[#101726] border-l border-[#1b2537] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#1b2537] mb-4">
-                <div>
-                  <h3 className="font-bold text-white text-base">{selectedMember.name}</h3>
-                  <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedMember.phone}</p>
-                </div>
-                <button 
-                  onClick={() => setSelectedMember(null)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1a253a]"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+      {/* 3. ADD / EDIT MEMBER MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">
+                  {editingMember ? 'Edit Community Member' : 'Add Community Member'}
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {editingMember ? 'Update member details and consent tracking' : 'Register a new member with camp affiliation and WhatsApp invite'}
+                </p>
               </div>
-
-              {/* Profile Details */}
-              <div className="space-y-3 mb-6">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537]">
-                    <span className="text-[10px] text-slate-500 block uppercase font-semibold">City / Location</span>
-                    <span className="font-semibold text-slate-200 mt-0.5 block">{selectedMember.location || 'Not provided'}</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537]">
-                    <span className="text-[10px] text-slate-500 block uppercase font-semibold">Camp / Lead Origin</span>
-                    <span className="font-semibold text-[#c2f83a] mt-0.5 block flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-[#c2f83a]" />
-                      <span>{selectedMember.campLocation || 'Direct / Web'}</span>
-                    </span>
-                    {isTiruppurDistrict(selectedMember) && (
-                      <span className="text-[10px] text-[#38bdf8] block font-mono mt-0.5">Tirupur District</span>
-                    )}
-                  </div>
-                </div>
-
-                {selectedMember.leadSource && (
-                  <div className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537] text-xs">
-                    <span className="text-[10px] text-slate-500 block uppercase font-semibold">Lead Source Event</span>
-                    <span className="font-medium text-slate-300 mt-0.5 block">{selectedMember.leadSource}</span>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537]">
-                    <span className="text-[10px] text-slate-500 block uppercase font-semibold">District</span>
-                    <span className="font-semibold text-slate-200 mt-0.5 block">{selectedMember.district || 'Not specified'}</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537]">
-                    <span className="text-[10px] text-slate-500 block uppercase font-semibold">Consent status</span>
-                    <span className="font-semibold text-[#c2f83a] capitalize mt-0.5 block">{selectedMember.consentStatus.replace('_', ' ')}</span>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537] text-xs">
-                  <span className="text-[10px] text-slate-500 block uppercase font-semibold mb-1.5">Interests</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedMember.interests.map((i, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded-md bg-[#162032] border border-[#223046] text-slate-200 text-[11px]">
-                        {i}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Communication Logs */}
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
-                Message history
-              </h4>
-
-              <div className="space-y-2">
-                {messageLogs.filter(l => l.recipientPhone === selectedMember.phone).length === 0 ? (
-                  <div className="text-xs text-slate-500 p-4 text-center bg-[#0c121e] rounded-xl border border-[#1b2537]">
-                    No messages sent to this recipient.
-                  </div>
-                ) : (
-                  messageLogs.filter(l => l.recipientPhone === selectedMember.phone).map(log => (
-                    <div key={log.id} className="p-3 rounded-xl bg-[#0c121e] border border-[#1b2537] text-xs space-y-1">
-                      <div className="flex items-center justify-between font-semibold text-white">
-                        <span className="truncate max-w-[200px]">{log.campaignTitle}</span>
-                        <span className="text-[10px] font-mono text-[#c2f83a] capitalize">{log.status}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono">{formatWhatsAppDate(log.timestamp)}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={() => setSelectedMember(null)}
-              className="mt-6 w-full py-2.5 rounded-xl bg-[#162032] hover:bg-[#1f2b40] text-xs font-semibold text-slate-200 transition"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Edit / Add Modal in Dark Theme */}
-      {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-[#101726] border border-[#1b2537] rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3.5 border-b border-[#1b2537] mb-4">
-              <h3 className="text-sm font-bold text-white tracking-tight">
-                {editingMember.id ? 'Edit Member Record' : 'Add Community Member'}
-              </h3>
-              <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-slate-400 hover:text-slate-200"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveSubmit} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingMember.name || ''}
-                  onChange={(e) => setEditingMember({ ...editingMember, name: e.target.value })}
-                  placeholder="e.g. Aarav Sharma"
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
-                />
-              </div>
+            <form onSubmit={handleFormSubmit} className="p-5 space-y-3.5 text-xs">
+              {formError && (
+                <div className="p-2.5 rounded bg-rose-950/40 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
+                  <span>{formError}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
+                {/* Full Name */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">WhatsApp Phone *</label>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Full Name *
+                  </label>
                   <input
                     type="text"
                     required
-                    value={editingMember.phone || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, phone: e.target.value })}
-                    placeholder="+91 98765 43210"
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-[#c2f83a]/60"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="e.g. Ramesh Kumar"
+                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
                   />
                 </div>
 
+                {/* WhatsApp Number */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Gender</label>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    WhatsApp Number *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="+919876543210"
+                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {/* Age */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Age
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={formAge}
+                    onChange={(e) => setFormAge(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="e.g. 28"
+                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                  />
+                </div>
+
+                {/* Gender */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Gender
+                  </label>
                   <select
-                    value={editingMember.gender || 'prefer_not_to_say'}
-                    onChange={(e) => setEditingMember({ ...editingMember, gender: e.target.value as any })}
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
+                    value={formGender}
+                    onChange={(e) => setFormGender(e.target.value as any)}
+                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -820,137 +864,118 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     <option value="prefer_not_to_say">Prefer not to say</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
+                {/* Location */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Age</label>
-                  <input
-                    type="number"
-                    value={editingMember.age || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, age: Number(e.target.value) })}
-                    placeholder="e.g. 28"
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">City / Location</label>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Location
+                  </label>
                   <input
                     type="text"
-                    value={editingMember.location || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, location: e.target.value })}
-                    placeholder="e.g. Palladam / Bangalore"
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Camp Location (Lead Origin)</label>
-                  <input
-                    type="text"
-                    value={editingMember.campLocation || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, campLocation: e.target.value })}
-                    placeholder="e.g. Palladam Camp Hub"
-                    list="camp-location-presets"
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
-                  />
-                  <datalist id="camp-location-presets">
-                    <option value="Palladam Camp Hub" />
-                    <option value="Avinashi STEM Center" />
-                    <option value="Tiruppur Central Hub" />
-                    <option value="Dharapuram Camp Hub" />
-                    <option value="Kangeyam Tech Camp" />
-                    <option value="Udumalpet Innovation Camp" />
-                    <option value="Uthukuli Camp Hub" />
-                  </datalist>
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">District</label>
-                  <input
-                    type="text"
-                    value={editingMember.district || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, district: e.target.value })}
+                    value={formLocation}
+                    onChange={(e) => setFormLocation(e.target.value)}
                     placeholder="e.g. Tiruppur"
-                    list="district-presets"
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
+                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
                   />
-                  <datalist id="district-presets">
-                    <option value="Tiruppur" />
-                    <option value="Coimbatore" />
-                    <option value="Erode" />
-                    <option value="Salem" />
-                    <option value="Bangalore Urban" />
-                    <option value="Chennai" />
-                  </datalist>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Lead Source Event / Drive</label>
-                <input
-                  type="text"
-                  value={editingMember.leadSource || ''}
-                  onChange={(e) => setEditingMember({ ...editingMember, leadSource: e.target.value })}
-                  placeholder="e.g. Palladam Robotics Workshop Registration"
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
-                />
+              {/* Registration Mode / Filter Checkboxes */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center text-xs text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formFilterMode === 'camp'}
+                      onChange={() => setFormFilterMode('camp')}
+                      className="mr-1.5 rounded accent-[#16a34a]"
+                    />
+                    By Camp
+                  </label>
+                  <label className="flex items-center text-xs text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formFilterMode === 'referral'}
+                      onChange={() => setFormFilterMode('referral')}
+                      className="mr-1.5 rounded accent-[#16a34a]"
+                    />
+                    By Referral
+                  </label>
+                </div>
+
+                {/* Conditional Camp Selection */}
+                {formFilterMode === 'camp' && (
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                      Preferred Camp / Center
+                    </label>
+                    <select
+                      value={formPreferredCamp}
+                      onChange={(e) => setFormPreferredCamp(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    >
+                      {availableCamps.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Interests (Comma separated)</label>
-                <input
-                  type="text"
-                  value={Array.isArray(editingMember.interests) ? editingMember.interests.join(', ') : ''}
-                  onChange={(e) => setEditingMember({ ...editingMember, interests: e.target.value.split(',').map(s => s.trim()) })}
-                  placeholder="Coding, AI, Camps"
-                  className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#c2f83a]/60"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              {/* Membership Status & Consent */}
+              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[#1e293b]">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Messaging Consent</label>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Membership Status
+                  </label>
                   <select
-                    value={editingMember.consentStatus || 'opted_in'}
-                    onChange={(e) => setEditingMember({ ...editingMember, consentStatus: e.target.value as any })}
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
+                    value={formMembershipStatus}
+                    onChange={(e) => setFormMembershipStatus(e.target.value as any)}
+                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
                   >
-                    <option value="opted_in">Opted in</option>
-                    <option value="opted_out">Opted out</option>
+                    <option value="registered">Registered</option>
+                    <option value="invitation_sent">Invitation Sent</option>
+                    <option value="joined_community">Joined Community</option>
+                    <option value="not_joined">Not Joined</option>
+                    <option value="left_community">Left Community</option>
+                    <option value="unverified">Unverified</option>
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Note: Only set to Joined Community upon actual confirmation.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Communication Consent
+                  </label>
+                  <select
+                    value={formConsent}
+                    onChange={(e) => setFormConsent(e.target.value as any)}
+                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                  >
+                    <option value="opted_in">Opted In (Voluntary consent)</option>
+                    <option value="opted_out">Opted Out (Do not message)</option>
                     <option value="unspecified">Unspecified</option>
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Membership Status</label>
-                  <select
-                    value={editingMember.verificationStatus || 'verified'}
-                    onChange={(e) => setEditingMember({ ...editingMember, verificationStatus: e.target.value as any })}
-                    className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-[#c2f83a]/60"
-                  >
-                    <option value="verified">Verified</option>
-                    <option value="unverified">Unverified</option>
-                  </select>
-                </div>
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-4 border-t border-[#1b2537] mt-5">
+              {/* Form buttons */}
+              <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#162032] font-semibold transition"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#c2f83a] hover:bg-[#b0e82e] text-black font-extrabold shadow-[0_0_15px_rgba(194,248,58,0.3)] transition"
+                  disabled={isSubmitting}
+                  className="px-4 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
                 >
-                  Save Record
+                  {isSubmitting ? 'Saving...' : editingMember ? 'Update Member' : 'Save Member'}
                 </button>
               </div>
             </form>
@@ -958,118 +983,217 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
       )}
 
-      {/* CSV Import Modal in Dark Theme */}
-      {isCsvModalOpen && (
-        <CsvImportModal
-          isOpen={isCsvModalOpen}
-          onClose={() => setIsCsvModalOpen(false)}
-          onImport={onImportCsv}
-        />
+      {/* 4. REMOVE MEMBER CONFIRMATION DIALOG (Wireframe 2) */}
+      {memberToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">
+                  Confirm Member Removal
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Are you sure you want to remove <strong className="text-slate-200">{memberToDelete.name}</strong> ({memberToDelete.phone})?
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-[#090d16] p-3 rounded border border-[#1e293b] text-[11px] text-slate-400 space-y-1">
+              <p className="font-semibold text-slate-300">Effect of Removal:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>Deletes record from community management database.</li>
+                <li>Haults future automated campaign broadcasts.</li>
+                <li>Creates an audit trail entry for this removal.</li>
+              </ul>
+              <p className="text-amber-400/90 pt-1 text-[10px]">
+                Note: Removal from the live WhatsApp Community group requires admin removal in WhatsApp.
+              </p>
+            </div>
+
+            {/* Wireframe 2 shows explicit Yes / No confirmation buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setMemberToDelete(null)}
+                className="px-4 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+              >
+                No, Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleConfirmDelete}
+                className="px-4 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
+              >
+                {isSubmitting ? 'Removing...' : 'Yes, Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
-  );
-};
 
-interface CsvImportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onImport: (members: Partial<Member>[]) => Promise<void>;
-}
+      {/* 5. VIEW DETAILS MODAL */}
+      {viewingMember && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
+            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">
+                  Member Details
+                </h3>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  {viewingMember.id}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingMember(null)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-export const CsvImportModal: React.FC<CsvImportModalProps> = ({
-  isOpen,
-  onClose,
-  onImport
-}) => {
-  const [csvText, setCsvText] = useState(`Full Name,Phone Number,Age,Gender,Location,Camp Location,District,Lead Source,Interests
-Vigneshwaran P,+919876510001,23,male,Palladam,Palladam Camp Hub,Tiruppur,Palladam Tech Camp Stall,Robotics;Coding
-Deepa Pillai,+919876500002,29,female,Avinashi,Avinashi STEM Center,Tiruppur,District Education Expo,Kids Camps;Art
-Ramesh Gupta,+919876500003,45,male,Mumbai,,,Direct Referral,Sports;Offers`);
+            <div className="p-5 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3 bg-[#090d16] p-3 rounded border border-[#1e293b]">
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Name</span>
+                  <span className="font-semibold text-slate-100">{viewingMember.name}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">WhatsApp Number</span>
+                  <span className="font-mono text-slate-200">{viewingMember.phone}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Age & Gender</span>
+                  <span className="text-slate-200">{viewingMember.age ? `${viewingMember.age} yrs` : '—'} • {viewingMember.gender}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Location</span>
+                  <span className="text-slate-200">{viewingMember.location}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Camp Affiliation</span>
+                  <span className="text-slate-200">{viewingMember.preferredCamp || viewingMember.campLocation || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Membership Status</span>
+                  <div className="mt-0.5">{renderMembershipStatusBadge(viewingMember.membershipStatus)}</div>
+                </div>
+              </div>
 
-  const [isProcessing, setIsProcessing] = useState(false);
+              {/* Interests & Communication */}
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-400 font-medium block">Interests</span>
+                <div className="flex flex-wrap gap-1">
+                  {viewingMember.interests.map(i => (
+                    <span key={i} className="px-2 py-0.5 rounded bg-[#162032] border border-[#273549] text-slate-300 text-[10px]">
+                      {i}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-  const handleProcessImport = async () => {
-    setIsProcessing(true);
-    try {
-      const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length < 2) {
-        alert('CSV must contain a header line and at least one data row.');
-        setIsProcessing(false);
-        return;
-      }
+              {/* Notes */}
+              {viewingMember.notes && (
+                <div>
+                  <span className="text-[11px] text-slate-400 font-medium block">Notes & Details</span>
+                  <p className="text-slate-300 bg-[#090d16] p-2.5 rounded border border-[#1e293b] text-xs">
+                    {viewingMember.notes}
+                  </p>
+                </div>
+              )}
 
-      const dataRows = lines.slice(1);
-      const imported: Partial<Member>[] = [];
+              {/* WhatsApp Invitation Helper */}
+              <div className="p-3 rounded bg-[#16a34a]/10 border border-[#16a34a]/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-[#22c55e] flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp Community Invitation</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://chat.whatsapp.com/sampleInvite-${viewingMember.id}`);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                    className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#16a34a]/20 text-[#22c55e] hover:bg-[#16a34a]/30 transition"
+                  >
+                    {copiedLink ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Send this invite link directly to {viewingMember.name} to welcome them into the community.
+                </p>
+              </div>
 
-      for (const row of dataRows) {
-        const parts = row.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
-        if (parts.length >= 2) {
-          const hasExtendedCampFields = parts.length >= 8;
-          imported.push({
-            name: parts[0],
-            phone: parts[1],
-            age: parts[2] ? Number(parts[2]) : undefined,
-            gender: (parts[3] as any) || 'prefer_not_to_say',
-            location: parts[4] || 'Unknown',
-            campLocation: hasExtendedCampFields && parts[5] ? parts[5] : undefined,
-            district: hasExtendedCampFields && parts[6] ? parts[6] : undefined,
-            leadSource: hasExtendedCampFields && parts[7] ? parts[7] : undefined,
-            interests: (hasExtendedCampFields ? parts[8] : parts[5])
-              ? (hasExtendedCampFields ? parts[8] : parts[5]).split(';').map(s => s.trim())
-              : ['General'],
-            consentStatus: 'opted_in',
-            verificationStatus: 'verified'
-          });
-        }
-      }
-
-      await onImport(imported);
-      onClose();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error processing CSV');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="bg-[#101726] border border-[#1b2537] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
-        <div className="flex items-center justify-between pb-3.5 border-b border-[#1b2537] mb-3">
-          <h3 className="text-sm font-bold text-white tracking-tight">
-            Import Members via CSV
-          </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
-            <X className="w-4 h-4" />
-          </button>
+              <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between">
+                <span className="text-[10px] text-slate-500 font-mono">
+                  Added on {new Date(viewingMember.dateAdded).toLocaleString()}
+                </span>
+                <button
+                  onClick={() => setViewingMember(null)}
+                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className="space-y-3 text-xs">
-          <p className="text-slate-400">
-            Paste CSV text with columns: <code className="text-[#c2f83a] font-mono">Full Name, Phone Number, Age, Gender, Location, Camp Location, District, Lead Source, Interests</code>.
-          </p>
+      {/* 6. CSV IMPORT MODAL */}
+      {isCsvModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">Import Members from CSV</h3>
+                <p className="text-[11px] text-slate-400">Paste CSV data (Name, Phone, Age, Gender, Location, Camp)</p>
+              </div>
+              <button onClick={() => setIsCsvModalOpen(false)} className="text-slate-400 hover:text-slate-200">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-          <textarea
-            rows={7}
-            value={csvText}
-            onChange={(e) => setCsvText(e.target.value)}
-            className="w-full bg-[#141c2c] border border-[#1e2a3c] rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-[#c2f83a]/60"
-          />
+            <textarea
+              rows={8}
+              value={csvText}
+              onChange={(e) => setCsvText(e.target.value)}
+              placeholder={`Name,Phone,Age,Gender,Location,Camp\nArun Kumar,+919842100111,28,male,Tiruppur,Tiruppur Central Hub\nDivya S,+919842200222,32,female,Palladam,Palladam Camp Hub`}
+              className="w-full p-3 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+            />
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[10px] text-slate-500">
+                Duplicates with existing phone numbers will be safely skipped.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCsvModalOpen(false)}
+                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting || !csvText.trim()}
+                  onClick={handleImportCsvSubmit}
+                  className="px-4 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white transition text-xs font-medium disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Importing...' : 'Upload & Import'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div className="flex justify-end gap-2.5 pt-4 border-t border-[#1b2537] mt-4">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition">
-            Cancel
-          </button>
-          <button
-            onClick={handleProcessImport}
-            disabled={isProcessing}
-            className="px-4 py-2 rounded-xl bg-[#c2f83a] hover:bg-[#b0e82e] text-black text-xs font-extrabold shadow-[0_0_15px_rgba(194,248,58,0.3)] transition disabled:opacity-50"
-          >
-            {isProcessing ? 'Importing...' : 'Validate & Import'}
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

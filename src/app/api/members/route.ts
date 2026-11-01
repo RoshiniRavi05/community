@@ -61,14 +61,26 @@ export async function POST(req: Request) {
         ...member,
         id: `mem_${Date.now()}`,
         dateAdded: new Date().toISOString(),
+        membershipStatus: member.membershipStatus || 'invitation_sent',
         consentTimestamp: member.consentStatus === 'opted_in' ? new Date().toISOString() : undefined,
         isUnsubscribed: member.consentStatus === 'opted_out'
       };
 
       db.members.unshift(newMember);
-      logAuditAction(user, 'MEMBER_ADDED', `Added new community member: ${newMember.name} (${newMember.phone})`);
+      logAuditAction(user, 'MEMBER_ADDED', `Added new community member: ${newMember.name} (${newMember.phone}) [Status: ${newMember.membershipStatus}]`);
       saveDatabase(db);
       return NextResponse.json({ success: true, member: newMember });
+    }
+
+    if (action === 'DELETE' || action === 'REMOVE') {
+      const memberId = body.memberId || (member && member.id);
+      const idx = db.members.findIndex(m => m.id === memberId);
+      if (idx === -1) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+      const removed = db.members[idx];
+      db.members.splice(idx, 1);
+      logAuditAction(user, 'MEMBER_REMOVED', `Removed member from database: ${removed.name} (${removed.phone}). Note: Manual removal in WhatsApp Community required.`);
+      saveDatabase(db);
+      return NextResponse.json({ success: true, removedId: memberId });
     }
 
     if (action === 'UPDATE') {

@@ -105,6 +105,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, campaign: target });
     }
 
+    if (action === 'CANCEL_ALL_SCHEDULED') {
+      let cancelledCount = 0;
+      db.campaigns.forEach(c => {
+        if (c.status === 'scheduled' || c.status === 'pending_approval') {
+          c.status = 'cancelled';
+          c.updatedAt = new Date().toISOString();
+          cancelledCount++;
+        }
+      });
+      db.antiSpamSettings.emergencyPauseActive = true;
+      logAuditAction(user, 'EMERGENCY_STOP_ALL_SCHEDULED', `Emergency stop cancelled ${cancelledCount} scheduled campaigns and paused dispatch`);
+      saveDatabase(db);
+      return NextResponse.json({ success: true, cancelledCount });
+    }
+
     if (action === 'CANCEL') {
       const target = db.campaigns.find(c => c.id === campaignId);
       if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });

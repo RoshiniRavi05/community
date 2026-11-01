@@ -26,8 +26,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, camp: newCamp });
     }
 
+    if (action === 'UPDATE') {
+      const idx = db.camps.findIndex(c => c.id === camp.id);
+      if (idx !== -1) {
+        db.camps[idx] = { ...db.camps[idx], ...camp };
+        logAuditAction(user, 'CAMP_UPDATED', `Updated camp: "${camp.title}"`);
+        saveDatabase(db);
+        return NextResponse.json({ success: true, camp: db.camps[idx] });
+      }
+      return NextResponse.json({ error: 'Camp not found' }, { status: 404 });
+    }
+
     if (action === 'DELETE') {
+      const targetCamp = db.camps.find(c => c.id === campId);
       db.camps = db.camps.filter(c => c.id !== campId);
+      logAuditAction(user, 'CAMP_DELETED', `Deleted camp event: "${targetCamp?.title || campId}"`);
       saveDatabase(db);
       return NextResponse.json({ success: true });
     }

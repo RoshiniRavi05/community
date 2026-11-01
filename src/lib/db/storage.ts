@@ -956,6 +956,22 @@ const INITIAL_SOCIAL_POSTS: SocialMediaPost[] = [
 
 const INITIAL_CAMPS: CampEvent[] = [
   {
+    id: 'camp_tiruppur_blood',
+    title: 'Free Blood Test & Health Screening Camp',
+    subtitle: 'Comprehensive blood diagnostic, diabetic screening, and vitals checkup',
+    category: 'wellness',
+    startDate: '2026-11-06',
+    endDate: '2026-11-08',
+    venue: 'Tiruppur Central Community Hall, Kumaran Road, Tiruppur',
+    ageGroup: 'All Ages / Seniors',
+    fee: 'Free',
+    maxCapacity: 150,
+    registeredCount: 88,
+    status: 'upcoming',
+    registrationDeadline: '2026-11-05',
+    description: 'Community health outreach organized for Tiruppur and surrounding regions with certified phlebotomists and physician consults.'
+  },
+  {
     id: 'camp_e1',
     title: 'Winter Robotics & Drone Camp',
     subtitle: 'Hands-on hardware, sensors, and autonomous flight programming',
@@ -1261,6 +1277,19 @@ export function getDatabase(): AppState {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
       memoryState = JSON.parse(data) as AppState;
       let shouldSave = false;
+      if (!memoryState.camps.some(c => c.id === 'camp_tiruppur_blood')) {
+        memoryState.camps.unshift(INITIAL_CAMPS[0]);
+        shouldSave = true;
+      }
+      memoryState.members.forEach(m => {
+        if (!m.membershipStatus) {
+          if (m.isUnsubscribed) m.membershipStatus = 'left_community';
+          else if (m.verificationStatus === 'verified' && m.consentStatus === 'opted_in') m.membershipStatus = 'joined_community';
+          else if (m.verificationStatus === 'unverified') m.membershipStatus = 'unverified';
+          else m.membershipStatus = 'registered';
+          shouldSave = true;
+        }
+      });
       if (!memoryState.careAlarms || memoryState.careAlarms.length === 0) {
         memoryState.careAlarms = INITIAL_CARE_ALARMS;
         shouldSave = true;

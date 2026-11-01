@@ -2,6 +2,13 @@ export type MemberGender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 export type VerificationStatus = 'verified' | 'unverified' | 'pending';
 export type ConsentStatus = 'opted_in' | 'opted_out' | 'unspecified';
 export type ContactChannel = 'whatsapp' | 'sms' | 'email';
+export type MembershipStatus = 
+  | 'registered' 
+  | 'invitation_sent' 
+  | 'joined_community' 
+  | 'not_joined' 
+  | 'left_community' 
+  | 'unverified';
 
 export interface Member {
   id: string;
@@ -14,7 +21,9 @@ export interface Member {
   interests: string[];
   preferredCategories: string[];
   dateAdded: string;
+  dateLeft?: string;
   verificationStatus: VerificationStatus;
+  membershipStatus?: MembershipStatus;
   consentStatus: ConsentStatus;
   consentTimestamp?: string;
   preferredChannel: ContactChannel;
@@ -22,6 +31,8 @@ export interface Member {
   nextEligiblePromoDate?: string;
   isUnsubscribed: boolean;
   campLocation?: string; // e.g. "Palladam Camp Hub", "Avinashi STEM Center", "Tiruppur Central"
+  preferredCamp?: string;
+  communicationPreferences?: string[];
   district?: string; // e.g. "Tiruppur", "Coimbatore", "Bangalore"
   leadSource?: string; // e.g. "Camp Outreach Drive", "Walk-in Registration", "Referral", "Web"
   notes?: string;
@@ -132,9 +143,14 @@ export interface AudienceSegment {
   createdAt: string;
 }
 
+export type SocialPostType = 'reel' | 'post' | 'short';
+export type SocialSharingStatus = 'not_shared' | 'scheduled' | 'pending_approval' | 'shared_to_community';
+
 export interface SocialMediaPost {
   id: string;
   platform: 'instagram' | 'youtube';
+  postType?: SocialPostType;
+  sharingStatus?: SocialSharingStatus;
   title: string;
   url: string;
   thumbnailUrl: string;
@@ -144,8 +160,18 @@ export interface SocialMediaPost {
   caption: string;
   category: string;
   dateAdded: string;
+  publicationDate?: string;
   suggestedBroadcastText?: string;
 }
+
+export type CampStatus = 
+  | 'draft' 
+  | 'upcoming' 
+  | 'registration_open' 
+  | 'full' 
+  | 'ongoing' 
+  | 'completed' 
+  | 'cancelled';
 
 export interface CampEvent {
   id: string;
@@ -154,13 +180,19 @@ export interface CampEvent {
   category: 'sports' | 'coding' | 'art' | 'science' | 'wellness';
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
   venue: string;
+  area?: string;
   ageGroup: string;
   fee: string;
   maxCapacity: number;
   registeredCount: number;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  status: CampStatus;
   registrationDeadline: string;
+  registrationLink?: string;
+  eligibilityCriteria?: string;
+  promotionalImageUrl?: string;
   description: string;
 }
 

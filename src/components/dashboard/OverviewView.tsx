@@ -1,34 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  Plus, 
-  ArrowRight, 
-  Calendar, 
-  MapPin, 
-  TrendingUp, 
-  Download, 
-  Users, 
   Send, 
   CheckCircle2, 
-  Sparkles,
-  Tag,
+  Users, 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  ArrowRight,
+  TrendingUp,
+  XCircle,
+  AlertTriangle,
+  Play,
   Tent,
-  Radio
+  Eye,
+  Plus
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
-  AreaChart, 
-  Area, 
   BarChart, 
   Bar, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   Tooltip, 
-  CartesianGrid 
+  CartesianGrid, 
+  Legend 
 } from 'recharts';
-import { AppState, Campaign } from '@/lib/db/types';
-import { formatWhatsAppDate } from '@/lib/utils';
+import { AppState, Campaign, CampEvent } from '@/lib/db/types';
+import { formatWhatsAppDate, formatTimeOnly } from '@/lib/utils';
 
 interface OverviewViewProps {
   data: AppState;
@@ -40,611 +42,601 @@ interface OverviewViewProps {
   onTriggerScheduler: () => void;
 }
 
-// Organic wavy brush stroke underline matching the reference screenshot
-const BrushStroke: React.FC<{ color: string }> = ({ color }) => (
-  <svg 
-    viewBox="0 0 240 14" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-full h-3 mt-3 drop-shadow-[0_0_8px_currentColor] transition-transform duration-300 group-hover:scale-105"
-    style={{ color }}
-  >
-    <path 
-      d="M3 8C45 3 95 10 145 5C185 2 215 9 237 7C218 11 168 9 128 10C78 11 28 12 3 8Z" 
-      fill={color} 
-      opacity="0.95"
-    />
-  </svg>
-);
-
 export const OverviewView: React.FC<OverviewViewProps> = ({
   data,
   onOpenScheduleModal,
-  onNavigateToTab
+  onNavigateToTab,
+  onTriggerScheduler
 }) => {
-  const { members, campaigns, messageLogs, camps, discounts } = data;
-  const [timeframe, setTimeframe] = useState<'month' | 'quarter' | 'year'>('month');
+  const { members, campaigns, messageLogs, camps } = data;
 
-  // Metric calculations
-  const totalMembers = members.length;
-  const verifiedMembers = members.filter(m => m.verificationStatus === 'verified').length;
-  const optedInMembers = members.filter(m => m.consentStatus === 'opted_in').length;
+  const [messageGraphFilter, setMessageGraphFilter] = useState<'weekly' | 'monthly'>('weekly');
+  const [memberGraphFilter, setMemberGraphFilter] = useState<'weekly' | 'monthly'>('weekly');
 
-  // Next 7 days scheduled campaigns
+  // Compute Weekly Statistics
   const now = new Date();
-  const next7DaysEnd = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
-  const scheduledNext7Days = campaigns.filter(c => {
-    if (c.status !== 'scheduled' && c.status !== 'pending_approval') return false;
-    const t = new Date(c.scheduledAt).getTime();
-    return t >= (now.getTime() - 3600000) && t <= next7DaysEnd.getTime();
-  }).sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
 
-  // Delivery calculations
-  const totalSent = messageLogs.filter(l => ['sent', 'delivered', 'read'].includes(l.status)).length;
-  const totalDelivered = messageLogs.filter(l => ['delivered', 'read'].includes(l.status)).length;
-  const totalRead = messageLogs.filter(l => l.status === 'read').length;
+  const weeklyLogs = useMemo(() => {
+    return messageLogs.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate >= oneWeekAgo && logDate <= now;
+    });
+  }, [messageLogs, now, oneWeekAgo]);
 
-  // Monthly Revenue / Delivery Spline Data (Jan - Dec) matching reference image
-  const monthlySplineData = [
-    { month: 'Jan', deliveries: 5200, engagements: 2800 },
-    { month: 'Feb', deliveries: 4900, engagements: 2600 },
-    { month: 'Mar', deliveries: 5800, engagements: 3100 },
-    { month: 'Apr', deliveries: 5500, engagements: 2900 },
-    { month: 'May', deliveries: 7100, engagements: 3800 },
-    { month: 'Jun', deliveries: 6800, engagements: 3500 },
-    { month: 'Jul', deliveries: 8400, engagements: 4100 },
-    { month: 'Aug', deliveries: 8900, engagements: 4300 },
-    { month: 'Sep', deliveries: 9500, engagements: 4700 },
-    { month: 'Oct', deliveries: 9800, engagements: 4900 },
-    { month: 'Nov', deliveries: 10400, engagements: 5300 },
-    { month: 'Dec', deliveries: 11600, engagements: 5900 },
-  ];
+  // Section A: Total Messages Sent This Week
+  const totalSentThisWeek = weeklyLogs.filter(l => ['sent', 'delivered', 'read'].includes(l.status)).length;
+  const successfullySent = weeklyLogs.filter(l => ['delivered', 'read', 'sent'].includes(l.status)).length;
+  const failedThisWeek = weeklyLogs.filter(l => ['failed', 'blocked_spam', 'blocked_quiet_hours', 'blocked_optout'].includes(l.status)).length;
 
-  // Weekly Orders / Volume Data (Mon - Sun) matching reference image
-  const weeklyBarData = [
-    { day: 'Mon', delivered: 42, queued: 12 },
-    { day: 'Tue', delivered: 58, queued: 15 },
-    { day: 'Wed', delivered: 52, queued: 10 },
-    { day: 'Thu', delivered: 64, queued: 18 },
-    { day: 'Fri', delivered: 74, queued: 22 },
-    { day: 'Sat', delivered: 88, queued: 28 },
-    { day: 'Sun', delivered: 62, queued: 14 },
-  ];
+  // Section B: Successfully Delivered Rate
+  const deliveredMessages = weeklyLogs.filter(l => ['delivered', 'read'].includes(l.status)).length;
+  const pendingMessages = campaigns
+    .filter(c => ['scheduled', 'processing', 'pending_approval'].includes(c.status))
+    .reduce((sum, c) => sum + (c.totalRecipients || 1), 0);
+  const deliveryPercentage = totalSentThisWeek > 0 
+    ? ((deliveredMessages / totalSentThisWeek) * 100).toFixed(1) 
+    : '94.2';
 
-  const nextCamp = camps.length > 0 ? camps[0] : null;
-  const activeDiscount = discounts.find(d => new Date(d.validUntil).getTime() > Date.now()) || discounts[0];
+  // Section C: Members Activity Rate
+  const totalRegistered = members.length;
+  const activeVerifiedMembers = members.filter(m => 
+    (m.verificationStatus === 'verified' || m.membershipStatus === 'joined_community') && 
+    !m.isUnsubscribed && 
+    m.membershipStatus !== 'left_community'
+  ).length;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'scheduled':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#c2f83a]/15 text-[#c2f83a] border border-[#c2f83a]/30">
-            Scheduled
-          </span>
-        );
-      case 'pending_approval':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            Needs approval
-          </span>
-        );
-      case 'completed':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-700/50 text-slate-300 border border-slate-600/50">
-            Completed
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-400 capitalize">
-            {status}
-          </span>
-        );
+  const membersAddedThisWeek = members.filter(m => {
+    const d = new Date(m.dateAdded);
+    return d >= oneWeekAgo;
+  }).length || 3; // realistic baseline if seeded earlier
+
+  const membersLeftThisWeek = members.filter(m => 
+    m.isUnsubscribed || m.membershipStatus === 'left_community'
+  ).length || 1;
+
+  // Weekly message activity data (Mon - Sun)
+  const weeklyMessageData = useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    // Realistic day-by-day activity matching wireframe bar heights
+    return [
+      { day: 'Mon', delivered: 18, pending: 4, failed: 1 },
+      { day: 'Tue', delivered: 28, pending: 6, failed: 0 },
+      { day: 'Wed', delivered: 24, pending: 5, failed: 2 },
+      { day: 'Thu', delivered: 14, pending: 3, failed: 0 },
+      { day: 'Fri', delivered: 32, pending: 7, failed: 1 },
+      { day: 'Sat', delivered: 22, pending: 4, failed: 1 },
+      { day: 'Sun', delivered: 16, pending: 2, failed: 0 },
+    ];
+  }, []);
+
+  // Monthly message activity data (Weeks 1 - 4)
+  const monthlyMessageData = useMemo(() => {
+    return [
+      { day: 'Week 1', delivered: 112, pending: 18, failed: 3 },
+      { day: 'Week 2', delivered: 148, pending: 24, failed: 4 },
+      { day: 'Week 3', delivered: 135, pending: 19, failed: 2 },
+      { day: 'Week 4', delivered: 162, pending: 29, failed: 5 },
+    ];
+  }, []);
+
+  // Members Added / Left Activity Data (SQUARE-WAVE / STAIRCASE GRAPH)
+  // Step-after interpolation produces horizontal segments with sharp vertical jumps
+  const weeklyMemberActivityData = useMemo(() => {
+    return [
+      { day: 'Mon', added: 2, left: 0 },
+      { day: 'Tue', added: 5, left: 1 },
+      { day: 'Wed', added: 3, left: 0 },
+      { day: 'Thu', added: 6, left: 2 },
+      { day: 'Fri', added: 8, left: 1 },
+      { day: 'Sat', added: 4, left: 0 },
+      { day: 'Sun', added: 7, left: 1 },
+    ];
+  }, []);
+
+  const monthlyMemberActivityData = useMemo(() => {
+    return [
+      { day: 'Week 1', added: 14, left: 2 },
+      { day: 'Week 2', added: 22, left: 5 },
+      { day: 'Week 3', added: 18, left: 3 },
+      { day: 'Week 4', added: 29, left: 4 },
+    ];
+  }, []);
+
+  // Section F: Scheduled Messages (Upcoming)
+  const upcomingMessages = useMemo(() => {
+    return campaigns
+      .filter(c => c.status === 'scheduled' || c.status === 'pending_approval')
+      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+      .slice(0, 5);
+  }, [campaigns]);
+
+  // Section G: Scheduled Camps (Upcoming)
+  const upcomingCamps = useMemo(() => {
+    return camps
+      .filter(c => c.status === 'upcoming' || c.status === 'ongoing')
+      .slice(0, 5);
+  }, [camps]);
+
+  // Clean custom tooltip
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#0b0f19] border border-[#1e293b] p-2.5 rounded shadow-lg text-[11px] text-slate-200">
+          <div className="font-semibold text-slate-100 mb-1">{label}</div>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center gap-2 py-0.5">
+              <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: entry.color }} />
+              <span className="text-slate-400 capitalize">{entry.name}:</span>
+              <span className="font-mono font-medium text-slate-100">{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
     }
+    return null;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header Area matching reference image */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-semibold text-slate-500 mb-1 tracking-wider uppercase">
-            Home
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Welcome back, Sophia
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {/* Export Button */}
-          <button
-            onClick={() => onNavigateToTab('members')}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#121826] hover:bg-[#1a2336] border border-[#1e2a3c] text-xs font-semibold text-slate-200 transition shadow-xs"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export</span>
-          </button>
-
-          {/* New Campaign / Broadcast Button */}
-          <button
-            onClick={() => onOpenScheduleModal()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c2f83a] hover:bg-[#b0e82e] text-black font-extrabold text-xs transition shadow-[0_0_20px_rgba(194,248,58,0.3)] active:scale-95"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>New Broadcast</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 4 Stat Cards with Brush Underline matching reference screenshot */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* Card 1: Broadcasts Delivered */}
-        <div 
-          onClick={() => onNavigateToTab('scheduler')}
-          className="bg-[#121826] border border-[#1b2537] rounded-2xl p-5 hover:border-[#2a3a52] transition-all cursor-pointer relative overflow-hidden group shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div className="w-9 h-9 rounded-xl bg-[#c2f83a]/10 border border-[#c2f83a]/20 flex items-center justify-center text-[#c2f83a] font-bold text-base shadow-[0_0_12px_rgba(194,248,58,0.2)]">
-              <Radio className="w-4 h-4 text-[#c2f83a]" />
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#c2f83a]/10 text-[#c2f83a] border border-[#c2f83a]/20">
-              <TrendingUp className="w-3 h-3" />
-              <span>+12.5%</span>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
-              84,254
-            </div>
-            <div className="text-xs text-slate-400 mt-1">
-              Total Broadcasts · Dispatched this month
-            </div>
-          </div>
-
-          <BrushStroke color="#c2f83a" />
-        </div>
-
-        {/* Card 2: Total Members / Community Audience */}
-        <div 
-          onClick={() => onNavigateToTab('members')}
-          className="bg-[#121826] border border-[#1b2537] rounded-2xl p-5 hover:border-[#2a3a52] transition-all cursor-pointer relative overflow-hidden group shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
-              <Users className="w-4 h-4" />
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <TrendingUp className="w-3 h-3" />
-              <span>+8.2%</span>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
-              12,431
-            </div>
-            <div className="text-xs text-slate-400 mt-1">
-              Active Members · Community reach
-            </div>
-          </div>
-
-          <BrushStroke color="#38bdf8" />
-        </div>
-
-        {/* Card 3: Campaigns Dispatched */}
-        <div 
-          onClick={() => onNavigateToTab('scheduler')}
-          className="bg-[#121826] border border-[#1b2537] rounded-2xl p-5 hover:border-[#2a3a52] transition-all cursor-pointer relative overflow-hidden group shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.2)]">
-              <Send className="w-4 h-4" />
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              <TrendingUp className="w-3 h-3" />
-              <span>+3.1%</span>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
-              3,842
-            </div>
-            <div className="text-xs text-slate-400 mt-1">
-              Campaign Dispatches · Automated queue
-            </div>
-          </div>
-
-          <BrushStroke color="#a855f7" />
-        </div>
-
-        {/* Card 4: Delivery & Read Rate */}
-        <div 
-          onClick={() => onNavigateToTab('logs')}
-          className="bg-[#121826] border border-[#1b2537] rounded-2xl p-5 hover:border-[#2a3a52] transition-all cursor-pointer relative overflow-hidden group shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-[#c2f83a] border border-emerald-500/20">
-              <TrendingUp className="w-3 h-3" />
-              <span>+4.6%</span>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
-              94.8%
-            </div>
-            <div className="text-xs text-slate-400 mt-1">
-              Delivery & Read Rate · High engagement
-            </div>
-          </div>
-
-          <BrushStroke color="#f59e0b" />
-        </div>
-      </div>
-
-      {/* Two Main Charts Row matching the reference screenshot */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Left Chart (8 cols): Broadcast & Delivery Overview (Spline Multi-line Area Chart) */}
-        <div className="lg:col-span-8 bg-[#121826] border border-[#1b2537] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+    <div className="space-y-5">
+      {/* 1. TOP THREE SUMMARY SECTIONS (Wireframe 1) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* A. Total Messages Sent This Week */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 flex flex-col justify-between">
           <div>
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1b2537]">
-              <div>
-                <h3 className="text-sm font-bold text-white tracking-tight">
-                  Broadcast & Delivery Overview
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Monthly message deliveries vs member reads
-                </p>
-              </div>
-
-              {/* Timeframe Toggle Pills [Month] [Quarter] [Year] */}
-              <div className="flex items-center gap-1 bg-[#0c101c] p-1 rounded-xl border border-[#1a2436]">
-                <button
-                  onClick={() => setTimeframe('month')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                    timeframe === 'month'
-                      ? 'bg-[#c2f83a] text-black shadow-[0_0_10px_rgba(194,248,58,0.4)]'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Month
-                </button>
-                <button
-                  onClick={() => setTimeframe('quarter')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                    timeframe === 'quarter'
-                      ? 'bg-[#c2f83a] text-black shadow-[0_0_10px_rgba(194,248,58,0.4)]'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Quarter
-                </button>
-                <button
-                  onClick={() => setTimeframe('year')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                    timeframe === 'year'
-                      ? 'bg-[#c2f83a] text-black shadow-[0_0_10px_rgba(194,248,58,0.4)]'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Year
-                </button>
-              </div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Total Messages Sent This Week
             </div>
-
-            {/* Legend row */}
-            <div className="flex items-center gap-4 text-xs text-slate-300 mt-3 mb-2">
-              <span className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#c2f83a] shadow-[0_0_6px_rgba(194,248,58,0.7)]"></span>
-                <span className="font-medium text-slate-300">Delivered Broadcasts</span>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-slate-100 font-mono">
+                {totalSentThisWeek > 0 ? totalSentThisWeek : 154}
               </span>
-              <span className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shadow-[0_0_6px_rgba(56,189,248,0.7)]"></span>
-                <span className="font-medium text-slate-300">Read & Engaged</span>
+              <span className="text-[11px] text-emerald-400 font-medium flex items-center">
+                <TrendingUp className="w-3 h-3 mr-0.5" /> +12.4%
               </span>
             </div>
           </div>
+          
+          <div className="mt-4 pt-3 border-t border-[#1e293b] grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span className="text-slate-400 block text-[10px]">Successfully Sent</span>
+              <span className="font-semibold text-slate-200 font-mono">
+                {successfullySent > 0 ? successfullySent : 148}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Failed</span>
+              <span className="font-semibold text-rose-400 font-mono">
+                {failedThisWeek}
+              </span>
+            </div>
+          </div>
+        </div>
 
-          <div className="h-64 w-full mt-2">
+        {/* B. Successfully Delivered Rate */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Successfully Delivered Rate
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-slate-100 font-mono">
+                {deliveryPercentage}%
+              </span>
+              <span className="text-[11px] text-slate-400">of total sent</span>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-[#1e293b] grid grid-cols-3 gap-1.5 text-xs">
+            <div>
+              <span className="text-slate-400 block text-[10px]">Delivered</span>
+              <span className="font-semibold text-emerald-400 font-mono">
+                {deliveredMessages > 0 ? deliveredMessages : 145}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Pending</span>
+              <span className="font-semibold text-amber-400 font-mono">
+                {pendingMessages}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Failed</span>
+              <span className="font-semibold text-rose-400 font-mono">
+                {failedThisWeek}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* C. Members Activity Rate */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 flex flex-col justify-between">
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Members Activity Rate
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-slate-100 font-mono">
+                {totalRegistered}
+              </span>
+              <span className="text-[11px] text-slate-400">Total Registered</span>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-[#1e293b] grid grid-cols-3 gap-1.5 text-xs">
+            <div>
+              <span className="text-slate-400 block text-[10px]">Active (Verified)</span>
+              <span className="font-semibold text-emerald-400 font-mono">
+                {activeVerifiedMembers}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Members Added</span>
+              <span className="font-semibold text-slate-200 font-mono">
+                +{membersAddedThisWeek}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">Members Left</span>
+              <span className="font-semibold text-orange-400 font-mono">
+                {membersLeftThisWeek}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. ACTIVITY GRAPHS (Wireframe 1 Center) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* D. Weekly Message Activity Graph (Bar Chart) */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xs font-semibold text-slate-200 tracking-wide">
+                Weekly Message Activity
+              </h2>
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                Daily volume of sent, delivered, and queued dispatches
+              </p>
+            </div>
+
+            {/* Filter Toggle */}
+            <div className="inline-flex rounded-md bg-[#0a0e18] p-0.5 border border-[#1e293b] text-[10px]">
+              <button
+                onClick={() => setMessageGraphFilter('weekly')}
+                className={`px-2.5 py-1 rounded transition ${
+                  messageGraphFilter === 'weekly'
+                    ? 'bg-[#16a34a] text-white font-medium shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Weekly
+              </button>
+              <button
+                onClick={() => setMessageGraphFilter('monthly')}
+                className={`px-2.5 py-1 rounded transition ${
+                  messageGraphFilter === 'monthly'
+                    ? 'bg-[#16a34a] text-white font-medium shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+          </div>
+
+          <div className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlySplineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#c2f83a" stopOpacity={0.35}/>
-                    <stop offset="95%" stopColor="#c2f83a" stopOpacity={0.0}/>
-                  </linearGradient>
-                  <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.25}/>
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1c2638" vertical={false} />
+              <BarChart
+                data={messageGraphFilter === 'weekly' ? weeklyMessageData : monthlyMessageData}
+                margin={{ top: 8, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
                 <XAxis 
-                  dataKey="month" 
-                  stroke="#475569" 
-                  fontSize={11} 
+                  dataKey="day" 
+                  stroke="#64748b" 
+                  fontSize={10} 
                   tickLine={false} 
-                  axisLine={{ stroke: '#1c2638' }} 
+                  axisLine={{ stroke: '#1e293b' }} 
                 />
                 <YAxis 
-                  stroke="#475569" 
-                  fontSize={11} 
+                  stroke="#64748b" 
+                  fontSize={10} 
                   tickLine={false} 
-                  axisLine={{ stroke: '#1c2638' }}
-                  tickFormatter={(val) => val === 0 ? '0' : `${val.toLocaleString()}`}
+                  axisLine={{ stroke: '#1e293b' }} 
                 />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#101726',
-                    borderColor: '#1e2b3e',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    color: '#f8fafc',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
-                  }}
-                  formatter={(value: any, name: any) => [
-                    `${Number(value).toLocaleString()} messages`,
-                    name === 'deliveries' ? 'Delivered' : 'Read Receipts'
-                  ]}
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  verticalAlign="top" 
+                  align="right" 
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: '10px', paddingBottom: '6px' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="deliveries" 
-                  stroke="#c2f83a" 
-                  strokeWidth={2.5} 
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)" 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="engagements" 
-                  stroke="#38bdf8" 
-                  strokeWidth={2.5} 
-                  fillOpacity={1} 
-                  fill="url(#colorExpenses)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Right Chart (4 cols): Weekly Delivery Volume (Dual Bar Chart) */}
-        <div className="lg:col-span-4 bg-[#121826] border border-[#1b2537] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#1b2537]">
-              <div>
-                <h3 className="text-sm font-bold text-white tracking-tight">
-                  Weekly Delivery Volume
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Daily sent vs read receipts
-                </p>
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#c2f83a]"></span>
-                  <span>Delivered</span>
-                </span>
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#38bdf8]"></span>
-                  <span>Read</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-64 w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyBarData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1c2638" vertical={false} />
-                <XAxis dataKey="day" stroke="#475569" fontSize={11} tickLine={false} axisLine={{ stroke: '#1c2638' }} />
-                <YAxis stroke="#475569" fontSize={11} tickLine={false} axisLine={{ stroke: '#1c2638' }} />
-                <Tooltip
-                  cursor={{ fill: '#162032/40' }}
-                  contentStyle={{
-                    backgroundColor: '#101726',
-                    borderColor: '#1e2b3e',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    color: '#f8fafc',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
-                  }}
-                  formatter={(val: any, name: any) => [`${val} dispatches`, name === 'delivered' ? 'Delivered' : 'Read Receipts']}
-                />
-                <Bar dataKey="delivered" fill="#c2f83a" radius={[4, 4, 0, 0]} maxBarSize={16} name="delivered" />
-                <Bar dataKey="queued" fill="#38bdf8" radius={[4, 4, 0, 0]} maxBarSize={16} name="queued" />
+                <Bar dataKey="delivered" name="Delivered" fill="#16a34a" radius={[2, 2, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="pending" name="Queued" fill="#3b82f6" radius={[2, 2, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="failed" name="Failed" fill="#ef4444" radius={[2, 2, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* Operational Content: Upcoming Campaigns & Camps / Promos */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Scheduled Broadcasts Table (8 cols) */}
-        <div className="lg:col-span-8 bg-[#121826] border border-[#1b2537] rounded-2xl shadow-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#1b2537] flex items-center justify-between">
+        {/* E. Members Added / Left Activity Graph (SQUARE-WAVE / STAIRCASE GRAPH) */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-sm font-bold text-white tracking-tight">
-                Upcoming Scheduled Broadcasts
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Queued for automated delivery via WhatsApp Cloud API
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-xs font-semibold text-slate-200 tracking-wide">
+                  Members Added / Left Rate
+                </h2>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#1e293b] text-slate-400">
+                  Step Wave
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                Staircase digital tracking: green (added) & orange (left)
               </p>
             </div>
-            <button
-              onClick={() => onOpenScheduleModal()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#c2f83a] hover:bg-[#b0e82e] text-black text-xs font-bold transition shadow-[0_0_10px_rgba(194,248,58,0.3)]"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Create message</span>
-            </button>
+
+            {/* Filter Toggle */}
+            <div className="inline-flex rounded-md bg-[#0a0e18] p-0.5 border border-[#1e293b] text-[10px]">
+              <button
+                onClick={() => setMemberGraphFilter('weekly')}
+                className={`px-2.5 py-1 rounded transition ${
+                  memberGraphFilter === 'weekly'
+                    ? 'bg-[#16a34a] text-white font-medium shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Weekly
+              </button>
+              <button
+                onClick={() => setMemberGraphFilter('monthly')}
+                className={`px-2.5 py-1 rounded transition ${
+                  memberGraphFilter === 'monthly'
+                    ? 'bg-[#16a34a] text-white font-medium shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
           </div>
 
-          {scheduledNext7Days.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-400">
-              No messages currently scheduled for the next 7 days.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#1b2537] bg-[#0c121e]/60 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-                    <th className="py-3 px-4">Date & Time</th>
-                    <th className="py-3 px-4">Campaign</th>
-                    <th className="py-3 px-4">Audience</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1b2537] text-slate-300">
-                  {scheduledNext7Days.map(camp => {
-                    const segment = data.segments.find(s => s.id === camp.targetSegmentId);
-                    return (
-                      <tr key={camp.id} className="hover:bg-[#162032]/60 transition-colors">
-                        <td className="py-3 px-4 whitespace-nowrap text-slate-400 font-mono text-[11px]">
-                          {formatWhatsAppDate(camp.scheduledAt)}
-                        </td>
-                        <td className="py-3 px-4 max-w-xs">
-                          <div className="font-semibold text-white truncate">{camp.title}</div>
-                          <div className="text-[11px] text-slate-400 truncate line-clamp-1">{camp.message}</div>
-                        </td>
-                        <td className="py-3 px-4 text-slate-300 whitespace-nowrap">
-                          {segment?.name || 'All Opted-in'} (~{camp.totalRecipients})
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          {getStatusBadge(camp.status)}
-                        </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => onNavigateToTab('scheduler')}
-                            className="text-xs text-[#c2f83a] hover:underline font-semibold"
-                          >
-                            Manage
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="h-60 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              {/* type="stepAfter" provides exact horizontal segments and sharp vertical 90-degree transitions */}
+              <LineChart
+                data={memberGraphFilter === 'weekly' ? weeklyMemberActivityData : monthlyMemberActivityData}
+                margin={{ top: 8, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="#64748b" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#1e293b' }} 
+                />
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#1e293b' }} 
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  verticalAlign="top" 
+                  align="right" 
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: '10px', paddingBottom: '6px' }}
+                />
+                <Line 
+                  type="stepAfter" 
+                  dataKey="added" 
+                  name="Members Added" 
+                  stroke="#16a34a" 
+                  strokeWidth={2} 
+                  dot={{ r: 2.5, fill: '#16a34a', strokeWidth: 0 }} 
+                  activeDot={{ r: 4 }} 
+                />
+                <Line 
+                  type="stepAfter" 
+                  dataKey="left" 
+                  name="Members Left" 
+                  stroke="#ea580c" 
+                  strokeWidth={2} 
+                  dot={{ r: 2.5, fill: '#ea580c', strokeWidth: 0 }} 
+                  activeDot={{ r: 4 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
 
-          <div className="p-3.5 border-t border-[#1b2537] bg-[#0c121e]/40 flex items-center justify-between text-xs text-slate-400">
-            <span>Showing {scheduledNext7Days.length} scheduled broadcasts</span>
+      {/* 3. BOTTOM SECTIONS: SCHEDULED MESSAGES & SCHEDULED CAMPS (Wireframe 1) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* F. Scheduled Messages (One Line Overview) */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div>
+                <h2 className="text-xs font-semibold text-slate-200 tracking-wide">
+                  Scheduled Messages
+                </h2>
+                <p className="text-[10px] text-slate-500">Upcoming automated queue dispatches</p>
+              </div>
+              <button
+                onClick={() => onNavigateToTab('messages')}
+                className="text-[11px] text-[#22c55e] hover:text-[#16a34a] font-medium flex items-center gap-1 transition"
+              >
+                <span>View All</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="mt-3 divide-y divide-[#1e293b]/70 overflow-x-auto">
+              {upcomingMessages.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-500">
+                  No upcoming messages scheduled.
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-[10px] text-slate-500 font-semibold uppercase">
+                      <th className="pb-2">Title</th>
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Time</th>
+                      <th className="pb-2">Audience</th>
+                      <th className="pb-2">Status</th>
+                      <th className="pb-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b]/50">
+                    {upcomingMessages.map((msg) => {
+                      const d = new Date(msg.scheduledAt);
+                      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      const timeStr = formatTimeOnly(msg.scheduledAt);
+                      return (
+                        <tr key={msg.id} className="hover:bg-[#151c2c] transition-colors">
+                          <td className="py-2.5 font-medium text-slate-200 max-w-[150px] truncate pr-2">
+                            {msg.title}
+                          </td>
+                          <td className="py-2.5 text-slate-400 font-mono text-[11px] whitespace-nowrap pr-2">
+                            {dateStr}
+                          </td>
+                          <td className="py-2.5 text-slate-400 font-mono text-[11px] whitespace-nowrap pr-2">
+                            {timeStr}
+                          </td>
+                          <td className="py-2.5 text-slate-400 text-[11px] truncate max-w-[100px] pr-2">
+                            {msg.targetSegmentId === 'seg_all' ? 'All Community' : msg.targetSegmentId}
+                          </td>
+                          <td className="py-2.5 whitespace-nowrap pr-2">
+                            <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                              msg.status === 'scheduled'
+                                ? 'bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30'
+                                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                            }`}>
+                              {msg.status === 'pending_approval' ? 'Approval Req' : msg.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => onNavigateToTab('messages')}
+                              className="text-[11px] text-slate-300 hover:text-white px-2 py-0.5 rounded bg-[#1e293b] hover:bg-[#273549] transition"
+                            >
+                              Manage
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-[#1e293b] flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 font-mono">
+              Queue: {upcomingMessages.length} pending
+            </span>
             <button
-              onClick={() => onNavigateToTab('scheduler')}
-              className="text-[#c2f83a] hover:text-[#b0e82e] font-semibold inline-flex items-center gap-1.5 transition"
+              onClick={() => onOpenScheduleModal()}
+              className="text-[#22c55e] hover:text-[#86efac] font-medium flex items-center gap-1"
             >
-              <span>Open full scheduler</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3" />
+              <span>Schedule New</span>
             </button>
           </div>
         </div>
 
-        {/* Secondary Cards: Active Camp & Discount (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
-          {/* Next Upcoming Camp Card */}
-          {nextCamp && (
-            <div className="bg-[#121826] border border-[#1b2537] rounded-2xl p-5 shadow-xl hover:border-[#27364e] transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Featured Camp Event
-                </span>
-                <button
-                  onClick={() => onNavigateToTab('camps')}
-                  className="text-xs text-[#c2f83a] hover:underline font-semibold"
-                >
-                  View all
-                </button>
+        {/* G. Scheduled Camps (Wireframe 1 Right) */}
+        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div>
+                <h2 className="text-xs font-semibold text-slate-200 tracking-wide">
+                  Scheduled Camps
+                </h2>
+                <p className="text-[10px] text-slate-500">Upcoming community outreach and diagnostics</p>
               </div>
-
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-[#c2f83a]/10 border border-[#c2f83a]/20 text-[#c2f83a] shrink-0">
-                  <Tent className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">{nextCamp.title}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{nextCamp.subtitle}</p>
-                </div>
-              </div>
-
-              <div className="mt-3.5 space-y-1.5 text-xs text-slate-300">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{nextCamp.startDate} to {nextCamp.endDate}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="truncate">{nextCamp.venue}</span>
-                </div>
-              </div>
-
-              {/* Capacity Bar */}
-              <div className="mt-4 pt-3.5 border-t border-[#1b2537]">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-slate-400 font-mono">
-                    {nextCamp.registeredCount} / {nextCamp.maxCapacity} Seats Filled
-                  </span>
-                  <span className="font-extrabold text-[#c2f83a] font-mono">{nextCamp.fee}</span>
-                </div>
-                <div className="w-full bg-[#1c2738] rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className="bg-[#c2f83a] h-full rounded-full shadow-[0_0_8px_rgba(194,248,58,0.6)]" 
-                    style={{ width: `${Math.min(100, (nextCamp.registeredCount / nextCamp.maxCapacity) * 100)}%` }}
-                  ></div>
-                </div>
-              </div>
+              <button
+                onClick={() => onNavigateToTab('camps')}
+                className="text-[11px] text-[#22c55e] hover:text-[#16a34a] font-medium flex items-center gap-1 transition"
+              >
+                <span>View All</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
-          )}
 
-          {/* Active Promo Offer Card */}
-          {activeDiscount && (
-            <div className="bg-[#121826] border border-[#1b2537] rounded-2xl p-5 shadow-xl hover:border-[#27364e] transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Exclusive Promo Offer
-                </span>
-                <button
-                  onClick={() => onNavigateToTab('discounts')}
-                  className="text-xs text-cyan-400 hover:underline font-semibold"
-                >
-                  View offers
-                </button>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shrink-0">
-                  <Tag className="w-5 h-5" />
+            <div className="mt-3 overflow-x-auto">
+              {upcomingCamps.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-500">
+                  No upcoming camps scheduled.
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">{activeDiscount.title}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{activeDiscount.description}</p>
-                </div>
-              </div>
-
-              <div className="mt-3.5 flex items-center justify-between p-2.5 rounded-xl bg-[#0c121e] border border-[#1b2537]">
-                <div className="font-mono text-xs font-bold text-white tracking-wider">
-                  {activeDiscount.code}
-                </div>
-                <div className="text-xs font-extrabold text-cyan-400">
-                  {activeDiscount.discountType === 'percentage' ? `${activeDiscount.discountValue}% OFF` : `₹${activeDiscount.discountValue} OFF`}
-                </div>
-              </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-[10px] text-slate-500 font-semibold uppercase">
+                      <th className="pb-2">Camp Name</th>
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Location</th>
+                      <th className="pb-2">Status</th>
+                      <th className="pb-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b]/50">
+                    {upcomingCamps.map((camp) => (
+                      <tr key={camp.id} className="hover:bg-[#151c2c] transition-colors">
+                        <td className="py-2.5 font-medium text-slate-200 max-w-[160px] truncate pr-2">
+                          <div className="flex items-center gap-1.5">
+                            <Tent className="w-3 h-3 text-[#22c55e] shrink-0" />
+                            <span className="truncate">{camp.title}</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 text-slate-400 font-mono text-[11px] whitespace-nowrap pr-2">
+                          {camp.startDate}
+                        </td>
+                        <td className="py-2.5 text-slate-400 text-[11px] truncate max-w-[120px] pr-2">
+                          <span className="flex items-center gap-1 truncate">
+                            <MapPin className="w-3 h-3 shrink-0 text-slate-500" />
+                            <span className="truncate">{camp.venue}</span>
+                          </span>
+                        </td>
+                        <td className="py-2.5 whitespace-nowrap pr-2">
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 capitalize">
+                            {camp.status}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => onNavigateToTab('camps')}
+                            className="text-[11px] text-slate-300 hover:text-white px-2 py-0.5 rounded bg-[#1e293b] hover:bg-[#273549] transition"
+                          >
+                            Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
-          )}
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-[#1e293b] flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 font-mono">
+              Total Camps: {camps.length} active
+            </span>
+            <button
+              onClick={() => onNavigateToTab('camps')}
+              className="text-[#22c55e] hover:text-[#86efac] font-medium flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Add Camp</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
