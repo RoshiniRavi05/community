@@ -15,6 +15,7 @@ import { AnalyticsView } from '@/components/analytics/AnalyticsView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { CampaignComposerModal } from '@/components/scheduler/CampaignComposerModal';
 import { CareAlarmModal } from '@/components/alarms/CareAlarmModal';
+import { Sun, Moon } from 'lucide-react';
 import { AppState, Campaign, Member, SocialMediaPost, CampEvent, DiscountOffer, AntiSpamSettings, CareAlarm } from '@/lib/db/types';
 
 export default function Home() {
@@ -23,6 +24,20 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+
+  // Sync dark class on root <html>
+  const toggleTheme = () => {
+    setIsDarkTheme((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      return next;
+    });
+  };
 
   // Campaign Composer state
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -73,7 +88,7 @@ export default function Home() {
     }
   };
 
-  // Emergency Stop: Cancel all scheduled and activate kill-switch
+  // Emergency Stop
   const handleStopAllScheduled = async () => {
     if (!confirm('Are you sure you want to trigger an Emergency Stop? This will halt outbound dispatch and cancel all currently scheduled messages.')) {
       return;
@@ -283,7 +298,7 @@ export default function Home() {
     await fetchData();
   };
 
-  // Care & Medicine Alarm Clock Actions
+  // Care Alarm Actions
   const handleToggleCareAlarm = async (alarmId: string) => {
     const res = await fetch('/api/alarms', {
       method: 'POST',
@@ -293,7 +308,7 @@ export default function Home() {
     const json = await res.json();
     if (json.alarm) {
       showToast(json.alarm.isActive
-        ? `Alarm "${json.alarm.title}" is ON (Rings daily at ${json.alarm.time}).`
+        ? `Alarm "${json.alarm.title}" is ON.`
         : `Alarm "${json.alarm.title}" turned OFF.`);
     }
     await fetchData();
@@ -333,14 +348,14 @@ export default function Home() {
         body: JSON.stringify({ action: 'TRIGGER_ALARM_NOW', alarmId })
       });
       const json = await res.json();
-      showToast(`Alarm rung! Notified ${json.deliveredCount || 0} elderly members (Age-wise filter).`);
+      showToast(`Alarm rung! Notified ${json.deliveredCount || 0} members.`);
       await fetchData();
     } finally {
       setIsSyncing(false);
     }
   };
 
-  // WhatsApp integration test
+  // WhatsApp
   const handleSendTestMessage = async (phone: string, text: string) => {
     const res = await fetch('/api/whatsapp', {
       method: 'POST',
@@ -369,7 +384,6 @@ export default function Home() {
     return res.json();
   };
 
-  // WhatsApp Community & Group Actions
   const handleUpdateCommunityConfig = async (cfg: any) => {
     const res = await fetch('/api/whatsapp', {
       method: 'POST',
@@ -414,7 +428,6 @@ export default function Home() {
     return json;
   };
 
-  // Settings update
   const handleUpdateSettings = async (newSettings: Partial<AntiSpamSettings>) => {
     await fetch('/api/data', {
       method: 'POST',
@@ -442,7 +455,7 @@ export default function Home() {
 
   if (isLoading || !data) {
     return (
-      <div className="min-h-screen bg-[#F4F0E8] flex flex-col items-center justify-center text-[#85877F] space-y-2 font-sans">
+      <div className="min-h-screen bg-[var(--bg-app)] flex flex-col items-center justify-center text-[var(--text-sub)] space-y-2 font-sans">
         <div className="w-6 h-6 border-2 border-[#87936C] border-t-[#263323] rounded-full animate-spin"></div>
         <p className="text-xs font-medium">Loading Community Hub...</p>
       </div>
@@ -458,7 +471,7 @@ export default function Home() {
   }).length;
 
   return (
-    <div className="flex min-h-screen bg-[#F4F0E8] text-[#20231F] font-sans antialiased">
+    <div className="flex min-h-screen bg-[var(--bg-app)] text-[var(--text-main)] font-sans antialiased transition-colors">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#263323] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-2xl border border-white/10 flex items-center gap-2">
@@ -480,7 +493,39 @@ export default function Home() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[#F4F0E8]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[var(--bg-app)]">
+        {/* Global Tab Top Bar (when on inner views) */}
+        {activeTab !== 'overview' && activeTab !== 'dashboard' && (
+          <div className="px-8 py-3.5 border-b border-[var(--border-card)] bg-[var(--bg-card)] flex items-center justify-between sticky top-0 z-20">
+            <div>
+              <h2 className="text-sm font-bold text-[var(--text-main)] capitalize">
+                {activeTab === 'social' ? 'Social Media' : activeTab === 'whatsapp' ? 'WhatsApp Integration' : activeTab}
+              </h2>
+              <span className="text-[11px] text-[var(--text-sub)]">Community Hub Management</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                title={`Switch to ${isDarkTheme ? 'Light' : 'Dark'} Mode`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-card)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition shadow-xs"
+              >
+                {isDarkTheme ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-[var(--forest-green)]" />
+                    <span>Dark Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
         <main className="flex-1 px-8 py-6 max-w-[1400px] w-full">
           {(activeTab === 'overview' || activeTab === 'dashboard') && (
             <OverviewView
@@ -491,11 +536,13 @@ export default function Home() {
               onOpenCreateDiscount={() => setActiveTab('discounts')}
               onNavigateToTab={(tab) => setActiveTab(tab)}
               onTriggerScheduler={handleTriggerScheduler}
+              isDarkTheme={isDarkTheme}
+              onToggleTheme={toggleTheme}
             />
           )}
 
           {activeTab === 'members' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <MembersView
                 members={data.members}
                 segments={data.segments}
@@ -508,7 +555,7 @@ export default function Home() {
           )}
 
           {(activeTab === 'messages' || activeTab === 'scheduler') && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <SchedulerView
                 campaigns={data.campaigns}
                 segments={data.segments}
@@ -525,7 +572,7 @@ export default function Home() {
           )}
 
           {activeTab === 'calendar' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <SchedulerView
                 campaigns={data.campaigns}
                 segments={data.segments}
@@ -542,7 +589,7 @@ export default function Home() {
           )}
 
           {activeTab === 'logs' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <MessageLogsView
                 logs={data.messageLogs}
                 onRetryFailed={async (logId) => {
@@ -554,7 +601,7 @@ export default function Home() {
           )}
 
           {activeTab === 'social' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <SocialMediaView
                 posts={data.socialPosts}
                 onOpenScheduleModal={openScheduleComposer}
@@ -565,7 +612,7 @@ export default function Home() {
           )}
 
           {activeTab === 'camps' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <CampsView
                 camps={data.camps}
                 onOpenScheduleModal={openScheduleComposer}
@@ -576,7 +623,7 @@ export default function Home() {
           )}
 
           {activeTab === 'discounts' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <DiscountsView
                 discounts={data.discounts}
                 onOpenScheduleModal={openScheduleComposer}
@@ -587,7 +634,7 @@ export default function Home() {
           )}
 
           {activeTab === 'analytics' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <AnalyticsView
                 data={data}
                 onToggleEmergencyPause={handleToggleEmergencyPause}
@@ -597,7 +644,7 @@ export default function Home() {
           )}
 
           {activeTab === 'monitor' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <AutomationMonitorView
                 errors={data.errors}
                 campaigns={data.campaigns}
@@ -612,7 +659,7 @@ export default function Home() {
           )}
 
           {activeTab === 'whatsapp' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <WhatsAppIntegrationView
                 config={data.whatsappConfig}
                 onSendTestMessage={handleSendTestMessage}
@@ -627,7 +674,7 @@ export default function Home() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+            <div className="theme-card p-6 shadow-xs">
               <SettingsView
                 settings={data.antiSpamSettings}
                 auditLogs={data.auditLogs}

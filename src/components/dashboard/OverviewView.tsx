@@ -8,8 +8,9 @@ import {
   Bell,
   MoreHorizontal,
   ChevronDown,
-  TrendingUp,
-  Layers
+  Layers,
+  Sun,
+  Moon
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -34,12 +35,16 @@ interface OverviewViewProps {
   onOpenCreateDiscount?: () => void;
   onNavigateToTab: (tab: any) => void;
   onTriggerScheduler?: () => void;
+  isDarkTheme?: boolean;
+  onToggleTheme?: () => void;
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({
   data,
   onOpenScheduleModal,
-  onNavigateToTab
+  onNavigateToTab,
+  isDarkTheme = false,
+  onToggleTheme
 }) => {
   const { members, campaigns, messageLogs, camps } = data;
 
@@ -87,7 +92,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const membersLeft = members.filter(m => 
     m.isUnsubscribed || m.membershipStatus === 'left_community'
   ).length || 48;
-  const netGrowthPercent = '+ 2.1%';
 
   // Weekly message activity data (Mon - Sun)
   const weeklyMessageData = useMemo(() => {
@@ -111,7 +115,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     ];
   }, []);
 
-  // Members Activity Step Chart Data (Staircase / stepAfter net change with positive and negative)
+  // Members Activity Step Chart Data
   const weeklyMemberActivityData = useMemo(() => {
     return [
       { day: 'Mon', net: 18 },
@@ -142,7 +146,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
     if (msgs.length > 0) return msgs;
 
-    // Fallback matching reference exactly
     return [
       {
         id: 'msg_1',
@@ -174,12 +177,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   // Scheduled Camps
   const upcomingCamps = useMemo(() => {
     const campList = camps
-      .filter(c => ((c.status as string) === 'upcoming' || (c.status as string) === 'planned' || c.status === 'ongoing' || c.status === 'registration_open'))
+      .filter(c => (c.status as string) === 'upcoming' || (c.status as string) === 'planned' || c.status === 'ongoing' || c.status === 'registration_open')
       .slice(0, 3);
 
     if (campList.length > 0) return campList;
 
-    // Fallback matching reference exactly
     return [
       {
         id: 'c1',
@@ -209,31 +211,54 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   }, [camps]);
 
   return (
-    <div className="space-y-6 text-[#20231F]">
+    <div className="space-y-6">
       {/* ── HEADER ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold text-[#85877F] uppercase tracking-wider">
+          <div className="text-[11px] font-semibold text-[var(--muted-grey)] uppercase tracking-wider">
             GOOD AFTERNOON,
           </div>
-          <h1 className="text-[32px] font-bold text-[#20231F] tracking-tight leading-tight mt-0.5">
+          <h1 className="text-[32px] font-bold text-[var(--dark-text)] tracking-tight leading-tight mt-0.5">
             Roshini
           </h1>
-          <p className="text-[13px] text-[#85877F] mt-0.5">
+          <p className="text-[13px] text-[var(--muted-grey)] mt-0.5">
             Here's what's happening in your community this week.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#D9D6CC] bg-[#FFFFFF] text-[13px] text-[#20231F] shadow-xs cursor-pointer">
-            <CalendarIcon className="w-4 h-4 text-[#85877F]" />
+          {/* Light / Dark Theme Toggle */}
+          {onToggleTheme && (
+            <button
+              onClick={onToggleTheme}
+              title={`Switch to ${isDarkTheme ? 'Light' : 'Dark'} Mode`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--soft-border)] bg-[var(--white)] text-[12px] font-medium text-[var(--dark-text)] hover:bg-[var(--bg-muted)] transition shadow-xs"
+            >
+              {isDarkTheme ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-400" />
+                  <span>Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-[var(--forest-green)]" />
+                  <span>Dark Mode</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Date Selector */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--soft-border)] bg-[var(--white)] text-[13px] text-[var(--dark-text)] shadow-xs cursor-pointer">
+            <CalendarIcon className="w-4 h-4 text-[var(--muted-grey)]" />
             <span>Oct 27 – Nov 2, 2026</span>
-            <ChevronDown className="w-3.5 h-3.5 text-[#85877F] ml-1" />
+            <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-grey)] ml-1" />
           </div>
 
+          {/* Notification Bell */}
           <button
             onClick={() => onNavigateToTab('settings')}
-            className="w-9 h-9 rounded-full border border-[#D9D6CC] bg-[#FFFFFF] flex items-center justify-center text-[#20231F] hover:bg-[#F4F0E8] transition relative shadow-xs"
+            className="w-9 h-9 rounded-full border border-[var(--soft-border)] bg-[var(--white)] flex items-center justify-center text-[var(--dark-text)] hover:bg-[var(--bg-muted)] transition relative shadow-xs"
           >
             <Bell className="w-4 h-4" />
             <span className="w-2 h-2 rounded-full bg-[#27833A] absolute top-2 right-2 border-2 border-white"></span>
@@ -241,8 +266,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* ── KPI SECTION: THREE HORIZONTALLY ALIGNED METRICS SEPARATED BY VERTICAL DIVIDERS ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#D9D6CC] pt-2">
+      {/* ── KPI SECTION ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--soft-border)] pt-2">
         {/* KPI 1: Messages Sent */}
         <div className="pr-6 pb-4 md:pb-0">
           <div className="flex items-center gap-2.5">
@@ -250,29 +275,29 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <Send className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[14px] font-semibold text-[#20231F]">Messages Sent</div>
-              <div className="text-[11px] text-[#85877F]">This Week</div>
+              <div className="text-[14px] font-semibold text-[var(--dark-text)]">Messages Sent</div>
+              <div className="text-[11px] text-[var(--muted-grey)]">This Week</div>
             </div>
           </div>
 
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-[36px] font-bold text-[#20231F] tabular-nums tracking-tight">
+            <div className="text-[36px] font-bold text-[var(--dark-text)] tabular-nums tracking-tight">
               {displayTotalSent.toLocaleString()}
             </div>
             <div className="space-y-1 text-right text-[12px]">
               <div className="flex items-center justify-end gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#27833A]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   {displaySuccessful.toLocaleString()}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Successful</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Successful</span>
               </div>
               <div className="flex items-center justify-end gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C65B42]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   {displayFailed}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Failed</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Failed</span>
               </div>
             </div>
           </div>
@@ -284,34 +309,34 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <div className="w-8 h-8 rounded-full bg-[#87936C]/20 flex items-center justify-center text-[#87936C]">
               <Layers className="w-4 h-4" />
             </div>
-            <div className="text-[14px] font-semibold text-[#20231F]">Delivery Rate</div>
+            <div className="text-[14px] font-semibold text-[var(--dark-text)]">Delivery Rate</div>
           </div>
 
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-[36px] font-bold text-[#20231F] tabular-nums tracking-tight">
+            <div className="text-[36px] font-bold text-[var(--dark-text)] tabular-nums tracking-tight">
               {deliveryPercentage}%
             </div>
             <div className="space-y-1 text-right text-[12px]">
               <div className="flex items-center justify-end gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#27833A]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   {displayDelivered.toLocaleString()}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Delivered</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Delivered</span>
               </div>
               <div className="flex items-center justify-end gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#85877F]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted-grey)]"></span>
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   {displayPending}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Pending</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Pending</span>
               </div>
               <div className="flex items-center justify-end gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C65B42]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   {displayFailed}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Failed</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Failed</span>
               </div>
             </div>
           </div>
@@ -323,64 +348,64 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <div className="w-8 h-8 rounded-full bg-[#87936C]/20 flex items-center justify-center text-[#87936C]">
               <Users className="w-4 h-4" />
             </div>
-            <div className="text-[14px] font-semibold text-[#20231F]">Members Activity</div>
+            <div className="text-[14px] font-semibold text-[var(--dark-text)]">Members Activity</div>
           </div>
 
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-[36px] font-bold text-[#20231F] tabular-nums tracking-tight">
+            <div className="text-[36px] font-bold text-[var(--dark-text)] tabular-nums tracking-tight">
               {totalMembers.toLocaleString()}
             </div>
             <div className="space-y-1 text-right text-[12px]">
               <div className="flex items-center justify-end gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#27833A]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   +{membersAdded}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Added</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Added</span>
               </div>
               <div className="flex items-center justify-end gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C65B42]"></span>
-                <span className="font-semibold text-[#20231F] tabular-nums">
+                <span className="font-semibold text-[var(--dark-text)] tabular-nums">
                   -{membersLeft}
                 </span>
-                <span className="text-[#85877F] text-[11px]">Left</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Left</span>
               </div>
               <div className="flex items-center justify-end gap-1.5">
                 <span className="font-semibold text-[#27833A] text-[12px] flex items-center">
                   ↑ 2.1%
                 </span>
-                <span className="text-[#85877F] text-[11px]">Growth</span>
+                <span className="text-[var(--muted-grey)] text-[11px]">Growth</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── GRAPH SECTION: ENCLOSED BY TWO HORIZONTAL DIVIDERS + ONE VERTICAL DIVIDER ── */}
-      <div className="border-y border-[#D9D6CC] py-6 my-2">
-        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#D9D6CC]">
-          {/* GRAPH 1: Weekly Message Activity (Bar Chart) */}
+      {/* ── GRAPH SECTION ── */}
+      <div className="border-y border-[var(--soft-border)] py-6 my-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[var(--soft-border)]">
+          {/* GRAPH 1: Weekly Message Activity */}
           <div className="pr-0 lg:pr-8 pb-6 lg:pb-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 flex items-end gap-0.5 text-[#263323]">
-                  <span className="w-1 h-2 bg-[#263323]"></span>
-                  <span className="w-1 h-3.5 bg-[#263323]"></span>
-                  <span className="w-1 h-2.5 bg-[#263323]"></span>
+                <div className="w-3.5 h-3.5 flex items-end gap-0.5 text-[#87936C]">
+                  <span className="w-1 h-2 bg-[#87936C]"></span>
+                  <span className="w-1 h-3.5 bg-[#87936C]"></span>
+                  <span className="w-1 h-2.5 bg-[#87936C]"></span>
                 </div>
-                <h3 className="text-[15px] font-bold text-[#20231F]">
+                <h3 className="text-[15px] font-bold text-[var(--dark-text)]">
                   Weekly Message Activity
                 </h3>
               </div>
 
               {/* Week / Month Toggle */}
-              <div className="flex items-center bg-[#E6E1D5] rounded-full p-0.5 text-[11px] font-medium">
+              <div className="flex items-center bg-[var(--bg-muted)] rounded-full p-0.5 text-[11px] font-medium">
                 <button
                   onClick={() => setMessageGraphFilter('week')}
                   className={`px-3 py-0.5 rounded-full transition ${
                     messageGraphFilter === 'week'
                       ? 'bg-[#263323] text-white shadow-xs'
-                      : 'text-[#85877F]'
+                      : 'text-[var(--muted-grey)]'
                   }`}
                 >
                   Week
@@ -390,7 +415,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   className={`px-3 py-0.5 rounded-full transition ${
                     messageGraphFilter === 'month'
                       ? 'bg-[#263323] text-white shadow-xs'
-                      : 'text-[#85877F]'
+                      : 'text-[var(--muted-grey)]'
                   }`}
                 >
                   Month
@@ -404,16 +429,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   data={messageGraphFilter === 'week' ? weeklyMessageData : monthlyMessageData}
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                 >
-                  <CartesianGrid stroke="#E6E1D5" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="var(--soft-border)" strokeDasharray="3 3" vertical={false} opacity={0.6} />
                   <XAxis
                     dataKey="day"
-                    stroke="#85877F"
+                    stroke="var(--muted-grey)"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    stroke="#85877F"
+                    stroke="var(--muted-grey)"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
@@ -421,7 +446,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     ticks={[0, 50, 100, 150, 200, 250]}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(135, 147, 108, 0.1)' }}
+                    cursor={{ fill: 'rgba(135, 147, 108, 0.15)' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
@@ -444,24 +469,24 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
 
-          {/* GRAPH 2: Members Added / Left Activity (Continuous Step-Line with Zero Baseline) */}
+          {/* GRAPH 2: Members Added / Left Activity */}
           <div className="pl-0 lg:pl-8 pt-6 lg:pt-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#263323]" />
-                <h3 className="text-[15px] font-bold text-[#20231F]">
+                <Users className="w-4 h-4 text-[#87936C]" />
+                <h3 className="text-[15px] font-bold text-[var(--dark-text)]">
                   Members Added / Left Activity
                 </h3>
               </div>
 
               {/* Week / Month Toggle */}
-              <div className="flex items-center bg-[#E6E1D5] rounded-full p-0.5 text-[11px] font-medium">
+              <div className="flex items-center bg-[var(--bg-muted)] rounded-full p-0.5 text-[11px] font-medium">
                 <button
                   onClick={() => setMemberGraphFilter('week')}
                   className={`px-3 py-0.5 rounded-full transition ${
                     memberGraphFilter === 'week'
                       ? 'bg-[#263323] text-white shadow-xs'
-                      : 'text-[#85877F]'
+                      : 'text-[var(--muted-grey)]'
                   }`}
                 >
                   Week
@@ -471,7 +496,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   className={`px-3 py-0.5 rounded-full transition ${
                     memberGraphFilter === 'month'
                       ? 'bg-[#263323] text-white shadow-xs'
-                      : 'text-[#85877F]'
+                      : 'text-[var(--muted-grey)]'
                   }`}
                 >
                   Month
@@ -485,24 +510,23 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   data={memberGraphFilter === 'week' ? weeklyMemberActivityData : monthlyMemberActivityData}
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                 >
-                  <CartesianGrid stroke="#E6E1D5" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="var(--soft-border)" strokeDasharray="3 3" vertical={false} opacity={0.6} />
                   <XAxis
                     dataKey="day"
-                    stroke="#85877F"
+                    stroke="var(--muted-grey)"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    stroke="#85877F"
+                    stroke="var(--muted-grey)"
                     fontSize={11}
                     tickLine={false}
                     axisLine={false}
                     domain={[-60, 80]}
                     ticks={[-60, -40, -20, 0, 20, 40, 60, 80]}
                   />
-                  {/* Clearly visible zero baseline */}
-                  <ReferenceLine y={0} stroke="#85877F" strokeWidth={1} />
+                  <ReferenceLine y={0} stroke="var(--muted-grey)" strokeWidth={1} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
@@ -516,7 +540,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       return null;
                     }}
                   />
-                  {/* Step-After continuous line matching staircase wireframe */}
                   <Line
                     type="stepAfter"
                     dataKey="net"
@@ -531,14 +554,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* ── BOTTOM SECTION: TWO SIDE-BY-SIDE TABLES SEPARATED BY VERTICAL DIVIDER ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#D9D6CC] pt-2">
+      {/* ── BOTTOM SECTION: TWO SIDE-BY-SIDE TABLES ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[var(--soft-border)] pt-2">
         {/* LEFT: Scheduled Messages */}
         <div className="pr-0 lg:pr-8 pb-6 lg:pb-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-[#263323]" />
-              <h3 className="text-[16px] font-bold text-[#20231F]">Scheduled Messages</h3>
+              <CalendarIcon className="w-4 h-4 text-[#87936C]" />
+              <h3 className="text-[16px] font-bold text-[var(--dark-text)]">Scheduled Messages</h3>
             </div>
             <button
               onClick={() => onNavigateToTab('messages')}
@@ -552,7 +575,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[12px]">
               <thead>
-                <tr className="text-[#85877F] text-[11px] font-medium border-b border-[#D9D6CC]/60">
+                <tr className="text-[var(--muted-grey)] text-[11px] font-medium border-b border-[var(--soft-border)]">
                   <th className="pb-2 font-medium">Message</th>
                   <th className="pb-2 font-medium">Date</th>
                   <th className="pb-2 font-medium">Time</th>
@@ -561,15 +584,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <th className="pb-2 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#D9D6CC]/40">
+              <tbody className="divide-y divide-[var(--soft-border)]/50">
                 {upcomingMessages.map((msg: any) => {
                   const d = new Date(msg.scheduledAt);
                   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                   const timeStr = formatTimeOnly(msg.scheduledAt);
 
                   return (
-                    <tr key={msg.id} className="hover:bg-[#FFFFFF]/60 transition-colors">
-                      <td className="py-3 font-medium text-[#20231F] pr-2">
+                    <tr key={msg.id} className="hover:bg-[var(--bg-muted)]/50 transition-colors">
+                      <td className="py-3 font-medium text-[var(--dark-text)] pr-2">
                         <div className="flex items-center gap-2">
                           <span className="w-5 h-5 rounded bg-[#87936C]/20 flex items-center justify-center text-[#87936C] shrink-0 text-[10px]">
                             {msg.type === 'video' ? '▶' : '✉'}
@@ -577,21 +600,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                           <span className="truncate max-w-[150px]">{msg.title}</span>
                         </div>
                       </td>
-                      <td className="py-3 text-[#85877F] whitespace-nowrap pr-2">
+                      <td className="py-3 text-[var(--muted-grey)] whitespace-nowrap pr-2">
                         {dateStr}
                       </td>
-                      <td className="py-3 text-[#85877F] whitespace-nowrap pr-2">
+                      <td className="py-3 text-[var(--muted-grey)] whitespace-nowrap pr-2">
                         {timeStr}
                       </td>
-                      <td className="py-3 text-[#20231F] whitespace-nowrap pr-2">
+                      <td className="py-3 text-[var(--dark-text)] whitespace-nowrap pr-2">
                         {msg.targetSegmentId === 'seg_all' ? 'All Members' : msg.targetSegmentId}
                       </td>
                       <td className="py-3 whitespace-nowrap pr-2">
                         <span
                           className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
                             msg.status === 'scheduled'
-                              ? 'bg-[#E7EBD8] text-[#263323]'
-                              : 'bg-[#EAE8E3] text-[#85877F]'
+                              ? 'bg-[#87936C]/20 text-[#27833A]'
+                              : 'bg-[var(--bg-muted)] text-[var(--muted-grey)]'
                           }`}
                         >
                           {msg.status === 'scheduled' ? 'Scheduled' : 'Draft'}
@@ -600,7 +623,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       <td className="py-3 text-right whitespace-nowrap">
                         <button
                           onClick={() => onNavigateToTab('messages')}
-                          className="text-[#85877F] hover:text-[#20231F] p-1"
+                          className="text-[var(--muted-grey)] hover:text-[var(--dark-text)] p-1"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
@@ -617,12 +640,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         <div className="pl-0 lg:pl-8 pt-6 lg:pt-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 text-[#263323]">
+              <div className="w-4 h-4 text-[#87936C]">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                   <path d="m19 20-7-14-7 14h14Z" />
                 </svg>
               </div>
-              <h3 className="text-[16px] font-bold text-[#20231F]">Scheduled Camps</h3>
+              <h3 className="text-[16px] font-bold text-[var(--dark-text)]">Scheduled Camps</h3>
             </div>
             <button
               onClick={() => onNavigateToTab('camps')}
@@ -636,7 +659,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[12px]">
               <thead>
-                <tr className="text-[#85877F] text-[11px] font-medium border-b border-[#D9D6CC]/60">
+                <tr className="text-[var(--muted-grey)] text-[11px] font-medium border-b border-[var(--soft-border)]">
                   <th className="pb-2 font-medium">Camp</th>
                   <th className="pb-2 font-medium">Date</th>
                   <th className="pb-2 font-medium">Location</th>
@@ -644,12 +667,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <th className="pb-2 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#D9D6CC]/40">
+              <tbody className="divide-y divide-[var(--soft-border)]/50">
                 {upcomingCamps.map((camp: any) => (
-                  <tr key={camp.id} className="hover:bg-[#FFFFFF]/60 transition-colors">
-                    <td className="py-3 font-medium text-[#20231F] pr-2">
+                  <tr key={camp.id} className="hover:bg-[var(--bg-muted)]/50 transition-colors">
+                    <td className="py-3 font-medium text-[var(--dark-text)] pr-2">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-6 rounded overflow-hidden bg-[#D9D6CC] shrink-0">
+                        <div className="w-8 h-6 rounded overflow-hidden bg-[var(--soft-border)] shrink-0">
                           {camp.image ? (
                             <img
                               src={camp.image}
@@ -657,28 +680,28 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-[#87936C]/30 flex items-center justify-center text-[10px] text-[#263323]">
+                            <div className="w-full h-full bg-[#87936C]/20 flex items-center justify-center text-[10px] text-[var(--forest-green)]">
                               ⛺
                             </div>
                           )}
                         </div>
-                        <span className="truncate max-w-[140px] font-medium text-[#20231F]">
+                        <span className="truncate max-w-[140px] font-medium text-[var(--dark-text)]">
                           {camp.title}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 text-[#85877F] whitespace-nowrap pr-2">
+                    <td className="py-3 text-[var(--muted-grey)] whitespace-nowrap pr-2">
                       {camp.startDate}
                     </td>
-                    <td className="py-3 text-[#85877F] whitespace-nowrap pr-2">
+                    <td className="py-3 text-[var(--muted-grey)] whitespace-nowrap pr-2">
                       {camp.venue}
                     </td>
                     <td className="py-3 whitespace-nowrap pr-2">
                       <span
                         className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
                           camp.status === 'upcoming'
-                            ? 'bg-[#E7EBD8] text-[#263323]'
-                            : 'bg-[#EAE8E3] text-[#85877F]'
+                            ? 'bg-[#87936C]/20 text-[#27833A]'
+                            : 'bg-[var(--bg-muted)] text-[var(--muted-grey)]'
                         }`}
                       >
                         {camp.status}
@@ -687,7 +710,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <td className="py-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => onNavigateToTab('camps')}
-                        className="text-[#85877F] hover:text-[#20231F] p-1"
+                        className="text-[var(--muted-grey)] hover:text-[var(--dark-text)] p-1"
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </button>

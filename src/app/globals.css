@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Design System: Green & Cream Theme ── */
+  /* ── Design System: Approved Green & Cream Theme (Light Mode Default) ── */
   --forest-green: #263323;
   --sage-green: #87936C;
   --warm-cream: #F4F0E8;
@@ -13,29 +13,84 @@
   --success-green: #27833A;
   --negative-terracotta: #C65B42;
 
-  /* Legacy vars kept for non-dashboard views */
-  --background: #090d16;
-  --foreground: #f8fafc;
-  --sidebar-bg: #263323;
-  --panel-bg: #111726;
-  --panel-muted: #0b0f19;
-  --border-subtle: #1e293b;
-  --border-strong: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --wa-green: #25D366;
-  --wa-green-dark: #128C7E;
-  --wa-green-accent: #16a34a;
-  --orange-accent: #f97316;
+  /* Universal Surface and Text Tokens (Light Theme) */
+  --bg-app: #F4F0E8;
+  --bg-sidebar: #263323;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F6F0;
+  --bg-muted: #EAE6DC;
+  --border-card: #D9D6CC;
+  --border-muted: #E2DFD6;
+  --text-main: #20231F;
+  --text-sub: #85877F;
+  --text-inverse: #FFFFFF;
+
+  /* Chart & Accent Colors */
+  --accent-primary: #87936C;
+  --accent-primary-hover: #75815a;
+  --accent-secondary: #263323;
+  --status-success: #27833A;
+  --status-danger: #C65B42;
+  --status-warning: #D9822B;
+}
+
+/* ── Dark Mode Class Override ── */
+html.dark {
+  --warm-cream: #141A13;
+  --white: #1C2419;
+  --dark-text: #F4F0E8;
+  --muted-grey: #9FA199;
+  --soft-border: #2F3D2C;
+
+  --bg-app: #141A13;
+  --bg-sidebar: #0E140D;
+  --bg-card: #1B2418;
+  --bg-card-hover: #222D1E;
+  --bg-muted: #243021;
+  --border-card: #2E3C2B;
+  --border-muted: #273324;
+  --text-main: #F4F0E8;
+  --text-sub: #9FA199;
+  --text-inverse: #141A13;
+
+  --accent-primary: #87936C;
+  --accent-secondary: #A3AF85;
 }
 
 body {
-  background: var(--warm-cream);
-  color: var(--dark-text);
+  background: var(--bg-app);
+  color: var(--text-main);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Universal Card & Container Styles */
+.theme-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  color: var(--text-main);
+  border-radius: 0.75rem;
+}
+
+.theme-card-subtle {
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-card);
+  color: var(--text-main);
+  border-radius: 0.5rem;
+}
+
+.theme-border {
+  border-color: var(--border-card);
+}
+
+.theme-text-sub {
+  color: var(--text-sub);
+}
+
+.theme-text-main {
+  color: var(--text-main);
 }
 
 /* Tabular numerals for KPI values */
@@ -54,10 +109,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D9D6CC;
+  background: var(--soft-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8B4AA;
+  background: var(--muted-grey);
 }
