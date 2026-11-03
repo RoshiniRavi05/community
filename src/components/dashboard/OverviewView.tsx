@@ -18,6 +18,8 @@ import {
   Bar,
   LineChart,
   Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -388,11 +390,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="pr-0 lg:pr-8 pb-6 lg:pb-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 flex items-end gap-0.5 text-[#87936C]">
-                  <span className="w-1 h-2 bg-[#87936C]"></span>
-                  <span className="w-1 h-3.5 bg-[#87936C]"></span>
-                  <span className="w-1 h-2.5 bg-[#87936C]"></span>
-                </div>
+                <svg className="w-4 h-4 text-[#87936C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M2 17l5-6 4 4 6-9 5 5" />
+                </svg>
                 <h3 className="text-[15px] font-bold text-[var(--dark-text)]">
                   Weekly Message Activity
                 </h3>
@@ -425,10 +425,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
             <div className="h-56 w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
+                <AreaChart
                   data={messageGraphFilter === 'week' ? weeklyMessageData : monthlyMessageData}
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                 >
+                  <defs>
+                    <linearGradient id="sageWaveGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#87936C" stopOpacity={0.45} />
+                      <stop offset="50%" stopColor="#87936C" stopOpacity={0.20} />
+                      <stop offset="95%" stopColor="#87936C" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid stroke="var(--soft-border)" strokeDasharray="3 3" vertical={false} opacity={0.6} />
                   <XAxis
                     dataKey="day"
@@ -446,7 +453,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     ticks={[0, 50, 100, 150, 200, 250]}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(135, 147, 108, 0.15)' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
@@ -458,13 +464,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       return null;
                     }}
                   />
-                  <Bar
+                  <Area
+                    type="natural"
                     dataKey="sent"
-                    fill="#87936C"
-                    radius={[3, 3, 0, 0]}
-                    maxBarSize={38}
+                    stroke="#87936C"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#sageWaveGradient)"
+                    dot={{ r: 2.5, fill: '#87936C', strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: '#263323', stroke: '#87936C', strokeWidth: 2 }}
                   />
-                </BarChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
