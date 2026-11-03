@@ -8,6 +8,9 @@ import {
   Bell,
   MoreHorizontal,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  X,
   Layers,
   Sun,
   Moon
@@ -52,6 +55,28 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   const [messageGraphFilter, setMessageGraphFilter] = useState<'week' | 'month'>('week');
   const [memberGraphFilter, setMemberGraphFilter] = useState<'week' | 'month'>('week');
+
+  // Top Calendar Picker State
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 10, 1)); // Default Nov 2026
+
+  // Scheduled message dates map for highlighting in the current month
+  const scheduledDatesMap = useMemo(() => {
+    const map = new Map<number, { count: number; titles: string[] }>();
+    campaigns.forEach((c) => {
+      if (c.status === 'scheduled' || c.status === 'pending_approval' || c.status === 'draft') {
+        const d = new Date(c.scheduledAt);
+        if (d.getFullYear() === calendarMonth.getFullYear() && d.getMonth() === calendarMonth.getMonth()) {
+          const day = d.getDate();
+          const existing = map.get(day) || { count: 0, titles: [] };
+          existing.count += 1;
+          existing.titles.push(c.title);
+          map.set(day, existing);
+        }
+      }
+    });
+    return map;
+  }, [campaigns, calendarMonth]);
 
   // Compute Weekly Statistics
   const now = new Date();
@@ -250,11 +275,111 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </button>
           )}
 
-          {/* Date Selector */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--soft-border)] bg-[var(--white)] text-[13px] text-[var(--dark-text)] shadow-xs cursor-pointer">
-            <CalendarIcon className="w-4 h-4 text-[var(--muted-grey)]" />
-            <span>Oct 27 – Nov 2, 2026</span>
-            <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-grey)] ml-1" />
+          {/* Interactive Date Selector with Scheduled Month Calendar */}
+          <div className="relative">
+            <button
+              onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--soft-border)] bg-[var(--white)] text-[13px] text-[var(--dark-text)] hover:bg-[var(--bg-muted)] transition shadow-xs cursor-pointer select-none"
+            >
+              <CalendarIcon className="w-4 h-4 text-[#87936C]" />
+              <span className="font-medium">
+                {calendarMonth.toLocaleString('en-US', { month: 'short', year: 'numeric' })}
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-[var(--muted-grey)] ml-1 transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Calendar Popover */}
+            {isCalendarOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsCalendarOpen(false)}
+                />
+                <div className="absolute right-0 top-11 z-50 w-72 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                  {/* Month Navigation */}
+                  <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)]">
+                    <button
+                      onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                      className="p-1 rounded hover:bg-[var(--bg-muted)] text-[var(--text-main)]"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-[13px] font-bold text-[var(--text-main)]">
+                      {calendarMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                    </span>
+                    <button
+                      onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                      className="p-1 rounded hover:bg-[var(--bg-muted)] text-[var(--text-main)]"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Day of Week Labels */}
+                  <div className="grid grid-cols-7 gap-1 pt-3 text-center text-[10px] font-semibold text-[var(--muted-grey)]">
+                    <span>Su</span>
+                    <span>Mo</span>
+                    <span>Tu</span>
+                    <span>We</span>
+                    <span>Th</span>
+                    <span>Fr</span>
+                    <span>Sa</span>
+                  </div>
+
+                  {/* Days Grid */}
+                  <div className="grid grid-cols-7 gap-1 pt-1.5 text-center text-xs">
+                    {(() => {
+                      const year = calendarMonth.getFullYear();
+                      const month = calendarMonth.getMonth();
+                      const firstDayIndex = new Date(year, month, 1).getDay();
+                      const totalDays = new Date(year, month + 1, 0).getDate();
+
+                      const days = [];
+                      for (let i = 0; i < firstDayIndex; i++) {
+                        days.push(<div key={`empty-${i}`} className="h-7" />);
+                      }
+
+                      for (let day = 1; day <= totalDays; day++) {
+                        const schedInfo = scheduledDatesMap.get(day);
+                        const hasScheduled = !!schedInfo;
+
+                        days.push(
+                          <div
+                            key={day}
+                            title={hasScheduled ? `${schedInfo.count} message(s) scheduled:\n${schedInfo.titles.join('\n')}` : undefined}
+                            className={`h-7 w-7 mx-auto flex flex-col items-center justify-center rounded-full text-[11px] font-medium transition cursor-pointer relative ${
+                              hasScheduled
+                                ? 'bg-[#87936C] text-white font-bold shadow-xs hover:bg-[#77835c]'
+                                : 'text-[var(--text-main)] hover:bg-[var(--bg-muted)]'
+                            }`}
+                          >
+                            <span>{day}</span>
+                            {hasScheduled && (
+                              <span className="w-1 h-1 rounded-full bg-white absolute bottom-0.5" />
+                            )}
+                          </div>
+                        );
+                      }
+                      return days;
+                    })()}
+                  </div>
+
+                  {/* Legend Footer */}
+                  <div className="mt-3 pt-2.5 border-t border-[var(--border-card)] flex items-center justify-between text-[11px] text-[var(--text-sub)]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#87936C]" />
+                      <span>Scheduled Message</span>
+                    </div>
+                    <button
+                      onClick={() => onNavigateToTab('messages')}
+                      className="text-[11px] font-semibold text-[#27833A] hover:underline"
+                    >
+                      View All
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Notification Bell */}
