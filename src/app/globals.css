@@ -1,9 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
+  /* ── Design System: Green & Cream Theme ── */
+  --forest-green: #263323;
+  --sage-green: #87936C;
+  --warm-cream: #F4F0E8;
+  --white: #FFFFFF;
+  --dark-text: #20231F;
+  --muted-grey: #85877F;
+  --soft-border: #D9D6CC;
+  --success-green: #27833A;
+  --negative-terracotta: #C65B42;
+
+  /* Legacy vars kept for non-dashboard views */
   --background: #090d16;
   --foreground: #f8fafc;
-  --sidebar-bg: #0d121f;
+  --sidebar-bg: #263323;
   --panel-bg: #111726;
   --panel-muted: #0b0f19;
   --border-subtle: #1e293b;
@@ -18,11 +31,16 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--warm-cream);
+  color: var(--dark-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular numerals for KPI values */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Custom administrative scrollbar */
@@ -36,10 +54,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #D9D6CC;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #B8B4AA;
 }

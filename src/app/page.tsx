@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar, ActiveTab } from '@/components/layout/Sidebar';
-import { Header } from '@/components/layout/Header';
 import { OverviewView } from '@/components/dashboard/OverviewView';
 import { MembersView } from '@/components/members/MembersView';
 import { SchedulerView } from '@/components/scheduler/SchedulerView';
@@ -20,7 +19,7 @@ import { AppState, Campaign, Member, SocialMediaPost, CampEvent, DiscountOffer, 
 
 export default function Home() {
   const [data, setData] = useState<AppState | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -443,9 +442,9 @@ export default function Home() {
 
   if (isLoading || !data) {
     return (
-      <div className="min-h-screen bg-[#fbfbfa] flex flex-col items-center justify-center text-zinc-500 space-y-2 font-sans">
-        <div className="w-6 h-6 border-2 border-zinc-400 border-t-zinc-800 rounded-full animate-spin"></div>
-        <p className="text-xs">Loading community operations...</p>
+      <div className="min-h-screen bg-[#F4F0E8] flex flex-col items-center justify-center text-[#85877F] space-y-2 font-sans">
+        <div className="w-6 h-6 border-2 border-[#87936C] border-t-[#263323] rounded-full animate-spin"></div>
+        <p className="text-xs font-medium">Loading Community Hub...</p>
       </div>
     );
   }
@@ -459,11 +458,11 @@ export default function Home() {
   }).length;
 
   return (
-    <div className="flex min-h-screen bg-[#090d16] text-slate-100 font-sans antialiased">
+    <div className="flex min-h-screen bg-[#F4F0E8] text-[#20231F] font-sans antialiased">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#111726] text-white text-xs font-medium px-4 py-2.5 rounded-md shadow-2xl border border-[#1e293b] flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
+        <div className="fixed bottom-5 right-5 z-50 bg-[#263323] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-2xl border border-white/10 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#87936C] animate-pulse"></span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -481,20 +480,8 @@ export default function Home() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen">
-        <Header
-          activeTab={activeTab}
-          emergencyPauseActive={data.antiSpamSettings.emergencyPauseActive}
-          onToggleEmergencyPause={handleToggleEmergencyPause}
-          onTriggerScheduler={handleTriggerScheduler}
-          onRefresh={fetchData}
-          isSyncing={isSyncing}
-          onOpenScheduleModal={() => openScheduleComposer()}
-          onOpenCareAlarmsModal={() => setIsCareAlarmModalOpen(true)}
-          activeAlarmsCount={data.careAlarms?.filter(a => a.isActive).length ?? 0}
-        />
-
-        <main className="flex-1 p-5 max-w-7xl w-full mx-auto space-y-5">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[#F4F0E8]">
+        <main className="flex-1 px-8 py-6 max-w-[1400px] w-full">
           {(activeTab === 'overview' || activeTab === 'dashboard') && (
             <OverviewView
               data={data}
@@ -508,123 +495,145 @@ export default function Home() {
           )}
 
           {activeTab === 'members' && (
-            <MembersView
-              members={data.members}
-              segments={data.segments}
-              messageLogs={data.messageLogs}
-              onSaveMember={handleSaveMember}
-              onRemoveMember={handleRemoveMember}
-              onImportCsv={handleImportCsv}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <MembersView
+                members={data.members}
+                segments={data.segments}
+                messageLogs={data.messageLogs}
+                onSaveMember={handleSaveMember}
+                onRemoveMember={handleRemoveMember}
+                onImportCsv={handleImportCsv}
+              />
+            </div>
           )}
 
           {(activeTab === 'messages' || activeTab === 'scheduler') && (
-            <SchedulerView
-              campaigns={data.campaigns}
-              segments={data.segments}
-              members={data.members}
-              onOpenComposer={openScheduleComposer}
-              onApproveCampaign={handleApproveCampaign}
-              onCancelCampaign={handleCancelCampaign}
-              onDuplicateCampaign={handleDuplicateCampaign}
-              onSendNow={handleSendNow}
-              defaultView="table"
-              onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <SchedulerView
+                campaigns={data.campaigns}
+                segments={data.segments}
+                members={data.members}
+                onOpenComposer={openScheduleComposer}
+                onApproveCampaign={handleApproveCampaign}
+                onCancelCampaign={handleCancelCampaign}
+                onDuplicateCampaign={handleDuplicateCampaign}
+                onSendNow={handleSendNow}
+                defaultView="table"
+                onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
+              />
+            </div>
           )}
 
           {activeTab === 'calendar' && (
-            <SchedulerView
-              campaigns={data.campaigns}
-              segments={data.segments}
-              members={data.members}
-              onOpenComposer={openScheduleComposer}
-              onApproveCampaign={handleApproveCampaign}
-              onCancelCampaign={handleCancelCampaign}
-              onDuplicateCampaign={handleDuplicateCampaign}
-              onSendNow={handleSendNow}
-              defaultView="weekly_calendar"
-              onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <SchedulerView
+                campaigns={data.campaigns}
+                segments={data.segments}
+                members={data.members}
+                onOpenComposer={openScheduleComposer}
+                onApproveCampaign={handleApproveCampaign}
+                onCancelCampaign={handleCancelCampaign}
+                onDuplicateCampaign={handleDuplicateCampaign}
+                onSendNow={handleSendNow}
+                defaultView="weekly_calendar"
+                onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
+              />
+            </div>
           )}
 
           {activeTab === 'logs' && (
-            <MessageLogsView
-              logs={data.messageLogs}
-              onRetryFailed={async (logId) => {
-                showToast(`Retry dispatched for log ${logId}`);
-                await fetchData();
-              }}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <MessageLogsView
+                logs={data.messageLogs}
+                onRetryFailed={async (logId) => {
+                  showToast(`Retry dispatched for log ${logId}`);
+                  await fetchData();
+                }}
+              />
+            </div>
           )}
 
           {activeTab === 'social' && (
-            <SocialMediaView
-              posts={data.socialPosts}
-              onOpenScheduleModal={openScheduleComposer}
-              onAddPost={handleAddSocialPost}
-              onDeletePost={handleDeleteSocialPost}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <SocialMediaView
+                posts={data.socialPosts}
+                onOpenScheduleModal={openScheduleComposer}
+                onAddPost={handleAddSocialPost}
+                onDeletePost={handleDeleteSocialPost}
+              />
+            </div>
           )}
 
           {activeTab === 'camps' && (
-            <CampsView
-              camps={data.camps}
-              onOpenScheduleModal={openScheduleComposer}
-              onAddCamp={handleAddCamp}
-              onDeleteCamp={handleDeleteCamp}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <CampsView
+                camps={data.camps}
+                onOpenScheduleModal={openScheduleComposer}
+                onAddCamp={handleAddCamp}
+                onDeleteCamp={handleDeleteCamp}
+              />
+            </div>
           )}
 
           {activeTab === 'discounts' && (
-            <DiscountsView
-              discounts={data.discounts}
-              onOpenScheduleModal={openScheduleComposer}
-              onAddDiscount={handleAddDiscount}
-              onDeleteDiscount={handleDeleteDiscount}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <DiscountsView
+                discounts={data.discounts}
+                onOpenScheduleModal={openScheduleComposer}
+                onAddDiscount={handleAddDiscount}
+                onDeleteDiscount={handleDeleteDiscount}
+              />
+            </div>
           )}
 
           {activeTab === 'analytics' && (
-            <AnalyticsView
-              data={data}
-              onToggleEmergencyPause={handleToggleEmergencyPause}
-              onStopAllScheduled={handleStopAllScheduled}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <AnalyticsView
+                data={data}
+                onToggleEmergencyPause={handleToggleEmergencyPause}
+                onStopAllScheduled={handleStopAllScheduled}
+              />
+            </div>
           )}
 
           {activeTab === 'monitor' && (
-            <AutomationMonitorView
-              errors={data.errors}
-              campaigns={data.campaigns}
-              settings={data.antiSpamSettings}
-              whatsappConfig={data.whatsappConfig}
-              onToggleEmergencyPause={handleToggleEmergencyPause}
-              onResolveError={handleResolveError}
-              onTriggerScheduler={handleTriggerScheduler}
-              isSyncing={isSyncing}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <AutomationMonitorView
+                errors={data.errors}
+                campaigns={data.campaigns}
+                settings={data.antiSpamSettings}
+                whatsappConfig={data.whatsappConfig}
+                onToggleEmergencyPause={handleToggleEmergencyPause}
+                onResolveError={handleResolveError}
+                onTriggerScheduler={handleTriggerScheduler}
+                isSyncing={isSyncing}
+              />
+            </div>
           )}
 
           {activeTab === 'whatsapp' && (
-            <WhatsAppIntegrationView
-              config={data.whatsappConfig}
-              onSendTestMessage={handleSendTestMessage}
-              onTestConnection={handleTestConnection}
-              onSimulateWebhook={handleSimulateWebhook}
-              onUpdateCommunityConfig={handleUpdateCommunityConfig}
-              onSaveCommunityGroup={handleSaveCommunityGroup}
-              onDeleteCommunityGroup={handleDeleteCommunityGroup}
-              onUpdateCloudApiConfig={handleUpdateCloudApiConfig}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <WhatsAppIntegrationView
+                config={data.whatsappConfig}
+                onSendTestMessage={handleSendTestMessage}
+                onTestConnection={handleTestConnection}
+                onSimulateWebhook={handleSimulateWebhook}
+                onUpdateCommunityConfig={handleUpdateCommunityConfig}
+                onSaveCommunityGroup={handleSaveCommunityGroup}
+                onDeleteCommunityGroup={handleDeleteCommunityGroup}
+                onUpdateCloudApiConfig={handleUpdateCloudApiConfig}
+              />
+            </div>
           )}
 
           {activeTab === 'settings' && (
-            <SettingsView
-              settings={data.antiSpamSettings}
-              auditLogs={data.auditLogs}
-              onUpdateSettings={handleUpdateSettings}
-            />
+            <div className="bg-[#111726] p-5 rounded-xl border border-[#1e293b] text-slate-100">
+              <SettingsView
+                settings={data.antiSpamSettings}
+                auditLogs={data.auditLogs}
+                onUpdateSettings={handleUpdateSettings}
+              />
+            </div>
           )}
         </main>
       </div>

@@ -9,10 +9,9 @@ import {
   Video,
   BarChart3,
   MessageCircle,
-  Settings,
-  ShieldAlert,
-  BellRing,
-  Activity
+  HelpCircle,
+  ChevronDown,
+  ShieldAlert
 } from 'lucide-react';
 
 export type ActiveTab =
@@ -34,9 +33,9 @@ export type ActiveTab =
 interface SidebarProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
-  emergencyPauseActive: boolean;
-  unresolvedErrorsCount: number;
-  scheduledNext7DaysCount: number;
+  emergencyPauseActive?: boolean;
+  unresolvedErrorsCount?: number;
+  scheduledNext7DaysCount?: number;
   membersCount?: number;
   onOpenCareAlarms?: () => void;
   activeCareAlarmsCount?: number;
@@ -45,75 +44,64 @@ interface SidebarProps {
 interface NavItem {
   id: ActiveTab;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-  alert?: boolean;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
-  emergencyPauseActive,
-  unresolvedErrorsCount,
-  scheduledNext7DaysCount,
-  membersCount = 19,
-  onOpenCareAlarms,
-  activeCareAlarmsCount = 0
+  emergencyPauseActive = false,
 }) => {
   // Normalize tab for navigation matching
-  const currentTab = activeTab === 'overview' ? 'dashboard' : activeTab === 'scheduler' ? 'messages' : activeTab;
+  const currentTab =
+    activeTab === 'overview'
+      ? 'dashboard'
+      : activeTab === 'scheduler' || activeTab === 'calendar'
+      ? 'messages'
+      : activeTab;
 
-  // The 7 required navigation items in exact order from prompt and wireframe
+  // Exact 7 items in order from requirements:
+  // 1. Dashboard, 2. Members, 3. Messages, 4. Camps, 5. Social Media, 6. Analytics, 7. WhatsApp Integration
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'members', label: 'Members', icon: Users, badge: membersCount > 0 ? String(membersCount) : undefined },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, badge: scheduledNext7DaysCount > 0 ? String(scheduledNext7DaysCount) : undefined },
+    { id: 'members', label: 'Members', icon: Users },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'camps', label: 'Camps', icon: Tent },
     { id: 'social', label: 'Social Media', icon: Video },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'whatsapp', label: 'WhatsApp Integration', icon: MessageCircle, alert: unresolvedErrorsCount > 0 }
+    { id: 'whatsapp', label: 'WhatsApp Integration', icon: MessageCircle }
   ];
 
   return (
-    <aside className="w-60 bg-[#0d121f] border-r border-[#1e293b] flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none text-slate-200 z-30">
-      <div>
+    <aside className="w-[230px] bg-[#263323] text-white flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 font-sans">
+      <div className="flex flex-col">
         {/* Brand Header */}
-        <div className="h-14 px-4 border-b border-[#1e293b] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-[#16a34a] flex items-center justify-center text-white font-bold shadow-xs">
-              <MessageCircle className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <div className="font-semibold text-slate-100 text-xs tracking-wide">
-                COMMUNITY HUB
-              </div>
-              <div className="text-[10px] text-slate-500 font-normal">
-                Management Console
-              </div>
-            </div>
+        <div className="h-20 px-6 flex items-center gap-3">
+          {/* Leaf / Brand Icon matching reference */}
+          <div className="w-7 h-7 rounded-full bg-[#87936C]/30 flex items-center justify-center text-[#87936C]">
+            <svg
+              className="w-5 h-5 text-[#87936C]"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+            </svg>
           </div>
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30">
-            PROD
+          <span className="font-semibold text-[15px] tracking-tight text-[#FFFFFF]">
+            Community Hub
           </span>
         </div>
 
-        {/* Emergency Kill-Switch Notification */}
+        {/* Emergency Kill-Switch notification if active */}
         {emergencyPauseActive && (
-          <div className="mx-3 mt-2.5 p-2 rounded-md bg-rose-950/40 border border-rose-800/60 text-rose-300 text-[11px] flex items-start gap-2">
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-            <div className="leading-tight">
-              <div className="font-semibold text-rose-200">Kill-Switch Active</div>
-              <div className="text-[10px] text-rose-400 mt-0.5">Outbound dispatch halted</div>
-            </div>
+          <div className="mx-4 mb-2 p-2 rounded bg-[#C65B42]/20 border border-[#C65B42]/40 text-[#F4F0E8] text-[11px] flex items-center gap-2">
+            <ShieldAlert className="w-3.5 h-3.5 text-[#C65B42] shrink-0" />
+            <span className="truncate">Kill-Switch Active</span>
           </div>
         )}
 
-        {/* Navigation list */}
-        <nav className="p-2.5 space-y-1 mt-1">
-          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-2.5 py-1">
-            Navigation
-          </div>
-
+        {/* Navigation Items */}
+        <nav className="px-3 space-y-1 mt-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -121,74 +109,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-medium transition-colors text-left ${
+                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-lg text-[13px] font-medium transition-all text-left ${
                   isActive
-                    ? 'bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30 font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#151c2c]'
+                    ? 'bg-[#87936C]/30 text-white font-semibold'
+                    : 'text-[#D9D6CC]/80 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#22c55e]' : 'text-slate-400'}`} />
-                  <span className="truncate">{item.label}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {item.badge && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                      isActive 
-                        ? 'bg-[#16a34a]/30 text-[#86efac]' 
-                        : 'bg-[#1e293b] text-slate-400'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.alert && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  )}
-                </div>
+                <Icon
+                  strokeWidth={1.8}
+                  className={`w-[18px] h-[18px] shrink-0 ${
+                    isActive ? 'text-[#87936C]' : 'text-[#D9D6CC]/70'
+                  }`}
+                />
+                <span className="truncate">{item.label}</span>
               </button>
             );
           })}
         </nav>
       </div>
 
-      {/* Footer Area: Utilities & Status */}
-      <div className="p-2.5 border-t border-[#1e293b] space-y-1 bg-[#0a0e18]/60">
-        {onOpenCareAlarms && (
-          <button
-            onClick={onOpenCareAlarms}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded text-[11px] text-slate-400 hover:text-slate-200 hover:bg-[#151c2c] transition"
-          >
-            <div className="flex items-center gap-2">
-              <BellRing className="w-3.5 h-3.5 text-amber-400" />
-              <span>Care Alarms</span>
-            </div>
-            {activeCareAlarmsCount > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded font-mono bg-amber-500/20 text-amber-300">
-                {activeCareAlarmsCount} ON
-              </span>
-            )}
-          </button>
-        )}
-
+      {/* Bottom Section: Help & Support, User profile, role */}
+      <div className="p-4 space-y-3">
+        {/* Help & Support */}
         <button
           onClick={() => setActiveTab('settings')}
-          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] transition ${
-            activeTab === 'settings'
-              ? 'bg-[#16a34a]/15 text-[#22c55e]'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-[#151c2c]'
-          }`}
+          className="w-full flex items-center gap-3 px-3 py-2 text-[13px] text-[#D9D6CC]/80 hover:text-white transition-colors text-left"
         >
-          <Settings className="w-3.5 h-3.5" />
-          <span>Settings & Anti-Spam</span>
+          <HelpCircle strokeWidth={1.8} className="w-[18px] h-[18px] text-[#D9D6CC]/70" />
+          <span>Help & Support</span>
         </button>
 
-        <div className="pt-2 px-2.5 flex items-center justify-between text-[10px] text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <span>WhatsApp Cloud API</span>
+        {/* User Profile */}
+        <div className="pt-2 border-t border-white/10 flex items-center justify-between px-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-[#87936C]/30 text-[#87936C] flex items-center justify-center font-semibold text-xs shrink-0">
+              RR
+            </div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-medium text-white truncate leading-tight">
+                Roshini Ravi
+              </div>
+              <div className="text-[11px] text-[#85877F] leading-tight mt-0.5">
+                Admin
+              </div>
+            </div>
           </div>
-          <span className="font-mono text-slate-500">v2.4</span>
+          <ChevronDown className="w-4 h-4 text-[#85877F] shrink-0" />
         </div>
       </div>
     </aside>
