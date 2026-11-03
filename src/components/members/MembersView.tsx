@@ -372,7 +372,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
     switch (status) {
       case 'joined_community':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
             Joined Community
           </span>
         );
@@ -459,7 +459,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
             <button
               onClick={openAddModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Member</span>
@@ -636,7 +636,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   return (
                     <tr
                       key={member.id}
-                      className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#263323] hover:bg-[#1a2318]/5' : ''}`}
+                      className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#87936C] hover:bg-[#77835c]/5' : ''}`}
                     >
                       <td className="py-2.5 px-3">
                         <input
@@ -973,7 +973,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingMember ? 'Update Member' : 'Save Member'}
                 </button>
@@ -1107,7 +1107,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               )}
 
               {/* WhatsApp Invitation Helper */}
-              <div className="p-3 rounded bg-[#263323] hover:bg-[#1a2318]/10 border border-[#87936C]/30 space-y-2">
+              <div className="p-3 rounded bg-[#87936C] hover:bg-[#77835c]/10 border border-[#87936C]/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-[#27833A] flex items-center gap-1.5">
                     <MessageCircle className="w-3.5 h-3.5" />
@@ -1120,7 +1120,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                       setCopiedLink(true);
                       setTimeout(() => setCopiedLink(false), 2000);
                     }}
-                    className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#263323] hover:bg-[#1a2318]/20 text-[#27833A] hover:bg-[#263323] hover:bg-[#1a2318]/30 transition"
+                    className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#87936C]/20 text-[#27833A] hover:bg-[#87936C]/30 transition"
                   >
                     {copiedLink ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
@@ -1185,7 +1185,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   type="button"
                   disabled={isSubmitting || !csvText.trim()}
                   onClick={handleImportCsvSubmit}
-                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white transition text-xs font-medium disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white transition text-xs font-medium disabled:opacity-50"
                 >
                   {isSubmitting ? 'Importing...' : 'Upload & Import'}
                 </button>

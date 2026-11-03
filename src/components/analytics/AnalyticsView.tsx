@@ -275,7 +275,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1 rounded capitalize font-medium transition ${
                   timeframe === tf
-                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white'
+                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white'
                     : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
@@ -395,7 +395,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               <span>Sent</span>
             </span>
             <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
-              <span className="w-2.5 h-2.5 rounded-xs bg-[#263323] hover:bg-[#1a2318]"></span>
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#87936C] hover:bg-[#77835c]"></span>
               <span>Delivered</span>
             </span>
             <span className="flex items-center gap-1.5 text-[var(--text-sub)]">

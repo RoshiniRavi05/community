@@ -199,7 +199,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
     switch (status) {
       case 'shared_to_community':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
             Shared to Community
           </span>
         );
@@ -245,7 +245,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
           {/* Add Post Button */}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Post</span>
@@ -266,7 +266,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                   onClick={() => setPlatformFilter(p)}
                   className={`px-3 py-1 rounded capitalize font-medium transition ${
                     platformFilter === p
-                      ? 'bg-[#263323] hover:bg-[#1a2318] text-white'
+                      ? 'bg-[#87936C] hover:bg-[#77835c] text-white'
                       : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                   }`}
                 >
@@ -363,7 +363,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => handleScheduleBroadcast(post)}
                             title="Schedule Announcement in WhatsApp"
-                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#263323] hover:bg-[#1a2318]/20 text-[#27833A] hover:bg-[#263323] hover:bg-[#1a2318]/30 text-[10px] font-medium transition"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#87936C]/20 text-[#27833A] hover:bg-[#87936C]/30 text-[10px] font-medium transition"
                           >
                             <Send className="w-3 h-3" />
                             <span>Schedule</span>
@@ -565,7 +565,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingPost ? 'Update Post' : 'Save Post'}
                 </button>
@@ -623,7 +623,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                     setViewingPost(null);
                     handleScheduleBroadcast(p);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Schedule in Campaign Queue</span>

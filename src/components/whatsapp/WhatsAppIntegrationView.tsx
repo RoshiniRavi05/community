@@ -159,7 +159,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
       <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-md bg-[#263323] hover:bg-[#1a2318]/15 border border-[#87936C]/30 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-md bg-[#87936C]/20 border border-[#87936C]/30 flex items-center justify-center shrink-0">
               <MessageCircle className="w-5 h-5 text-[#27833A]" />
             </div>
             <div>
@@ -167,7 +167,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
                 <h2 className="text-sm font-semibold text-[var(--text-main)]">
                   WhatsApp Business Cloud API Integration
                 </h2>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]"></span>
                   <span>Connected (Live)</span>
                 </span>
@@ -276,7 +276,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
             <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4">
               <div className="text-[10px] text-[var(--text-sub)] uppercase font-semibold">Quality Rating</div>
               <div className="mt-1 flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#263323] hover:bg-[#1a2318]/20 text-[#27833A] border border-[#87936C]/30">
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
                   HIGH (GREEN)
                 </span>
               </div>
@@ -424,7 +424,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
             </div>
             <button
               onClick={() => setIsGroupModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Subgroup</span>
@@ -523,7 +523,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
             <button
               type="submit"
               disabled={isSavingApi}
-              className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs"
+              className="px-4 py-1.5 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs"
             >
               {isSavingApi ? 'Saving...' : 'Save API Credentials'}
             </button>
@@ -568,7 +568,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
           <button
             onClick={handleSendTest}
             disabled={isSendingTest}
-            className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs flex items-center gap-1.5"
+            className="px-4 py-1.5 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs flex items-center gap-1.5"
           >
             <Send className="w-3.5 h-3.5" />
             <span>{isSendingTest ? 'Sending Test...' : 'Send Live Test Message'}</span>
@@ -633,7 +633,7 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white font-medium"
+                  className="px-3 py-1 rounded bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white font-medium"
                 >
                   Save Group
                 </button>

@@ -122,7 +122,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
     switch (status) {
       case 'scheduled':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
             Scheduled
           </span>
         );
@@ -235,7 +235,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                 onClick={() => setViewMode('table')}
                 className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
                   viewMode === 'table'
-                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white font-medium'
+                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
                     : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
@@ -247,7 +247,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                 onClick={() => setViewMode('weekly_calendar')}
                 className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
                   viewMode === 'weekly_calendar'
-                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white font-medium'
+                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
                     : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
@@ -259,7 +259,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                 onClick={() => setViewMode('agenda')}
                 className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
                   viewMode === 'agenda'
-                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white font-medium'
+                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
                     : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
@@ -271,7 +271,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
             {/* + Add Message */}
             <button
               onClick={() => onOpenComposer()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Message</span>
@@ -345,7 +345,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                     return (
                       <tr
                         key={camp.id}
-                        className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#263323] hover:bg-[#1a2318]/5' : ''}`}
+                        className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#87936C] hover:bg-[#77835c]/5' : ''}`}
                       >
                         <td className="py-2.5 px-3">
                           <input
@@ -487,7 +487,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
 
             <div className="flex items-center gap-2 text-xs text-[var(--text-sub)]">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#263323] hover:bg-[#1a2318]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#87936C] hover:bg-[#77835c]"></span>
                 <span>7:00 PM Broadcast Window</span>
               </span>
             </div>
@@ -514,7 +514,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                       <span className={`text-xs font-semibold ${isToday ? 'text-[#27833A]' : 'text-[var(--text-main)]'}`}>
                         {dayName}
                       </span>
-                      <span className={`text-[11px] font-mono font-medium ${isToday ? 'px-1.5 rounded bg-[#263323] hover:bg-[#1a2318] text-white' : 'text-[var(--text-sub)]'}`}>
+                      <span className={`text-[11px] font-mono font-medium ${isToday ? 'px-1.5 rounded bg-[#87936C] hover:bg-[#77835c] text-white' : 'text-[var(--text-sub)]'}`}>
                         {dayNum}
                       </span>
                     </div>

@@ -525,7 +525,7 @@ export default function Home() {
                     const addBtn = document.querySelector('[data-action="add-member"]');
                     if (addBtn) (addBtn as HTMLButtonElement).click();
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#263323] hover:bg-[#1a2318] text-white text-[13px] font-medium shadow-xs transition"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#87936C] hover:bg-[#77835c] text-white text-[13px] font-medium shadow-xs transition"
                 >
                   <span>+ Add Member</span>
                 </button>
@@ -534,7 +534,7 @@ export default function Home() {
               {(activeTab === 'messages' || activeTab === 'scheduler' || activeTab === 'calendar') && (
                 <button
                   onClick={() => openScheduleComposer()}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#263323] hover:bg-[#1a2318] text-white text-[13px] font-medium shadow-xs transition"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#87936C] hover:bg-[#77835c] text-white text-[13px] font-medium shadow-xs transition"
                 >
                   <span>+ Create Message</span>
                 </button>
@@ -546,7 +546,7 @@ export default function Home() {
                     const addCampBtn = document.querySelector('[data-action="add-camp"]');
                     if (addCampBtn) (addCampBtn as HTMLButtonElement).click();
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#263323] hover:bg-[#1a2318] text-white text-[13px] font-medium shadow-xs transition"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#87936C] hover:bg-[#77835c] text-white text-[13px] font-medium shadow-xs transition"
                 >
                   <span>+ Add Camp</span>
                 </button>
