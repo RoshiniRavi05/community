@@ -343,36 +343,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                         const schedInfo = scheduledDatesMap.get(day);
                         const hasScheduled = !!schedInfo;
 
-                        const handleDayClick = () => {
-                          const chosen = new Date(year, month, day, 19, 0, 0);
-                          setIsCalendarOpen(false);
-                          // Open message composer pre-filled with this selected date
-                          onOpenScheduleModal({
-                            scheduledAt: chosen.toISOString().slice(0, 16)
-                          });
-                        };
-
                         days.push(
-                          <button
+                          <div
                             key={day}
-                            type="button"
-                            onClick={handleDayClick}
-                            title={
-                              hasScheduled
-                                ? `${schedInfo.count} message(s) scheduled on ${calendarMonth.toLocaleString('en-US', { month: 'short' })} ${day}:\n${schedInfo.titles.join('\n')}\nClick to schedule another message on this date.`
-                                : `Click to schedule a new message on ${calendarMonth.toLocaleString('en-US', { month: 'short' })} ${day}, ${year}`
-                            }
-                            className={`h-7 w-7 mx-auto flex flex-col items-center justify-center rounded-full text-[11px] font-medium transition cursor-pointer relative focus:outline-none focus:ring-1 focus:ring-[#87936C] ${
+                            title={hasScheduled ? `${schedInfo.count} message(s) scheduled:\n${schedInfo.titles.join('\n')}` : undefined}
+                            className={`h-7 w-7 mx-auto flex flex-col items-center justify-center rounded-full text-[11px] font-medium transition cursor-pointer relative ${
                               hasScheduled
                                 ? 'bg-[#87936C] text-white font-bold shadow-xs hover:bg-[#77835c]'
-                                : 'text-[var(--text-main)] hover:bg-[var(--bg-muted)] hover:text-[#87936C]'
+                                : 'text-[var(--text-main)] hover:bg-[var(--bg-muted)]'
                             }`}
                           >
                             <span>{day}</span>
                             {hasScheduled && (
                               <span className="w-1 h-1 rounded-full bg-white absolute bottom-0.5" />
                             )}
-                          </button>
+                          </div>
                         );
                       }
                       return days;
@@ -380,22 +365,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   </div>
 
                   {/* Legend Footer */}
-                  <div className="mt-3 pt-2.5 border-t border-[var(--border-card)] space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-[var(--text-sub)]">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#87936C]" />
-                        <span>Scheduled Message</span>
-                      </div>
-                      <button
-                        onClick={() => onNavigateToTab('messages')}
-                        className="text-[11px] font-semibold text-[#27833A] hover:underline"
-                      >
-                        View All
-                      </button>
+                  <div className="mt-3 pt-2.5 border-t border-[var(--border-card)] flex items-center justify-between text-[11px] text-[var(--text-sub)]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#87936C]" />
+                      <span>Scheduled Message</span>
                     </div>
-                    <div className="text-[10px] text-[var(--muted-grey)] text-center">
-                      💡 Click any day to schedule a message on that date
-                    </div>
+                    <button
+                      onClick={() => onNavigateToTab('messages')}
+                      className="text-[11px] font-semibold text-[#27833A] hover:underline"
+                    >
+                      View All
+                    </button>
                   </div>
                 </div>
               </>
