@@ -73,8 +73,65 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-[230px] bg-[#263323] text-white flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 font-sans">
-      <div className="flex flex-col">
+    <aside className="w-[230px] bg-[#263323] text-white flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 font-sans relative overflow-hidden">
+      {/* ── AMBIENT ORGANIC WAVES (Replicating exact curved wave artwork from reference) ── */}
+      <div className="absolute inset-x-0 bottom-16 top-48 pointer-events-none z-0 opacity-45 overflow-hidden">
+        <svg
+          className="w-full h-full object-cover"
+          viewBox="0 0 230 400"
+          preserveAspectRatio="none"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Subtle wave layer 1 */}
+          <path
+            d="M-40 280C20 220 80 200 130 250C180 300 210 260 270 200V420H-40V280Z"
+            fill="url(#waveGrad1)"
+          />
+          {/* Wave line 1 */}
+          <path
+            d="M-40 280C20 220 80 200 130 250C180 300 210 260 270 200"
+            stroke="#87936C"
+            strokeWidth="0.8"
+            strokeOpacity="0.4"
+          />
+
+          {/* Deeper wave layer 2 */}
+          <path
+            d="M-20 330C40 270 100 280 150 320C200 360 220 320 260 290V420H-20V330Z"
+            fill="url(#waveGrad2)"
+          />
+          {/* Wave line 2 */}
+          <path
+            d="M-20 330C40 270 100 280 150 320C200 360 220 320 260 290"
+            stroke="#87936C"
+            strokeWidth="1.2"
+            strokeOpacity="0.55"
+          />
+
+          {/* Smooth low contour */}
+          <path
+            d="M-10 380C60 340 120 370 180 350C210 340 235 345 260 340"
+            stroke="#87936C"
+            strokeWidth="0.8"
+            strokeOpacity="0.3"
+          />
+
+          <defs>
+            <linearGradient id="waveGrad1" x1="115" y1="200" x2="115" y2="400" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#2E3F2A" stopOpacity="0.6" />
+              <stop offset="1" stopColor="#1E281C" stopOpacity="0.8" />
+            </linearGradient>
+            <linearGradient id="waveGrad2" x1="115" y1="270" x2="115" y2="400" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#354930" stopOpacity="0.5" />
+              <stop offset="1" stopColor="#1A2418" stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      {/* Main Navigation Stack */}
+      <div className="flex flex-col relative z-10">
         {/* Brand Header with Distinct Two-Tone Leaf Brand Mark */}
         <div className="h-20 px-6 flex items-center gap-3">
           <div className="w-8 h-8 flex items-center justify-center shrink-0">
@@ -127,14 +184,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-lg text-[13px] font-medium transition-all text-left ${
                   isActive
-                    ? 'bg-[#87936C]/30 text-white font-semibold'
+                    ? 'bg-[#87936C]/40 text-white font-semibold shadow-xs'
                     : 'text-[#D9D6CC]/80 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <Icon
                   strokeWidth={1.8}
                   className={`w-[18px] h-[18px] shrink-0 ${
-                    isActive ? 'text-[#87936C]' : 'text-[#D9D6CC]/70'
+                    isActive ? 'text-[#A8B78C]' : 'text-[#D9D6CC]/70'
                   }`}
                 />
                 <span className="truncate">{item.label}</span>
@@ -144,17 +201,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Bottom Section: Subtle leaf watermark detail, Help & Support, User profile */}
-      <div className="p-4 space-y-3 relative overflow-hidden">
-        {/* Subtle leaf contour watermark in background */}
-        <svg
-          className="absolute -right-4 -bottom-6 w-28 h-28 text-white/[0.03] pointer-events-none"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-        >
-          <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
-        </svg>
-
+      {/* Bottom Section: Help & Support, User profile */}
+      <div className="p-4 space-y-3 relative z-10">
         {/* Help & Support */}
         <button
           onClick={() => setActiveTab('settings')}
@@ -167,7 +215,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* User Profile */}
         <div className="pt-2 border-t border-white/10 flex items-center justify-between px-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#87936C]/30 text-[#87936C] flex items-center justify-center font-semibold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#87936C]/40 text-[#A8B78C] flex items-center justify-center font-semibold text-xs shrink-0 border border-[#87936C]/30">
               RR
             </div>
             <div className="min-w-0">
