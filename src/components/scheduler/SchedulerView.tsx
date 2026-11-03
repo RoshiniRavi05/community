@@ -395,7 +395,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                               <button
                                 onClick={() => onApproveCampaign(camp.id)}
                                 title="Approve Campaign"
-                                className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-[10px] font-medium"
+                                className="px-2.5 py-1 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs"
                               >
                                 Approve
                               </button>
@@ -405,7 +405,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                               <button
                                 onClick={() => onSendNow(camp.id)}
                                 title="Dispatch Message Now"
-                                className="px-2 py-0.5 rounded bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 text-[10px] font-medium"
+                                className="px-2.5 py-1 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs"
                               >
                                 Send Now
                               </button>

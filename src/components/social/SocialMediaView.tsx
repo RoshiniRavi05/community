@@ -199,26 +199,26 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
     switch (status) {
       case 'shared_to_community':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#27833A] border border-[#87936C]/30">
             Shared to Community
           </span>
         );
       case 'scheduled':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/15 text-blue-300 border border-blue-500/30">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#263323] border border-[#87936C]/30">
             Scheduled
           </span>
         );
       case 'pending_approval':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FFF3DC] text-[#9A5B00] border border-[#F0D59E]">
             Pending Approval
           </span>
         );
       case 'not_shared':
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-[var(--text-sub)] border border-slate-600/50">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#F4F0E8] text-[#85877F] border border-[#D9D6CC]">
             Not Shared
           </span>
         );
