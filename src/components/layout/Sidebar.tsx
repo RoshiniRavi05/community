@@ -75,19 +75,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="w-[230px] bg-[#263323] text-white flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 font-sans">
       <div className="flex flex-col">
-        {/* Brand Header */}
+        {/* Brand Header with Distinct Two-Tone Leaf Brand Mark */}
         <div className="h-20 px-6 flex items-center gap-3">
-          {/* Leaf / Brand Icon matching reference */}
-          <div className="w-7 h-7 rounded-full bg-[#87936C]/30 flex items-center justify-center text-[#87936C]">
+          <div className="w-8 h-8 flex items-center justify-center shrink-0">
             <svg
-              className="w-5 h-5 text-[#87936C]"
-              viewBox="0 0 24 24"
-              fill="currentColor"
+              className="w-7 h-7"
+              viewBox="0 0 28 28"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+              {/* Left leaf lobe (sage green) */}
+              <path
+                d="M4 24C4 24 6 12 16 6C16 6 16 16 7 23L4 24Z"
+                fill="#87936C"
+              />
+              {/* Right leaf lobe (light vibrant green) */}
+              <path
+                d="M16 6C16 6 24 10 24 18C24 23 18 24 13 24C10.5 24 7 23 7 23C16 16 16 6 16 6Z"
+                fill="#A8B78C"
+              />
+              {/* Leaf central stem vein */}
+              <path
+                d="M4 24C8 21 13 14 16 6"
+                stroke="#263323"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
-          <span className="font-semibold text-[15px] tracking-tight text-[#FFFFFF]">
+          <span className="font-bold text-[16px] tracking-tight text-[#FFFFFF]">
             Community Hub
           </span>
         </div>
@@ -128,8 +144,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Bottom Section: Help & Support, User profile, role */}
-      <div className="p-4 space-y-3">
+      {/* Bottom Section: Subtle leaf watermark detail, Help & Support, User profile */}
+      <div className="p-4 space-y-3 relative overflow-hidden">
+        {/* Subtle leaf contour watermark in background */}
+        <svg
+          className="absolute -right-4 -bottom-6 w-28 h-28 text-white/[0.03] pointer-events-none"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
+        </svg>
+
         {/* Help & Support */}
         <button
           onClick={() => setActiveTab('settings')}

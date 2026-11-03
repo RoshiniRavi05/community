@@ -150,13 +150,13 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0b0f19] border border-[#1e293b] p-2.5 rounded shadow-lg text-[11px] text-slate-200">
-          <div className="font-semibold text-slate-100 mb-1">{label}</div>
+        <div className="bg-[#0b0f19] border border-[var(--border-card)] p-2.5 rounded shadow-lg text-[11px] text-[var(--text-main)]">
+          <div className="font-semibold text-[var(--text-main)] mb-1">{label}</div>
           {payload.map((entry: any, index: number) => (
             <div key={`item-${index}`} className="flex items-center gap-2 py-0.5">
               <span className="w-2 h-2 rounded-xs" style={{ backgroundColor: entry.color }} />
-              <span className="text-slate-400 capitalize">{entry.name}:</span>
-              <span className="font-mono font-medium text-slate-100">{entry.value}</span>
+              <span className="text-[var(--text-sub)] capitalize">{entry.name}:</span>
+              <span className="font-mono font-medium text-[var(--text-main)]">{entry.value}</span>
             </div>
           ))}
         </div>
@@ -176,7 +176,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <div className={`p-4 rounded-lg border transition-all ${
             isEmergencyPaused
               ? 'bg-rose-950/40 border-rose-600/80 shadow-lg shadow-rose-950/30'
-              : 'bg-[#111726] border-[#1e293b]'
+              : 'bg-[var(--bg-card)] border-[var(--border-card)]'
           }`}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start sm:items-center gap-3">
@@ -189,7 +189,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-slate-100">
+                    <h3 className="text-sm font-semibold text-[var(--text-main)]">
                       Emergency Broadcast Controls
                     </h3>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider ${
@@ -200,7 +200,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       {isEmergencyPaused ? '● All Dispatches Paused' : '● System Active'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-[var(--text-sub)] mt-0.5">
                     {isEmergencyPaused
                       ? 'Emergency kill-switch is ACTIVE. All automated sweeps and scheduled WhatsApp messages are halted.'
                       : `Currently ${scheduledCampaigns.length} message${scheduledCampaigns.length === 1 ? '' : 's'} scheduled in queue. Click below to instantly halt or stop all.`}
@@ -265,18 +265,18 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       })()}
 
       {/* 1. TOP TOOLBAR: Timeframe filters, Category filter, Export */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {/* Timeframe selector: Daily, Weekly, Monthly */}
-          <div className="inline-flex rounded-md bg-[#090d16] p-0.5 border border-[#1e293b] text-xs">
+          <div className="inline-flex rounded-md bg-[var(--bg-app)] p-0.5 border border-[var(--border-card)] text-xs">
             {(['daily', 'weekly', 'monthly'] as const).map(tf => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1 rounded capitalize font-medium transition ${
                   timeframe === tf
-                    ? 'bg-[#16a34a] text-white'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white'
+                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
                 {tf === 'daily' ? 'Daily Reports' : tf === 'weekly' ? 'Weekly Reports' : 'Monthly Reports'}
@@ -288,7 +288,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-2.5 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+            className="px-2.5 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
           >
             <option value="all">All Campaign Types</option>
             <option value="announcement">Announcements</option>
@@ -302,7 +302,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         {/* Export Button */}
         <button
           onClick={handleExportCsv}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-200 hover:text-white transition text-xs font-medium"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
         >
           <Download className="w-3.5 h-3.5" />
           <span>Export Analytics Report (CSV)</span>
@@ -312,66 +312,66 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       {/* 2. STATISTICAL SUMMARY CARDS (Compact Administrative Stats) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Messages Sent */}
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5">
-          <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5">
+          <div className="text-[10px] text-[var(--text-sub)] font-semibold uppercase tracking-wider">
             Messages Sent
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-slate-100">
+            <span className="text-xl font-bold font-mono text-[var(--text-main)]">
               {totalSent > 0 ? totalSent : 154}
             </span>
-            <span className="text-[10px] text-slate-500">dispatches</span>
+            <span className="text-[10px] text-[var(--text-sub)]">dispatches</span>
           </div>
-          <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between border-t border-[#1e293b] pt-1.5">
+          <div className="mt-2 text-[10px] text-[var(--text-sub)] flex items-center justify-between border-t border-[var(--border-card)] pt-1.5">
             <span>Failed: <strong className="text-rose-400 font-mono">{totalFailed}</strong></span>
             <span>Queued: <strong className="text-blue-400 font-mono">6</strong></span>
           </div>
         </div>
 
         {/* Delivery Rate */}
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5">
-          <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5">
+          <div className="text-[10px] text-[var(--text-sub)] font-semibold uppercase tracking-wider">
             Delivery Rate
           </div>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold font-mono text-emerald-400">
               {deliveryRate}%
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">({totalDelivered > 0 ? totalDelivered : 147} msgs)</span>
+            <span className="text-[10px] text-[var(--text-sub)] font-mono">({totalDelivered > 0 ? totalDelivered : 147} msgs)</span>
           </div>
-          <div className="mt-2 text-[10px] text-slate-400 border-t border-[#1e293b] pt-1.5 font-mono">
+          <div className="mt-2 text-[10px] text-[var(--text-sub)] border-t border-[var(--border-card)] pt-1.5 font-mono">
             Delivered / Sent × 100
           </div>
         </div>
 
         {/* Read Rate */}
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5">
-          <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5">
+          <div className="text-[10px] text-[var(--text-sub)] font-semibold uppercase tracking-wider">
             Read Rate
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-[#22c55e]">
+            <span className="text-xl font-bold font-mono text-[#27833A]">
               {readRate}%
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">({totalRead > 0 ? totalRead : 106} read)</span>
+            <span className="text-[10px] text-[var(--text-sub)] font-mono">({totalRead > 0 ? totalRead : 106} read)</span>
           </div>
-          <div className="mt-2 text-[10px] text-slate-400 border-t border-[#1e293b] pt-1.5 font-mono">
+          <div className="mt-2 text-[10px] text-[var(--text-sub)] border-t border-[var(--border-card)] pt-1.5 font-mono">
             Read / Delivered × 100
           </div>
         </div>
 
         {/* Member Growth */}
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5">
-          <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5">
+          <div className="text-[10px] text-[var(--text-sub)] font-semibold uppercase tracking-wider">
             Member Growth ({timeframe})
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-slate-100">
+            <span className="text-xl font-bold font-mono text-[var(--text-main)]">
               +{netGrowth > 0 ? netGrowth : 3}
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">({totalMembers} total)</span>
+            <span className="text-[10px] text-[var(--text-sub)] font-mono">({totalMembers} total)</span>
           </div>
-          <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between border-t border-[#1e293b] pt-1.5">
+          <div className="mt-2 text-[10px] text-[var(--text-sub)] flex items-center justify-between border-t border-[var(--border-card)] pt-1.5">
             <span>Added: <strong className="text-emerald-400 font-mono">+{membersAdded}</strong></span>
             <span>Left: <strong className="text-orange-400 font-mono">-{membersLeft}</strong></span>
           </div>
@@ -379,26 +379,26 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </div>
 
       {/* 3. PERFORMANCE TREND CHART */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-xs font-semibold text-slate-200">
+            <h3 className="text-xs font-semibold text-[var(--text-main)]">
               Dispatches & Engagement Trend ({timeframe})
             </h3>
-            <p className="text-[10px] text-slate-500 mt-0.5">
+            <p className="text-[10px] text-[var(--text-sub)] mt-0.5">
               Verified Sent, Delivered, and Read counts over selected interval
             </p>
           </div>
           <div className="flex items-center gap-3 text-[10px]">
-            <span className="flex items-center gap-1.5 text-slate-400">
+            <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
               <span className="w-2.5 h-2.5 rounded-xs bg-blue-500"></span>
               <span>Sent</span>
             </span>
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <span className="w-2.5 h-2.5 rounded-xs bg-[#16a34a]"></span>
+            <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#263323] hover:bg-[#1a2318]"></span>
               <span>Delivered</span>
             </span>
-            <span className="flex items-center gap-1.5 text-slate-400">
+            <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
               <span className="w-2.5 h-2.5 rounded-xs bg-emerald-400"></span>
               <span>Read</span>
             </span>
@@ -421,24 +421,24 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </div>
 
       {/* 4. CAMPAIGN-WISE COMPARISONS TABLE */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md overflow-hidden">
-        <div className="p-3.5 border-b border-[#1e293b] flex items-center justify-between">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md overflow-hidden">
+        <div className="p-3.5 border-b border-[var(--border-card)] flex items-center justify-between">
           <div>
-            <h3 className="text-xs font-semibold text-slate-200">
+            <h3 className="text-xs font-semibold text-[var(--text-main)]">
               Campaign-Wise Performance Comparison
             </h3>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-[10px] text-[var(--text-sub)]">
               Breakdown of individual campaign dispatches, delivery efficiency, and member reads
             </p>
           </div>
-          <span className="text-[10px] font-mono text-slate-400">
+          <span className="text-[10px] font-mono text-[var(--text-sub)]">
             {filteredCampaigns.length} campaigns analyzed
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#090d16] text-[10px] text-slate-400 uppercase font-semibold border-b border-[#1e293b]">
+            <thead className="bg-[var(--bg-app)] text-[10px] text-[var(--text-sub)] uppercase font-semibold border-b border-[var(--border-card)]">
               <tr>
                 <th className="py-2.5 px-3">Campaign Title</th>
                 <th className="py-2.5 px-3">Category</th>
@@ -450,7 +450,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 <th className="py-2.5 px-3 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]/60">
+            <tbody className="divide-y divide-[var(--border-card)]/60">
               {filteredCampaigns.map((camp) => {
                 const sent = camp.sentCount || (camp.status === 'completed' ? 19 : camp.totalRecipients || 19);
                 const delivered = camp.deliveredCount || (camp.status === 'completed' ? 18 : 0);
@@ -459,30 +459,30 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 const rRate = delivered > 0 ? ((read / delivered) * 100).toFixed(1) : '—';
 
                 return (
-                  <tr key={camp.id} className="hover:bg-[#151c2c] transition-colors">
-                    <td className="py-2.5 px-3 font-medium text-slate-200 max-w-[200px] truncate">
+                  <tr key={camp.id} className="hover:bg-[var(--bg-card-hover)] transition-colors">
+                    <td className="py-2.5 px-3 font-medium text-[var(--text-main)] max-w-[200px] truncate">
                       {camp.title}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-400 capitalize whitespace-nowrap text-[11px]">
+                    <td className="py-2.5 px-3 text-[var(--text-sub)] capitalize whitespace-nowrap text-[11px]">
                       {camp.category.replace('_', ' ')}
                     </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-300">
+                    <td className="py-2.5 px-3 font-mono text-[var(--text-main)]">
                       {sent}
                     </td>
                     <td className="py-2.5 px-3 font-mono text-emerald-400">
                       {delivered}
                     </td>
-                    <td className="py-2.5 px-3 font-mono text-[#22c55e]">
+                    <td className="py-2.5 px-3 font-mono text-[#27833A]">
                       {read}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-medium text-slate-200">
+                    <td className="py-2.5 px-3 font-mono font-medium text-[var(--text-main)]">
                       {delRate !== '—' ? `${delRate}%` : '—'}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-medium text-slate-200">
+                    <td className="py-2.5 px-3 font-mono font-medium text-[var(--text-main)]">
                       {rRate !== '—' ? `${rRate}%` : '—'}
                     </td>
                     <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#162032] border border-[#273549] text-slate-300 capitalize">
+                      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] capitalize">
                         {camp.status.replace('_', ' ')}
                       </span>
                     </td>
@@ -495,10 +495,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </div>
 
       {/* 5. ARCHITECTURAL DISTINCTION NOTICE */}
-      <div className="bg-[#090d16] border border-[#1e293b] p-3.5 rounded-md flex items-start gap-3 text-xs text-slate-400">
-        <Info className="w-4 h-4 text-[#22c55e] shrink-0 mt-0.5" />
+      <div className="bg-[var(--bg-app)] border border-[var(--border-card)] p-3.5 rounded-md flex items-start gap-3 text-xs text-[var(--text-sub)]">
+        <Info className="w-4 h-4 text-[#27833A] shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <span className="font-semibold text-slate-300 block">
+          <span className="font-semibold text-[var(--text-main)] block">
             Distinguishing Individual WhatsApp Messages vs Community Announcements
           </span>
           <p className="text-[11px] leading-relaxed">

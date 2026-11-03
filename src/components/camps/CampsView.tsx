@@ -223,7 +223,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
     switch (status) {
       case 'upcoming':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
             Upcoming
           </span>
         );
@@ -241,7 +241,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
         );
       case 'completed':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-slate-300 border border-slate-600/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-[var(--text-main)] border border-slate-600/50">
             Completed
           </span>
         );
@@ -264,24 +264,24 @@ export const CampsView: React.FC<CampsViewProps> = ({
   return (
     <div className="space-y-4">
       {/* 1. TOP TOOLBAR (Wireframe 4: Search Camps, Filter Date, Location, Type, +Add Camp) */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5 space-y-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search camps by name, venue, area (e.g. Tiruppur)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[#090d16] border border-[#1e293b] text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#16a34a]"
+              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[#87936C]"
             />
           </div>
 
           {/* + Add Camp Button */}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Camp</span>
@@ -289,16 +289,16 @@ export const CampsView: React.FC<CampsViewProps> = ({
         </div>
 
         {/* Filters Row: By Date, Location, Camp Type */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-[#1e293b] text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-[var(--border-card)] text-xs">
           {/* Filter by Date */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               Filter by Date
             </label>
             <select
               value={selectedDateFilter}
               onChange={(e) => setSelectedDateFilter(e.target.value)}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Dates</option>
               <option value="upcoming">Upcoming Camps Only</option>
@@ -308,13 +308,13 @@ export const CampsView: React.FC<CampsViewProps> = ({
 
           {/* Filter by Location */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               Filter by Location
             </label>
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Locations</option>
               {availableLocations.map(loc => (
@@ -325,13 +325,13 @@ export const CampsView: React.FC<CampsViewProps> = ({
 
           {/* Filter by Camp Type */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               Filter by Camp Type
             </label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Types</option>
               <option value="wellness">Health & Diagnostic</option>
@@ -345,10 +345,10 @@ export const CampsView: React.FC<CampsViewProps> = ({
       </div>
 
       {/* 2. CAMPS TABLE (Wireframe 4) */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md overflow-hidden">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#090d16] text-[10px] text-slate-400 uppercase font-semibold border-b border-[#1e293b]">
+            <thead className="bg-[var(--bg-app)] text-[10px] text-[var(--text-sub)] uppercase font-semibold border-b border-[var(--border-card)]">
               <tr>
                 <th className="py-2.5 px-3">Camp Name</th>
                 <th className="py-2.5 px-3">Type</th>
@@ -359,57 +359,57 @@ export const CampsView: React.FC<CampsViewProps> = ({
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]/60">
+            <tbody className="divide-y divide-[var(--border-card)]/60">
               {filteredCamps.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={7} className="py-12 text-center text-[var(--text-sub)] text-xs">
                     No scheduled camps found matching filter parameters.
                   </td>
                 </tr>
               ) : (
                 filteredCamps.map((camp) => (
-                  <tr key={camp.id} className="hover:bg-[#151c2c] transition-colors">
+                  <tr key={camp.id} className="hover:bg-[var(--bg-card-hover)] transition-colors">
                     {/* Camp Name */}
-                    <td className="py-2.5 px-3 font-medium text-slate-100 max-w-[200px]">
+                    <td className="py-2.5 px-3 font-medium text-[var(--text-main)] max-w-[200px]">
                       <div className="flex items-center gap-2">
-                        <Tent className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                        <Tent className="w-3.5 h-3.5 text-[#27833A] shrink-0" />
                         <div>
-                          <div className="font-semibold text-slate-100 truncate">{camp.title}</div>
-                          <div className="text-[10px] text-slate-400 truncate max-w-[180px]">{camp.subtitle}</div>
+                          <div className="font-semibold text-[var(--text-main)] truncate">{camp.title}</div>
+                          <div className="text-[10px] text-[var(--text-sub)] truncate max-w-[180px]">{camp.subtitle}</div>
                         </div>
                       </div>
                     </td>
 
                     {/* Camp Type */}
-                    <td className="py-2.5 px-3 text-slate-300 capitalize whitespace-nowrap">
-                      <span className="px-1.5 py-0.5 rounded bg-[#162032] border border-[#273549] text-[10px]">
+                    <td className="py-2.5 px-3 text-[var(--text-main)] capitalize whitespace-nowrap">
+                      <span className="px-1.5 py-0.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[10px]">
                         {camp.category}
                       </span>
                     </td>
 
                     {/* Date & Time */}
-                    <td className="py-2.5 px-3 text-slate-300 font-mono text-[11px] whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-[var(--text-main)] font-mono text-[11px] whitespace-nowrap">
                       <div>{camp.startDate} to {camp.endDate}</div>
-                      <div className="text-[10px] text-slate-500 font-sans">
+                      <div className="text-[10px] text-[var(--text-sub)] font-sans">
                         {camp.startTime || '09:00'} – {camp.endTime || '17:00'}
                       </div>
                     </td>
 
                     {/* Location & Area */}
-                    <td className="py-2.5 px-3 text-slate-300 max-w-[180px]">
+                    <td className="py-2.5 px-3 text-[var(--text-main)] max-w-[180px]">
                       <div className="flex items-start gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                        <MapPin className="w-3.5 h-3.5 text-[var(--text-sub)] shrink-0 mt-0.5" />
                         <div>
                           <div className="truncate font-medium">{camp.venue}</div>
-                          {camp.area && <div className="text-[10px] text-slate-400 truncate">{camp.area}</div>}
+                          {camp.area && <div className="text-[10px] text-[var(--text-sub)] truncate">{camp.area}</div>}
                         </div>
                       </div>
                     </td>
 
                     {/* Capacity */}
-                    <td className="py-2.5 px-3 text-slate-300 font-mono text-[11px] whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-[var(--text-main)] font-mono text-[11px] whitespace-nowrap">
                       <div>{camp.registeredCount} / {camp.maxCapacity}</div>
-                      <div className="text-[10px] text-slate-500 font-sans">Fee: {camp.fee}</div>
+                      <div className="text-[10px] text-[var(--text-sub)] font-sans">Fee: {camp.fee}</div>
                     </td>
 
                     {/* Status */}
@@ -423,7 +423,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
                         <button
                           onClick={() => handleScheduleAnnouncement(camp)}
                           title="Schedule WhatsApp Announcement for this Camp"
-                          className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#16a34a]/20 text-[#22c55e] hover:bg-[#16a34a]/30 text-[10px] font-medium transition"
+                          className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#263323] hover:bg-[#1a2318]/20 text-[#27833A] hover:bg-[#263323] hover:bg-[#1a2318]/30 text-[10px] font-medium transition"
                         >
                           <Send className="w-3 h-3" />
                           <span>Announce</span>
@@ -432,7 +432,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
                         <button
                           onClick={() => setViewingCamp(camp)}
                           title="View Camp Details"
-                          className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                          className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
@@ -440,7 +440,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
                         <button
                           onClick={() => openEditModal(camp)}
                           title="Edit Camp"
-                          className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                          className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -448,7 +448,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
                         <button
                           onClick={() => setCampToDelete(camp)}
                           title="Delete Camp"
-                          className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/20"
+                          className="p-1 rounded text-[var(--text-sub)] hover:text-rose-400 hover:bg-rose-950/20"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -465,17 +465,17 @@ export const CampsView: React.FC<CampsViewProps> = ({
       {/* 3. ADD / EDIT CAMP MODAL (Wireframe 4 Form Fields) */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-[var(--border-card)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">
                   {editingCamp ? 'Edit Camp Event' : 'Add Camp Location & Details'}
                 </h3>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--text-sub)]">
                   Configure outreach venue, schedule, and WhatsApp broadcast parameters
                 </p>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setIsAddModalOpen(false)} className="text-[var(--text-sub)] hover:text-[var(--text-main)]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -491,23 +491,23 @@ export const CampsView: React.FC<CampsViewProps> = ({
               {/* Camp Name & Category */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Camp Name *</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Camp Name *</label>
                   <input
                     type="text"
                     required
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="e.g. Free Blood Test Camp"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Camp Type</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Camp Type</label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   >
                     <option value="wellness">Health & Diagnostic</option>
                     <option value="coding">Coding & STEM</option>
@@ -520,38 +520,38 @@ export const CampsView: React.FC<CampsViewProps> = ({
 
               {/* Description */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">Description</label>
+                <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Description</label>
                 <textarea
                   rows={2}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Comprehensive diagnostic blood checkup, diabetic screening..."
-                  className="w-full p-2 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                  className="w-full p-2 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                 />
               </div>
 
               {/* Location & Area (Wireframe 4: Tiruppur, Area, Need to add camp location) */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Location / Venue *</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Location / Venue *</label>
                   <input
                     type="text"
                     required
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
                     placeholder="e.g. Tiruppur Central Community Hall"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Area / Landmark</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Area / Landmark</label>
                   <input
                     type="text"
                     value={formArea}
                     onChange={(e) => setFormArea(e.target.value)}
                     placeholder="e.g. Kumaran Road, Tiruppur"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
               </div>
@@ -559,41 +559,41 @@ export const CampsView: React.FC<CampsViewProps> = ({
               {/* Dates & Times */}
               <div className="grid grid-cols-4 gap-2">
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-400 mb-1">Start Date</label>
+                  <label className="block text-[10px] font-medium text-[var(--text-sub)] mb-1">Start Date</label>
                   <input
                     type="date"
                     required
                     value={formStartDate}
                     onChange={(e) => setFormStartDate(e.target.value)}
-                    className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono"
+                    className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-400 mb-1">End Date</label>
+                  <label className="block text-[10px] font-medium text-[var(--text-sub)] mb-1">End Date</label>
                   <input
                     type="date"
                     required
                     value={formEndDate}
                     onChange={(e) => setFormEndDate(e.target.value)}
-                    className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono"
+                    className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-400 mb-1">Start Time</label>
+                  <label className="block text-[10px] font-medium text-[var(--text-sub)] mb-1">Start Time</label>
                   <input
                     type="time"
                     value={formStartTime}
                     onChange={(e) => setFormStartTime(e.target.value)}
-                    className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono"
+                    className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-slate-400 mb-1">End Time</label>
+                  <label className="block text-[10px] font-medium text-[var(--text-sub)] mb-1">End Time</label>
                   <input
                     type="time"
                     value={formEndTime}
                     onChange={(e) => setFormEndTime(e.target.value)}
-                    className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono"
+                    className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono"
                   />
                 </div>
               </div>
@@ -601,24 +601,24 @@ export const CampsView: React.FC<CampsViewProps> = ({
               {/* Registration Link & Eligibility */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Registration Link</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Registration Link</label>
                   <input
                     type="text"
                     value={formRegLink}
                     onChange={(e) => setFormRegLink(e.target.value)}
                     placeholder="https://example.com/camps/tiruppur"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Eligibility Criteria</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Eligibility Criteria</label>
                   <input
                     type="text"
                     value={formEligibility}
                     onChange={(e) => setFormEligibility(e.target.value)}
                     placeholder="e.g. All community members & seniors"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
               </div>
@@ -626,33 +626,33 @@ export const CampsView: React.FC<CampsViewProps> = ({
               {/* Capacity, Fee & Status */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Max Capacity</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Max Capacity</label>
                   <input
                     type="number"
                     min={1}
                     value={formCapacity}
                     onChange={(e) => setFormCapacity(Number(e.target.value))}
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Fee</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Fee</label>
                   <input
                     type="text"
                     value={formFee}
                     onChange={(e) => setFormFee(e.target.value)}
                     placeholder="Free or ₹499"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Status</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Status</label>
                   <select
                     value={formStatus}
                     onChange={(e) => setFormStatus(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   >
                     <option value="upcoming">Upcoming</option>
                     <option value="registration_open">Registration Open</option>
@@ -665,18 +665,18 @@ export const CampsView: React.FC<CampsViewProps> = ({
               </div>
 
               {/* Modal Buttons */}
-              <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[var(--border-card)] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingCamp ? 'Update Camp' : 'Save Camp Location'}
                 </button>
@@ -689,48 +689,48 @@ export const CampsView: React.FC<CampsViewProps> = ({
       {/* 4. VIEW CAMP DETAILS MODAL */}
       {viewingCamp && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
-            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
+            <div className="px-5 py-3.5 border-b border-[var(--border-card)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">{viewingCamp.title}</h3>
-                <p className="text-[11px] text-slate-400 capitalize">{viewingCamp.category} Camp Event</p>
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">{viewingCamp.title}</h3>
+                <p className="text-[11px] text-[var(--text-sub)] capitalize">{viewingCamp.category} Camp Event</p>
               </div>
-              <button onClick={() => setViewingCamp(null)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setViewingCamp(null)} className="text-[var(--text-sub)] hover:text-[var(--text-main)]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="p-5 space-y-4 text-xs">
-              <div className="bg-[#090d16] p-3 rounded border border-[#1e293b] space-y-2">
+              <div className="bg-[var(--bg-app)] p-3 rounded border border-[var(--border-card)] space-y-2">
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Description</span>
-                  <p className="text-slate-200 text-xs mt-0.5">{viewingCamp.description}</p>
+                  <span className="text-[10px] text-[var(--text-sub)] block">Description</span>
+                  <p className="text-[var(--text-main)] text-xs mt-0.5">{viewingCamp.description}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#1e293b]">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border-card)]">
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Venue & Location</span>
-                    <span className="text-slate-200 font-medium">{viewingCamp.venue}</span>
-                    {viewingCamp.area && <span className="text-slate-400 block text-[10px]">{viewingCamp.area}</span>}
+                    <span className="text-[10px] text-[var(--text-sub)] block">Venue & Location</span>
+                    <span className="text-[var(--text-main)] font-medium">{viewingCamp.venue}</span>
+                    {viewingCamp.area && <span className="text-[var(--text-sub)] block text-[10px]">{viewingCamp.area}</span>}
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Schedule & Timings</span>
-                    <span className="text-slate-200 font-mono text-[11px]">{viewingCamp.startDate} to {viewingCamp.endDate}</span>
-                    <span className="text-slate-400 block text-[10px]">{viewingCamp.startTime || '09:00'} – {viewingCamp.endTime || '17:00'}</span>
+                    <span className="text-[10px] text-[var(--text-sub)] block">Schedule & Timings</span>
+                    <span className="text-[var(--text-main)] font-mono text-[11px]">{viewingCamp.startDate} to {viewingCamp.endDate}</span>
+                    <span className="text-[var(--text-sub)] block text-[10px]">{viewingCamp.startTime || '09:00'} – {viewingCamp.endTime || '17:00'}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#1e293b]">
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--border-card)]">
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Attendance</span>
-                    <span className="text-slate-200 font-mono">{viewingCamp.registeredCount} / {viewingCamp.maxCapacity}</span>
+                    <span className="text-[10px] text-[var(--text-sub)] block">Attendance</span>
+                    <span className="text-[var(--text-main)] font-mono">{viewingCamp.registeredCount} / {viewingCamp.maxCapacity}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Fee</span>
-                    <span className="text-slate-200 font-medium">{viewingCamp.fee}</span>
+                    <span className="text-[10px] text-[var(--text-sub)] block">Fee</span>
+                    <span className="text-[var(--text-main)] font-medium">{viewingCamp.fee}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Status</span>
+                    <span className="text-[10px] text-[var(--text-sub)] block">Status</span>
                     <div className="mt-0.5">{getCampStatusBadge(viewingCamp.status)}</div>
                   </div>
                 </div>
@@ -744,7 +744,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
                     setViewingCamp(null);
                     handleScheduleAnnouncement(c);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Broadcast Camp Announcement</span>
@@ -752,7 +752,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
 
                 <button
                   onClick={() => setViewingCamp(null)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white text-xs font-medium"
                 >
                   Close
                 </button>
@@ -765,15 +765,15 @@ export const CampsView: React.FC<CampsViewProps> = ({
       {/* 5. DELETE CAMP CONFIRMATION */}
       {campToDelete && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">Delete Camp Record</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Are you sure you want to delete <strong className="text-slate-200">{campToDelete.title}</strong>?
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">Delete Camp Record</h3>
+                <p className="text-xs text-[var(--text-sub)] mt-1">
+                  Are you sure you want to delete <strong className="text-[var(--text-main)]">{campToDelete.title}</strong>?
                 </p>
               </div>
             </div>
@@ -782,7 +782,7 @@ export const CampsView: React.FC<CampsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setCampToDelete(null)}
-                className="px-3.5 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white text-xs font-medium"
+                className="px-3.5 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white text-xs font-medium"
               >
                 Cancel
               </button>

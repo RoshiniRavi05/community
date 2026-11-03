@@ -199,7 +199,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
     switch (status) {
       case 'shared_to_community':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
             Shared to Community
           </span>
         );
@@ -218,7 +218,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
       case 'not_shared':
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-slate-400 border border-slate-600/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-[var(--text-sub)] border border-slate-600/50">
             Not Shared
           </span>
         );
@@ -228,24 +228,24 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
   return (
     <div className="space-y-4">
       {/* 1. TOP CONTROLS (Wireframe 2 bottom & Section 5: Search, Filter Platform, Filter Date, Add Post) */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5 space-y-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search posts by title, caption, or category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[#090d16] border border-[#1e293b] text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#16a34a]"
+              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[#87936C]"
             />
           </div>
 
           {/* Add Post Button */}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Post</span>
@@ -253,21 +253,21 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
         </div>
 
         {/* Filters Row: By Platform & By Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#1e293b] text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[var(--border-card)] text-xs">
           {/* Filter by Platform: Instagram Reels, Instagram Posts, YouTube Shorts */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               Filter by Platform & Format
             </label>
-            <div className="inline-flex rounded-md bg-[#090d16] p-0.5 border border-[#1e293b] text-xs">
+            <div className="inline-flex rounded-md bg-[var(--bg-app)] p-0.5 border border-[var(--border-card)] text-xs">
               {(['all', 'reel', 'post', 'short'] as const).map(p => (
                 <button
                   key={p}
                   onClick={() => setPlatformFilter(p)}
                   className={`px-3 py-1 rounded capitalize font-medium transition ${
                     platformFilter === p
-                      ? 'bg-[#16a34a] text-white'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-[#263323] hover:bg-[#1a2318] text-white'
+                      : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                   }`}
                 >
                   {p === 'all' ? 'All Platforms' : p === 'reel' ? 'Instagram Reels' : p === 'post' ? 'Instagram Posts' : 'YouTube Shorts'}
@@ -278,13 +278,13 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
 
           {/* Filter by Date */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               Filter by Date
             </label>
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value as any)}
-              className="w-full sm:w-48 px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full sm:w-48 px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Dates</option>
               <option value="7_days">Past 7 Days</option>
@@ -296,10 +296,10 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
       </div>
 
       {/* 2. POSTS TABLE / LIST */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md overflow-hidden">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#090d16] text-[10px] text-slate-400 uppercase font-semibold border-b border-[#1e293b]">
+            <thead className="bg-[var(--bg-app)] text-[10px] text-[var(--text-sub)] uppercase font-semibold border-b border-[var(--border-card)]">
               <tr>
                 <th className="py-2.5 px-3">Platform</th>
                 <th className="py-2.5 px-3">Post Title</th>
@@ -309,10 +309,10 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]/60">
+            <tbody className="divide-y divide-[var(--border-card)]/60">
               {filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={6} className="py-12 text-center text-[var(--text-sub)] text-xs">
                     No curated social posts found matching the filter criteria.
                   </td>
                 </tr>
@@ -322,10 +322,10 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                   const isCopied = copiedId === post.id;
 
                   return (
-                    <tr key={post.id} className="hover:bg-[#151c2c] transition-colors">
+                    <tr key={post.id} className="hover:bg-[var(--bg-card-hover)] transition-colors">
                       {/* Platform */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-[#162032] border border-[#273549] text-slate-300">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)]">
                           {type === 'short' ? (
                             <span className="w-2 h-2 rounded-full bg-rose-500" />
                           ) : (
@@ -336,18 +336,18 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                       </td>
 
                       {/* Post Title */}
-                      <td className="py-2.5 px-3 font-medium text-slate-100 max-w-[200px]">
+                      <td className="py-2.5 px-3 font-medium text-[var(--text-main)] max-w-[200px]">
                         <div className="truncate font-semibold">{post.title}</div>
-                        <div className="text-[10px] text-slate-500 truncate">{post.authorHandle} • {post.category}</div>
+                        <div className="text-[10px] text-[var(--text-sub)] truncate">{post.authorHandle} • {post.category}</div>
                       </td>
 
                       {/* Caption */}
-                      <td className="py-2.5 px-3 text-slate-400 max-w-[220px] truncate" title={post.caption}>
+                      <td className="py-2.5 px-3 text-[var(--text-sub)] max-w-[220px] truncate" title={post.caption}>
                         {post.caption}
                       </td>
 
                       {/* Publication Date */}
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-[var(--text-main)] whitespace-nowrap">
                         {post.publicationDate || new Date(post.dateAdded).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
 
@@ -363,7 +363,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => handleScheduleBroadcast(post)}
                             title="Schedule Announcement in WhatsApp"
-                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#16a34a]/20 text-[#22c55e] hover:bg-[#16a34a]/30 text-[10px] font-medium transition"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#263323] hover:bg-[#1a2318]/20 text-[#27833A] hover:bg-[#263323] hover:bg-[#1a2318]/30 text-[10px] font-medium transition"
                           >
                             <Send className="w-3 h-3" />
                             <span>Schedule</span>
@@ -382,7 +382,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => handleCopyLink(post.url, post.id)}
                             title="Copy Original Post URL"
-                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                           >
                             {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
@@ -391,7 +391,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => setViewingPost(post)}
                             title="Preview Video & WhatsApp Message"
-                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
@@ -400,7 +400,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => openEditModal(post)}
                             title="Edit Post"
-                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -409,7 +409,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => setPostToDelete(post)}
                             title="Delete Post"
-                            className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/20"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-rose-400 hover:bg-rose-950/20"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -427,17 +427,17 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
       {/* 3. ADD / EDIT POST MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
-            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
+            <div className="px-5 py-3.5 border-b border-[var(--border-card)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">
                   {editingPost ? 'Edit Social Post' : 'Add Published Reel / Short'}
                 </h3>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--text-sub)]">
                   Prepare short-form media releases for WhatsApp Community dispatches
                 </p>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setIsAddModalOpen(false)} className="text-[var(--text-sub)] hover:text-[var(--text-main)]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -453,23 +453,23 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
               {/* Title & Platform */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Post Title *</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Post Title *</label>
                   <input
                     type="text"
                     required
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
                     placeholder="e.g. 5 Daily Elder Care Habits"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Platform / Format</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Platform / Format</label>
                   <select
                     value={formPostType}
                     onChange={(e) => setFormPostType(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   >
                     <option value="reel">Instagram Reel</option>
                     <option value="post">Instagram Post</option>
@@ -481,70 +481,70 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
               {/* URL & Thumbnail */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Original Video / Post URL *</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Original Video / Post URL *</label>
                   <input
                     type="url"
                     required
                     value={formUrl}
                     onChange={(e) => setFormUrl(e.target.value)}
                     placeholder="https://instagram.com/reel/..."
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Thumbnail URL</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Thumbnail URL</label>
                   <input
                     type="url"
                     value={formThumbnail}
                     onChange={(e) => setFormThumbnail(e.target.value)}
                     placeholder="https://..."
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
               </div>
 
               {/* Caption */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">Caption / Summary</label>
+                <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Caption / Summary</label>
                 <textarea
                   rows={3}
                   value={formCaption}
                   onChange={(e) => setFormCaption(e.target.value)}
                   placeholder="Short engaging caption to be sent with the WhatsApp announcement..."
-                  className="w-full p-2.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                  className="w-full p-2.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                 />
               </div>
 
               {/* Category, Date & Status */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Category</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Category</label>
                   <input
                     type="text"
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
                     placeholder="e.g. Health & Care"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Publication Date</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">Publication Date</label>
                   <input
                     type="date"
                     value={formPublicationDate}
                     onChange={(e) => setFormPublicationDate(e.target.value)}
-                    className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono"
+                    className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">WhatsApp Status</label>
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">WhatsApp Status</label>
                   <select
                     value={formSharingStatus}
                     onChange={(e) => setFormSharingStatus(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs"
                   >
                     <option value="not_shared">Not Shared</option>
                     <option value="scheduled">Scheduled</option>
@@ -554,18 +554,18 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
               </div>
 
               {/* Buttons */}
-              <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[var(--border-card)] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingPost ? 'Update Post' : 'Save Post'}
                 </button>
@@ -578,13 +578,13 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
       {/* 4. PREVIEW MODAL */}
       {viewingPost && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-md w-full overflow-hidden shadow-2xl">
-            <div className="px-5 py-3 border-b border-[#1e293b] flex items-center justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-md w-full overflow-hidden shadow-2xl">
+            <div className="px-5 py-3 border-b border-[var(--border-card)] flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-semibold text-slate-100">{viewingPost.title}</h4>
-                <p className="text-[10px] text-slate-400 capitalize">{viewingPost.postType || viewingPost.platform}</p>
+                <h4 className="text-xs font-semibold text-[var(--text-main)]">{viewingPost.title}</h4>
+                <p className="text-[10px] text-[var(--text-sub)] capitalize">{viewingPost.postType || viewingPost.platform}</p>
               </div>
-              <button onClick={() => setViewingPost(null)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setViewingPost(null)} className="text-[var(--text-sub)] hover:text-[var(--text-main)]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -608,9 +608,9 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                 </div>
               </div>
 
-              <div className="bg-[#090d16] p-3 rounded border border-[#1e293b] space-y-1.5">
-                <div className="text-[10px] text-slate-500 uppercase font-semibold">Suggested WhatsApp Announcement:</div>
-                <p className="text-slate-200 whitespace-pre-wrap font-sans text-xs">
+              <div className="bg-[var(--bg-app)] p-3 rounded border border-[var(--border-card)] space-y-1.5">
+                <div className="text-[10px] text-[var(--text-sub)] uppercase font-semibold">Suggested WhatsApp Announcement:</div>
+                <p className="text-[var(--text-main)] whitespace-pre-wrap font-sans text-xs">
                   {viewingPost.suggestedBroadcastText || viewingPost.caption}
                 </p>
               </div>
@@ -623,7 +623,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                     setViewingPost(null);
                     handleScheduleBroadcast(p);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Schedule in Campaign Queue</span>
@@ -631,7 +631,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
 
                 <button
                   onClick={() => setViewingPost(null)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white text-xs font-medium"
                 >
                   Close
                 </button>
@@ -644,15 +644,15 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
       {/* 5. DELETE CONFIRMATION */}
       {postToDelete && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">Delete Post Record</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Are you sure you want to delete <strong className="text-slate-200">{postToDelete.title}</strong>?
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">Delete Post Record</h3>
+                <p className="text-xs text-[var(--text-sub)] mt-1">
+                  Are you sure you want to delete <strong className="text-[var(--text-main)]">{postToDelete.title}</strong>?
                 </p>
               </div>
             </div>
@@ -661,7 +661,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
               <button
                 type="button"
                 onClick={() => setPostToDelete(null)}
-                className="px-3.5 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white text-xs font-medium"
+                className="px-3.5 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white text-xs font-medium"
               >
                 Cancel
               </button>

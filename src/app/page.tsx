@@ -494,17 +494,65 @@ export default function Home() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[var(--bg-app)]">
-        {/* Global Tab Top Bar (when on inner views) */}
+        {/* Global Page Header (matching approved dashboard design system) */}
         {activeTab !== 'overview' && activeTab !== 'dashboard' && (
-          <div className="px-8 py-3.5 border-b border-[var(--border-card)] bg-[var(--bg-card)] flex items-center justify-between sticky top-0 z-20">
+          <div className="px-8 py-5 border-b border-[var(--border-card)] bg-[var(--bg-card)] flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20">
             <div>
-              <h2 className="text-sm font-bold text-[var(--text-main)] capitalize">
+              <h1 className="text-[24px] font-bold text-[var(--text-main)] tracking-tight capitalize leading-tight">
                 {activeTab === 'social' ? 'Social Media' : activeTab === 'whatsapp' ? 'WhatsApp Integration' : activeTab}
-              </h2>
-              <span className="text-[11px] text-[var(--text-sub)]">Community Hub Management</span>
+              </h1>
+              <p className="text-[13px] text-[var(--text-sub)] mt-0.5">
+                {activeTab === 'members' && 'Manage your community members and their details.'}
+                {activeTab === 'messages' && 'Create, schedule and manage community communications.'}
+                {activeTab === 'scheduler' && 'Create, schedule and manage community communications.'}
+                {activeTab === 'calendar' && 'Create, schedule and manage community communications.'}
+                {activeTab === 'camps' && 'Organise camps, registrations and upcoming activities.'}
+                {activeTab === 'social' && 'Manage social content and share updates with your community.'}
+                {activeTab === 'analytics' && 'Understand your community\'s growth and communication performance.'}
+                {activeTab === 'whatsapp' && 'Manage your WhatsApp connection and integration settings.'}
+                {activeTab === 'settings' && 'Manage anti-spam rules, quiet hours, and frequency capping.'}
+                {activeTab === 'logs' && 'Audit logs and delivery tracking of dispatched dispatches.'}
+                {activeTab === 'monitor' && 'Real-time diagnostic monitor and error management.'}
+                {activeTab === 'discounts' && 'Special camp discounts and referral perk vouchers.'}
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* Primary Action Button Contextual to Active Tab */}
+              {activeTab === 'members' && (
+                <button
+                  onClick={() => {
+                    const addBtn = document.querySelector('[data-action="add-member"]');
+                    if (addBtn) (addBtn as HTMLButtonElement).click();
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#263323] hover:bg-[#1a2318] text-white text-[13px] font-medium shadow-xs transition"
+                >
+                  <span>+ Add Member</span>
+                </button>
+              )}
+
+              {(activeTab === 'messages' || activeTab === 'scheduler' || activeTab === 'calendar') && (
+                <button
+                  onClick={() => openScheduleComposer()}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#263323] hover:bg-[#1a2318] text-white text-[13px] font-medium shadow-xs transition"
+                >
+                  <span>+ Create Message</span>
+                </button>
+              )}
+
+              {activeTab === 'camps' && (
+                <button
+                  onClick={() => {
+                    const addCampBtn = document.querySelector('[data-action="add-camp"]');
+                    if (addCampBtn) (addCampBtn as HTMLButtonElement).click();
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#263323] hover:bg-[#1a2318] text-white text-[13px] font-medium shadow-xs transition"
+                >
+                  <span>+ Add Camp</span>
+                </button>
+              )}
+
+              {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
                 title={`Switch to ${isDarkTheme ? 'Light' : 'Dark'} Mode`}

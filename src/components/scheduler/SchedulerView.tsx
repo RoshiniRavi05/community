@@ -122,7 +122,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
     switch (status) {
       case 'scheduled':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
             Scheduled
           </span>
         );
@@ -153,7 +153,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
         );
       case 'cancelled':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-slate-400 border border-slate-600/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-[var(--text-sub)] border border-slate-600/50">
             Cancelled
           </span>
         );
@@ -201,17 +201,17 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
   return (
     <div className="space-y-4">
       {/* 1. TOP TOOLBAR (Wireframe 3: Search, Delete Selected, Schedule, Calendar, +Add) */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5 space-y-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search messages by title, content preview, category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[#090d16] border border-[#1e293b] text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#16a34a]"
+              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[#87936C]"
             />
           </div>
 
@@ -230,13 +230,13 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
             )}
 
             {/* View Switchers: Schedule / History, Calendar, Agenda */}
-            <div className="inline-flex rounded-md bg-[#090d16] p-0.5 border border-[#1e293b] text-xs">
+            <div className="inline-flex rounded-md bg-[var(--bg-app)] p-0.5 border border-[var(--border-card)] text-xs">
               <button
                 onClick={() => setViewMode('table')}
                 className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
                   viewMode === 'table'
-                    ? 'bg-[#16a34a] text-white font-medium'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white font-medium'
+                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <List className="w-3.5 h-3.5" />
@@ -247,8 +247,8 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                 onClick={() => setViewMode('weekly_calendar')}
                 className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
                   viewMode === 'weekly_calendar'
-                    ? 'bg-[#16a34a] text-white font-medium'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white font-medium'
+                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <CalendarIcon className="w-3.5 h-3.5" />
@@ -259,8 +259,8 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                 onClick={() => setViewMode('agenda')}
                 className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
                   viewMode === 'agenda'
-                    ? 'bg-[#16a34a] text-white font-medium'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#263323] hover:bg-[#1a2318] text-white font-medium'
+                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
             {/* + Add Message */}
             <button
               onClick={() => onOpenComposer()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Message</span>
@@ -280,17 +280,17 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
         </div>
 
         {/* Filter bar for statuses */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#1e293b] text-xs">
+        <div className="flex items-center justify-between pt-2 border-t border-[var(--border-card)] text-xs">
           <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="text-[11px] text-slate-400 font-medium">Filter Status:</span>
+            <span className="text-[11px] text-[var(--text-sub)] font-medium">Filter Status:</span>
             {(['all', 'scheduled', 'pending_approval', 'completed', 'draft', 'cancelled'] as const).map(st => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className={`px-2 py-0.5 rounded text-[11px] font-medium capitalize transition ${
                   statusFilter === st
-                    ? 'bg-[#162032] text-slate-100 border border-[#273549]'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[var(--bg-muted)] text-[var(--text-main)] border border-[var(--border-card)]'
+                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
                 }`}
               >
                 {st === 'all' ? 'All Messages' : st.replace('_', ' ')}
@@ -298,7 +298,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
             ))}
           </div>
 
-          <span className="text-[11px] text-slate-500 font-mono">
+          <span className="text-[11px] text-[var(--text-sub)] font-mono">
             {filteredCampaigns.length} total messages
           </span>
         </div>
@@ -306,17 +306,17 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
 
       {/* 2. MAIN VIEW CONTENT */}
       {viewMode === 'table' && (
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md overflow-hidden">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#090d16] text-[10px] text-slate-400 uppercase font-semibold border-b border-[#1e293b]">
+              <thead className="bg-[var(--bg-app)] text-[10px] text-[var(--text-sub)] uppercase font-semibold border-b border-[var(--border-card)]">
                 <tr>
                   <th className="py-2.5 px-3 w-8">
                     <input
                       type="checkbox"
                       checked={selectedIds.size === filteredCampaigns.length && filteredCampaigns.length > 0}
                       onChange={handleToggleSelectAll}
-                      className="rounded bg-[#0d121f] border-[#273549] text-[#16a34a] focus:ring-0"
+                      className="rounded bg-[var(--bg-card)] border-[var(--border-card)] text-[#16a34a] focus:ring-0"
                     />
                   </th>
                   <th className="py-2.5 px-3">Message Title</th>
@@ -328,10 +328,10 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                   <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e293b]/60">
+              <tbody className="divide-y divide-[var(--border-card)]/60">
                 {filteredCampaigns.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-500 text-xs">
+                    <td colSpan={8} className="py-12 text-center text-[var(--text-sub)] text-xs">
                       No messages found matching search or filter parameters.
                     </td>
                   </tr>
@@ -345,41 +345,41 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                     return (
                       <tr
                         key={camp.id}
-                        className={`hover:bg-[#151c2c] transition-colors ${isSelected ? 'bg-[#16a34a]/5' : ''}`}
+                        className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#263323] hover:bg-[#1a2318]/5' : ''}`}
                       >
                         <td className="py-2.5 px-3">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleToggleSelectOne(camp.id)}
-                            className="rounded bg-[#0d121f] border-[#273549] text-[#16a34a] focus:ring-0"
+                            className="rounded bg-[var(--bg-card)] border-[var(--border-card)] text-[#16a34a] focus:ring-0"
                           />
                         </td>
 
                         {/* Title */}
-                        <td className="py-2.5 px-3 font-medium text-slate-100 max-w-[180px] truncate">
+                        <td className="py-2.5 px-3 font-medium text-[var(--text-main)] max-w-[180px] truncate">
                           {camp.title}
                         </td>
 
                         {/* Content Preview */}
-                        <td className="py-2.5 px-3 text-slate-400 max-w-[240px] truncate" title={camp.message}>
+                        <td className="py-2.5 px-3 text-[var(--text-sub)] max-w-[240px] truncate" title={camp.message}>
                           {camp.message.replace(/\*/g, '').slice(0, 75)}...
                         </td>
 
                         {/* Scheduled Date */}
-                        <td className="py-2.5 px-3 text-slate-300 font-mono text-[11px] whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-[var(--text-main)] font-mono text-[11px] whitespace-nowrap">
                           {dateStr}
                         </td>
 
                         {/* Scheduled Time (e.g. 7:00 PM) */}
                         <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap">
-                          <span className={timeStr.includes('7:00') ? 'text-[#22c55e] font-semibold' : 'text-slate-300'}>
+                          <span className={timeStr.includes('7:00') ? 'text-[#27833A] font-semibold' : 'text-[var(--text-main)]'}>
                             {timeStr}
                           </span>
                         </td>
 
                         {/* Audience */}
-                        <td className="py-2.5 px-3 text-slate-300 whitespace-nowrap text-[11px]">
+                        <td className="py-2.5 px-3 text-[var(--text-main)] whitespace-nowrap text-[11px]">
                           {camp.targetSegmentId === 'seg_all' ? 'All Community' : camp.targetSegmentId}
                         </td>
 
@@ -414,7 +414,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                             <button
                               onClick={() => setPreviewCampaign(camp)}
                               title="Live WhatsApp Preview"
-                              className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                              className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
@@ -422,7 +422,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                             <button
                               onClick={() => onOpenComposer(camp)}
                               title="Edit / Reschedule"
-                              className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                              className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                             >
                               <FileEdit className="w-3.5 h-3.5" />
                             </button>
@@ -430,7 +430,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                             <button
                               onClick={() => onDuplicateCampaign(camp.id)}
                               title="Duplicate for Next Week"
-                              className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b]"
+                              className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
                             >
                               <Copy className="w-3.5 h-3.5" />
                             </button>
@@ -439,7 +439,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                               <button
                                 onClick={() => onCancelCampaign(camp.id)}
                                 title="Cancel Campaign"
-                                className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/20"
+                                className="p-1 rounded text-[var(--text-sub)] hover:text-rose-400 hover:bg-rose-950/20"
                               >
                                 <Ban className="w-3.5 h-3.5" />
                               </button>
@@ -458,36 +458,36 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
 
       {/* 3. WEEKLY CALENDAR VIEW (Wireframe 3: Weekly Planning & 7:00 PM Slot) */}
       {viewMode === 'weekly_calendar' && (
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 space-y-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4 space-y-4">
           {/* Week Navigation */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setWeekOffset(w => w - 1)}
-                className="p-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white"
+                className="p-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setWeekOffset(0)}
-                className="px-2.5 py-1 rounded bg-[#162032] border border-[#273549] text-xs font-medium text-slate-300 hover:text-white"
+                className="px-2.5 py-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-xs font-medium text-[var(--text-main)] hover:text-white"
               >
                 This Week
               </button>
               <button
                 onClick={() => setWeekOffset(w => w + 1)}
-                className="p-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white"
+                className="p-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <span className="font-semibold text-slate-200 text-xs ml-2">
+              <span className="font-semibold text-[var(--text-main)] text-xs ml-2">
                 {formatDateRange()}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-[var(--text-sub)]">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#16a34a]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#263323] hover:bg-[#1a2318]"></span>
                 <span>7:00 PM Broadcast Window</span>
               </span>
             </div>
@@ -504,25 +504,25 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
               return (
                 <div
                   key={idx}
-                  className={`bg-[#090d16] border rounded-md p-2 flex flex-col justify-between min-h-[300px] ${
-                    isToday ? 'border-[#16a34a]/60 shadow-xs' : 'border-[#1e293b]'
+                  className={`bg-[var(--bg-app)] border rounded-md p-2 flex flex-col justify-between min-h-[300px] ${
+                    isToday ? 'border-[#87936C]/60 shadow-xs' : 'border-[var(--border-card)]'
                   }`}
                 >
                   {/* Day Header */}
                   <div>
-                    <div className="flex items-center justify-between pb-1.5 border-b border-[#1e293b]">
-                      <span className={`text-xs font-semibold ${isToday ? 'text-[#22c55e]' : 'text-slate-300'}`}>
+                    <div className="flex items-center justify-between pb-1.5 border-b border-[var(--border-card)]">
+                      <span className={`text-xs font-semibold ${isToday ? 'text-[#27833A]' : 'text-[var(--text-main)]'}`}>
                         {dayName}
                       </span>
-                      <span className={`text-[11px] font-mono font-medium ${isToday ? 'px-1.5 rounded bg-[#16a34a] text-white' : 'text-slate-400'}`}>
+                      <span className={`text-[11px] font-mono font-medium ${isToday ? 'px-1.5 rounded bg-[#263323] hover:bg-[#1a2318] text-white' : 'text-[var(--text-sub)]'}`}>
                         {dayNum}
                       </span>
                     </div>
 
                     {/* Prominent 7:00 PM Slot Marker (Wireframe 3) */}
-                    <div className="mt-2 py-1 px-1.5 rounded bg-[#111726] border border-[#1e293b] text-[10px] text-slate-400 flex items-center justify-between">
-                      <span className="font-mono text-[#22c55e] font-semibold">7:00 PM</span>
-                      <span className="text-[9px] text-slate-500">Peak Window</span>
+                    <div className="mt-2 py-1 px-1.5 rounded bg-[var(--bg-card)] border border-[var(--border-card)] text-[10px] text-[var(--text-sub)] flex items-center justify-between">
+                      <span className="font-mono text-[#27833A] font-semibold">7:00 PM</span>
+                      <span className="text-[9px] text-[var(--text-sub)]">Peak Window</span>
                     </div>
 
                     {/* Campaigns list on this day */}
@@ -536,15 +536,15 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                           <div
                             key={c.id}
                             onClick={() => setPreviewCampaign(c)}
-                            className="p-1.5 rounded bg-[#111726] border border-[#1e293b] hover:border-[#273549] text-left cursor-pointer transition space-y-1"
+                            className="p-1.5 rounded bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-[var(--border-card)] text-left cursor-pointer transition space-y-1"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-mono text-slate-400">
+                              <span className="text-[10px] font-mono text-[var(--text-sub)]">
                                 {formatTimeOnly(c.scheduledAt)}
                               </span>
                               {getStatusBadge(c.status)}
                             </div>
-                            <div className="font-medium text-slate-200 text-[11px] truncate" title={c.title}>
+                            <div className="font-medium text-[var(--text-main)] text-[11px] truncate" title={c.title}>
                               {c.title}
                             </div>
                           </div>
@@ -560,7 +560,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                       d.setHours(19, 0, 0, 0);
                       onOpenComposer({ scheduledAt: d.toISOString().slice(0, 16) });
                     }}
-                    className="mt-2 w-full py-1 text-[10px] text-slate-400 hover:text-white rounded bg-[#162032] border border-[#273549] flex items-center justify-center gap-1 transition"
+                    className="mt-2 w-full py-1 text-[10px] text-[var(--text-sub)] hover:text-white rounded bg-[var(--bg-muted)] border border-[var(--border-card)] flex items-center justify-center gap-1 transition"
                   >
                     <Plus className="w-3 h-3" />
                     <span>7 PM Message</span>
@@ -574,12 +574,12 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
 
       {/* 4. AGENDA VIEW */}
       {viewMode === 'agenda' && (
-        <div className="bg-[#111726] border border-[#1e293b] rounded-md p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[#1e293b]">
-            <h3 className="text-xs font-semibold text-slate-200">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-card)]">
+            <h3 className="text-xs font-semibold text-[var(--text-main)]">
               Chronological Broadcast Agenda
             </h3>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-[var(--text-sub)]">
               Next scheduled dispatches in order
             </span>
           </div>
@@ -588,29 +588,29 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
             {filteredCampaigns.slice(0, 10).map((camp) => (
               <div
                 key={camp.id}
-                className="p-3 rounded bg-[#090d16] border border-[#1e293b] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                className="p-3 rounded bg-[var(--bg-app)] border border-[var(--border-card)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
               >
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded bg-[#162032] border border-[#273549] text-center font-mono shrink-0">
-                    <span className="text-[10px] text-slate-400 block uppercase">
+                  <div className="p-2 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-center font-mono shrink-0">
+                    <span className="text-[10px] text-[var(--text-sub)] block uppercase">
                       {new Date(camp.scheduledAt).toLocaleDateString('en-US', { weekday: 'short' })}
                     </span>
-                    <span className="text-sm font-bold text-slate-100">
+                    <span className="text-sm font-bold text-[var(--text-main)]">
                       {new Date(camp.scheduledAt).getDate()}
                     </span>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-100">{camp.title}</span>
+                      <span className="font-semibold text-[var(--text-main)]">{camp.title}</span>
                       {getStatusBadge(camp.status)}
                     </div>
-                    <p className="text-slate-400 text-[11px] mt-0.5 max-w-xl truncate">
+                    <p className="text-[var(--text-sub)] text-[11px] mt-0.5 max-w-xl truncate">
                       {camp.message.replace(/\*/g, '')}
                     </p>
-                    <div className="flex items-center gap-3 text-[10px] text-slate-500 mt-1">
-                      <span>Time: <strong className="text-slate-400 font-mono">{formatTimeOnly(camp.scheduledAt)}</strong></span>
-                      <span>Audience: <strong className="text-slate-400">{camp.targetSegmentId}</strong></span>
+                    <div className="flex items-center gap-3 text-[10px] text-[var(--text-sub)] mt-1">
+                      <span>Time: <strong className="text-[var(--text-sub)] font-mono">{formatTimeOnly(camp.scheduledAt)}</strong></span>
+                      <span>Audience: <strong className="text-[var(--text-sub)]">{camp.targetSegmentId}</strong></span>
                     </div>
                   </div>
                 </div>
@@ -618,13 +618,13 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => setPreviewCampaign(camp)}
-                    className="px-2.5 py-1 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-[11px]"
+                    className="px-2.5 py-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-[11px]"
                   >
                     Preview
                   </button>
                   <button
                     onClick={() => onOpenComposer(camp)}
-                    className="px-2.5 py-1 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-[11px]"
+                    className="px-2.5 py-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-[11px]"
                   >
                     Edit
                   </button>
@@ -638,18 +638,18 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
       {/* 5. LIVE WHATSAPP PREVIEW MODAL */}
       {previewCampaign && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-md w-full p-4 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-md w-full p-4 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-2">
               <div>
-                <h4 className="text-xs font-semibold text-slate-100">WhatsApp Broadcast Preview</h4>
-                <p className="text-[10px] text-slate-400">{previewCampaign.title}</p>
+                <h4 className="text-xs font-semibold text-[var(--text-main)]">WhatsApp Broadcast Preview</h4>
+                <p className="text-[10px] text-[var(--text-sub)]">{previewCampaign.title}</p>
               </div>
-              <button onClick={() => setPreviewCampaign(null)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setPreviewCampaign(null)} className="text-[var(--text-sub)] hover:text-[var(--text-main)]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex justify-center bg-[#090d16] p-4 rounded border border-[#1e293b]">
+            <div className="flex justify-center bg-[var(--bg-app)] p-4 rounded border border-[var(--border-card)]">
               <WhatsAppChatPreview
                 message={previewCampaign.message}
                 mediaUrl={previewCampaign.mediaUrl}
@@ -660,12 +660,12 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
             </div>
 
             <div className="flex items-center justify-between text-xs pt-2">
-              <span className="text-[10px] text-slate-500 font-mono">
+              <span className="text-[10px] text-[var(--text-sub)] font-mono">
                 Scheduled: {formatWhatsAppDate(previewCampaign.scheduledAt)}
               </span>
               <button
                 onClick={() => setPreviewCampaign(null)}
-                className="px-3 py-1 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white"
+                className="px-3 py-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white"
               >
                 Close
               </button>

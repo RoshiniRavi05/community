@@ -372,7 +372,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
     switch (status) {
       case 'joined_community':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#16a34a]/15 text-[#22c55e] border border-[#16a34a]/30">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#263323] hover:bg-[#1a2318]/15 text-[#27833A] border border-[#87936C]/30">
             Joined Community
           </span>
         );
@@ -390,7 +390,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
         );
       case 'not_joined':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-slate-300 border border-slate-600/50">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-[var(--text-main)] border border-slate-600/50">
             Not Joined
           </span>
         );
@@ -413,12 +413,12 @@ export const MembersView: React.FC<MembersViewProps> = ({
   return (
     <div className="space-y-4">
       {/* 1. TOP CONTROLS (Wireframe 2) */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md p-3.5 space-y-3">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5 space-y-3">
         {/* Top search & Add Button Row */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search members by name, phone, location, camp, or interests..."
@@ -427,7 +427,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[#090d16] border border-[#1e293b] text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#16a34a]"
+              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[#87936C]"
             />
           </div>
 
@@ -436,14 +436,14 @@ export const MembersView: React.FC<MembersViewProps> = ({
             <button
               onClick={() => setMaskPhones(!maskPhones)}
               title={maskPhones ? 'Show unmasked phone numbers' : 'Mask phone numbers for privacy'}
-              className="p-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-400 hover:text-slate-200 transition text-xs"
+              className="p-1.5 rounded-md bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-sub)] hover:text-[var(--text-main)] transition text-xs"
             >
               {maskPhones ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
 
             <button
               onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>
@@ -451,7 +451,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
             <button
               onClick={() => setIsCsvModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>Import</span>
@@ -459,7 +459,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
             <button
               onClick={openAddModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Member</span>
@@ -468,10 +468,10 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
 
         {/* Filters Row: By Camp, By Age, By Gender, By Date, By Status */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[#1e293b] text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[var(--border-card)] text-xs">
           {/* Filter by Camp */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               By Camp
             </label>
             <select
@@ -480,7 +480,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 setSelectedCamp(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Camps</option>
               {availableCamps.map(camp => (
@@ -491,7 +491,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
           {/* Filter by Age */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               By Age
             </label>
             <select
@@ -500,7 +500,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 setSelectedAge(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Ages</option>
               <option value="under_18">&lt; 18 yrs</option>
@@ -513,7 +513,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
           {/* Filter by Gender */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               By Gender
             </label>
             <select
@@ -522,7 +522,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 setSelectedGender(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Genders</option>
               <option value="male">Male</option>
@@ -534,7 +534,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
           {/* Filter by Date */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               By Date
             </label>
             <select
@@ -543,7 +543,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 setSelectedDateFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Dates</option>
               <option value="7_days">Past 7 Days</option>
@@ -554,7 +554,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
           {/* Filter by Status */}
           <div>
-            <label className="block text-[10px] text-slate-400 font-medium mb-1">
+            <label className="block text-[10px] text-[var(--text-sub)] font-medium mb-1">
               Membership Status
             </label>
             <select
@@ -563,7 +563,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 setSelectedMembershipStatus(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+              className="w-full px-2 py-1 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
             >
               <option value="all">All Statuses</option>
               <option value="joined_community">Joined Community</option>
@@ -577,14 +577,14 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
         {/* Selection Bar */}
         {selectedMemberIds.size > 0 && (
-          <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between text-xs bg-[#162032]/60 px-3 py-1.5 rounded">
-            <span className="text-slate-300 font-medium">
+          <div className="pt-2 border-t border-[var(--border-card)] flex items-center justify-between text-xs bg-[var(--bg-muted)]/60 px-3 py-1.5 rounded">
+            <span className="text-[var(--text-main)] font-medium">
               {selectedMemberIds.size} of {filteredMembers.length} members selected for targeted audience
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSelectedMemberIds(new Set())}
-                className="text-slate-400 hover:text-slate-200 underline text-[11px]"
+                className="text-[var(--text-sub)] hover:text-[var(--text-main)] underline text-[11px]"
               >
                 Clear Selection
               </button>
@@ -594,17 +594,17 @@ export const MembersView: React.FC<MembersViewProps> = ({
       </div>
 
       {/* 2. MEMBERS TABLE (Wireframe 2) */}
-      <div className="bg-[#111726] border border-[#1e293b] rounded-md overflow-hidden">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#090d16] text-[10px] text-slate-400 uppercase font-semibold border-b border-[#1e293b]">
+            <thead className="bg-[var(--bg-app)] text-[10px] text-[var(--text-sub)] uppercase font-semibold border-b border-[var(--border-card)]">
               <tr>
                 <th className="py-2.5 px-3 w-8">
                   <input
                     type="checkbox"
                     checked={selectedMemberIds.size === filteredMembers.length && filteredMembers.length > 0}
                     onChange={handleToggleSelectAll}
-                    className="rounded bg-[#0d121f] border-[#273549] text-[#16a34a] focus:ring-0"
+                    className="rounded bg-[var(--bg-card)] border-[var(--border-card)] text-[#16a34a] focus:ring-0"
                   />
                 </th>
                 <th className="py-2.5 px-3">Name</th>
@@ -619,10 +619,10 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]/60">
+            <tbody className="divide-y divide-[var(--border-card)]/60">
               {paginatedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={11} className="py-12 text-center text-[var(--text-sub)] text-xs">
                     No community members found matching the selected filters.
                   </td>
                 </tr>
@@ -636,46 +636,46 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   return (
                     <tr
                       key={member.id}
-                      className={`hover:bg-[#151c2c] transition-colors ${isSelected ? 'bg-[#16a34a]/5' : ''}`}
+                      className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#263323] hover:bg-[#1a2318]/5' : ''}`}
                     >
                       <td className="py-2.5 px-3">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelectOne(member.id)}
-                          className="rounded bg-[#0d121f] border-[#273549] text-[#16a34a] focus:ring-0"
+                          className="rounded bg-[var(--bg-card)] border-[var(--border-card)] text-[#16a34a] focus:ring-0"
                         />
                       </td>
 
                       {/* Name */}
-                      <td className="py-2.5 px-3 font-medium text-slate-100 whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-medium text-[var(--text-main)] whitespace-nowrap">
                         {member.name}
                       </td>
 
                       {/* Phone */}
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-slate-300 whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-mono text-[11px] text-[var(--text-main)] whitespace-nowrap">
                         {displayPhone}
                       </td>
 
                       {/* Age */}
-                      <td className="py-2.5 px-3 text-slate-400 font-mono">
+                      <td className="py-2.5 px-3 text-[var(--text-sub)] font-mono">
                         {member.age ?? '—'}
                       </td>
 
                       {/* Gender */}
-                      <td className="py-2.5 px-3 text-slate-400 capitalize whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-[var(--text-sub)] capitalize whitespace-nowrap">
                         {member.gender.replace(/_/g, ' ')}
                       </td>
 
                       {/* Location */}
-                      <td className="py-2.5 px-3 text-slate-300 max-w-[120px] truncate" title={member.location}>
+                      <td className="py-2.5 px-3 text-[var(--text-main)] max-w-[120px] truncate" title={member.location}>
                         {member.location}
                       </td>
 
                       {/* Camp */}
-                      <td className="py-2.5 px-3 text-slate-300 max-w-[140px] truncate" title={member.preferredCamp || member.campLocation}>
+                      <td className="py-2.5 px-3 text-[var(--text-main)] max-w-[140px] truncate" title={member.preferredCamp || member.campLocation}>
                         <div className="flex items-center gap-1 truncate">
-                          <Tent className="w-3 h-3 text-[#22c55e] shrink-0" />
+                          <Tent className="w-3 h-3 text-[#27833A] shrink-0" />
                           <span className="truncate">{member.preferredCamp || member.campLocation || '—'}</span>
                         </div>
                       </td>
@@ -698,12 +698,12 @@ export const MembersView: React.FC<MembersViewProps> = ({
                             <span>Opted Out</span>
                           </span>
                         ) : (
-                          <span className="text-[10px] text-slate-500">Unspecified</span>
+                          <span className="text-[10px] text-[var(--text-sub)]">Unspecified</span>
                         )}
                       </td>
 
                       {/* Date Added */}
-                      <td className="py-2.5 px-3 font-mono text-[10px] text-slate-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-mono text-[10px] text-[var(--text-sub)] whitespace-nowrap">
                         {new Date(member.dateAdded).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
 
@@ -713,21 +713,21 @@ export const MembersView: React.FC<MembersViewProps> = ({
                           <button
                             onClick={() => setViewingMember(member)}
                             title="View Details"
-                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b] transition"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => openEditModal(member)}
                             title="Edit Member"
-                            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-[#1e293b] transition"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setMemberToDelete(member)}
                             title="Remove Member"
-                            className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 transition"
+                            className="p-1 rounded text-[var(--text-sub)] hover:text-rose-400 hover:bg-rose-950/20 transition"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -742,7 +742,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
         </div>
 
         {/* Pagination bar */}
-        <div className="px-4 py-2.5 border-t border-[#1e293b] bg-[#090d16] flex items-center justify-between text-xs text-slate-400">
+        <div className="px-4 py-2.5 border-t border-[var(--border-card)] bg-[var(--bg-app)] flex items-center justify-between text-xs text-[var(--text-sub)]">
           <div>
             Showing {filteredMembers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{' '}
             {Math.min(currentPage * pageSize, filteredMembers.length)} of {filteredMembers.length} members
@@ -752,17 +752,17 @@ export const MembersView: React.FC<MembersViewProps> = ({
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
-              className="p-1 rounded bg-[#162032] border border-[#273549] text-slate-300 disabled:opacity-40 transition"
+              className="p-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] disabled:opacity-40 transition"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="font-mono text-xs px-2 text-slate-300">
+            <span className="font-mono text-xs px-2 text-[var(--text-main)]">
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
-              className="p-1 rounded bg-[#162032] border border-[#273549] text-slate-300 disabled:opacity-40 transition"
+              className="p-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] disabled:opacity-40 transition"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -773,19 +773,19 @@ export const MembersView: React.FC<MembersViewProps> = ({
       {/* 3. ADD / EDIT MEMBER MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-3.5 border-b border-[var(--border-card)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">
                   {editingMember ? 'Edit Community Member' : 'Add Community Member'}
                 </h3>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--text-sub)]">
                   {editingMember ? 'Update member details and consent tracking' : 'Register a new member with camp affiliation and WhatsApp invite'}
                 </p>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-200"
+                className="text-[var(--text-sub)] hover:text-[var(--text-main)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -802,7 +802,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     Full Name *
                   </label>
                   <input
@@ -811,13 +811,13 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="e.g. Ramesh Kumar"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 {/* WhatsApp Number */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     WhatsApp Number *
                   </label>
                   <input
@@ -826,7 +826,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="+919876543210"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
               </div>
@@ -834,7 +834,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               <div className="grid grid-cols-3 gap-3">
                 {/* Age */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     Age
                   </label>
                   <input
@@ -844,19 +844,19 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     value={formAge}
                     onChange={(e) => setFormAge(e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="e.g. 28"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
 
                 {/* Gender */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     Gender
                   </label>
                   <select
                     value={formGender}
                     onChange={(e) => setFormGender(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -867,7 +867,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
 
                 {/* Location */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     Location
                   </label>
                   <input
@@ -875,7 +875,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
                     placeholder="e.g. Tiruppur"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   />
                 </div>
               </div>
@@ -883,7 +883,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               {/* Registration Mode / Filter Checkboxes */}
               <div className="space-y-2">
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center text-xs text-slate-300 cursor-pointer">
+                  <label className="flex items-center text-xs text-[var(--text-main)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formFilterMode === 'camp'}
@@ -892,7 +892,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     />
                     By Camp
                   </label>
-                  <label className="flex items-center text-xs text-slate-300 cursor-pointer">
+                  <label className="flex items-center text-xs text-[var(--text-main)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formFilterMode === 'referral'}
@@ -906,13 +906,13 @@ export const MembersView: React.FC<MembersViewProps> = ({
                 {/* Conditional Camp Selection */}
                 {formFilterMode === 'camp' && (
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                       Preferred Camp / Center
                     </label>
                     <select
                       value={formPreferredCamp}
                       onChange={(e) => setFormPreferredCamp(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                      className="w-full px-2.5 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                     >
                       {availableCamps.map(c => (
                         <option key={c} value={c}>{c}</option>
@@ -923,15 +923,15 @@ export const MembersView: React.FC<MembersViewProps> = ({
               </div>
 
               {/* Membership Status & Consent */}
-              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[#1e293b]">
+              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[var(--border-card)]">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     Membership Status
                   </label>
                   <select
                     value={formMembershipStatus}
                     onChange={(e) => setFormMembershipStatus(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   >
                     <option value="registered">Registered</option>
                     <option value="invitation_sent">Invitation Sent</option>
@@ -940,19 +940,19 @@ export const MembersView: React.FC<MembersViewProps> = ({
                     <option value="left_community">Left Community</option>
                     <option value="unverified">Unverified</option>
                   </select>
-                  <p className="text-[10px] text-slate-500 mt-1">
+                  <p className="text-[10px] text-[var(--text-sub)] mt-1">
                     Note: Only set to Joined Community upon actual confirmation.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-[var(--text-main)] mb-1">
                     Communication Consent
                   </label>
                   <select
                     value={formConsent}
                     onChange={(e) => setFormConsent(e.target.value as any)}
-                    className="w-full px-2 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs focus:outline-none focus:border-[#16a34a]"
+                    className="w-full px-2 py-1.5 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[#87936C]"
                   >
                     <option value="opted_in">Opted In (Voluntary consent)</option>
                     <option value="opted_out">Opted Out (Do not message)</option>
@@ -962,18 +962,18 @@ export const MembersView: React.FC<MembersViewProps> = ({
               </div>
 
               {/* Form buttons */}
-              <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[var(--border-card)] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white transition text-xs font-medium shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? 'Saving...' : editingMember ? 'Update Member' : 'Save Member'}
                 </button>
@@ -986,23 +986,23 @@ export const MembersView: React.FC<MembersViewProps> = ({
       {/* 4. REMOVE MEMBER CONFIRMATION DIALOG (Wireframe 2) */}
       {memberToDelete && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">
                   Confirm Member Removal
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Are you sure you want to remove <strong className="text-slate-200">{memberToDelete.name}</strong> ({memberToDelete.phone})?
+                <p className="text-xs text-[var(--text-sub)] mt-1">
+                  Are you sure you want to remove <strong className="text-[var(--text-main)]">{memberToDelete.name}</strong> ({memberToDelete.phone})?
                 </p>
               </div>
             </div>
 
-            <div className="bg-[#090d16] p-3 rounded border border-[#1e293b] text-[11px] text-slate-400 space-y-1">
-              <p className="font-semibold text-slate-300">Effect of Removal:</p>
+            <div className="bg-[var(--bg-app)] p-3 rounded border border-[var(--border-card)] text-[11px] text-[var(--text-sub)] space-y-1">
+              <p className="font-semibold text-[var(--text-main)]">Effect of Removal:</p>
               <ul className="list-disc pl-4 space-y-0.5">
                 <li>Deletes record from community management database.</li>
                 <li>Haults future automated campaign broadcasts.</li>
@@ -1018,7 +1018,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
               <button
                 type="button"
                 onClick={() => setMemberToDelete(null)}
-                className="px-4 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                className="px-4 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
               >
                 No, Cancel
               </button>
@@ -1038,58 +1038,58 @@ export const MembersView: React.FC<MembersViewProps> = ({
       {/* 5. VIEW DETAILS MODAL */}
       {viewingMember && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
-            <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-lg w-full overflow-hidden shadow-2xl">
+            <div className="px-5 py-3.5 border-b border-[var(--border-card)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">
                   Member Details
                 </h3>
-                <p className="text-[11px] text-slate-400 font-mono">
+                <p className="text-[11px] text-[var(--text-sub)] font-mono">
                   {viewingMember.id}
                 </p>
               </div>
               <button
                 onClick={() => setViewingMember(null)}
-                className="text-slate-400 hover:text-slate-200"
+                className="text-[var(--text-sub)] hover:text-[var(--text-main)]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="p-5 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 bg-[#090d16] p-3 rounded border border-[#1e293b]">
+              <div className="grid grid-cols-2 gap-3 bg-[var(--bg-app)] p-3 rounded border border-[var(--border-card)]">
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Name</span>
-                  <span className="font-semibold text-slate-100">{viewingMember.name}</span>
+                  <span className="text-[10px] text-[var(--text-sub)] block">Name</span>
+                  <span className="font-semibold text-[var(--text-main)]">{viewingMember.name}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">WhatsApp Number</span>
-                  <span className="font-mono text-slate-200">{viewingMember.phone}</span>
+                  <span className="text-[10px] text-[var(--text-sub)] block">WhatsApp Number</span>
+                  <span className="font-mono text-[var(--text-main)]">{viewingMember.phone}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Age & Gender</span>
-                  <span className="text-slate-200">{viewingMember.age ? `${viewingMember.age} yrs` : '—'} • {viewingMember.gender}</span>
+                  <span className="text-[10px] text-[var(--text-sub)] block">Age & Gender</span>
+                  <span className="text-[var(--text-main)]">{viewingMember.age ? `${viewingMember.age} yrs` : '—'} • {viewingMember.gender}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Location</span>
-                  <span className="text-slate-200">{viewingMember.location}</span>
+                  <span className="text-[10px] text-[var(--text-sub)] block">Location</span>
+                  <span className="text-[var(--text-main)]">{viewingMember.location}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Camp Affiliation</span>
-                  <span className="text-slate-200">{viewingMember.preferredCamp || viewingMember.campLocation || '—'}</span>
+                  <span className="text-[10px] text-[var(--text-sub)] block">Camp Affiliation</span>
+                  <span className="text-[var(--text-main)]">{viewingMember.preferredCamp || viewingMember.campLocation || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block">Membership Status</span>
+                  <span className="text-[10px] text-[var(--text-sub)] block">Membership Status</span>
                   <div className="mt-0.5">{renderMembershipStatusBadge(viewingMember.membershipStatus)}</div>
                 </div>
               </div>
 
               {/* Interests & Communication */}
               <div className="space-y-1">
-                <span className="text-[11px] text-slate-400 font-medium block">Interests</span>
+                <span className="text-[11px] text-[var(--text-sub)] font-medium block">Interests</span>
                 <div className="flex flex-wrap gap-1">
                   {viewingMember.interests.map(i => (
-                    <span key={i} className="px-2 py-0.5 rounded bg-[#162032] border border-[#273549] text-slate-300 text-[10px]">
+                    <span key={i} className="px-2 py-0.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] text-[10px]">
                       {i}
                     </span>
                   ))}
@@ -1099,17 +1099,17 @@ export const MembersView: React.FC<MembersViewProps> = ({
               {/* Notes */}
               {viewingMember.notes && (
                 <div>
-                  <span className="text-[11px] text-slate-400 font-medium block">Notes & Details</span>
-                  <p className="text-slate-300 bg-[#090d16] p-2.5 rounded border border-[#1e293b] text-xs">
+                  <span className="text-[11px] text-[var(--text-sub)] font-medium block">Notes & Details</span>
+                  <p className="text-[var(--text-main)] bg-[var(--bg-app)] p-2.5 rounded border border-[var(--border-card)] text-xs">
                     {viewingMember.notes}
                   </p>
                 </div>
               )}
 
               {/* WhatsApp Invitation Helper */}
-              <div className="p-3 rounded bg-[#16a34a]/10 border border-[#16a34a]/30 space-y-2">
+              <div className="p-3 rounded bg-[#263323] hover:bg-[#1a2318]/10 border border-[#87936C]/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-[#22c55e] flex items-center gap-1.5">
+                  <span className="text-[11px] font-semibold text-[#27833A] flex items-center gap-1.5">
                     <MessageCircle className="w-3.5 h-3.5" />
                     <span>WhatsApp Community Invitation</span>
                   </span>
@@ -1120,24 +1120,24 @@ export const MembersView: React.FC<MembersViewProps> = ({
                       setCopiedLink(true);
                       setTimeout(() => setCopiedLink(false), 2000);
                     }}
-                    className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#16a34a]/20 text-[#22c55e] hover:bg-[#16a34a]/30 transition"
+                    className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-[#263323] hover:bg-[#1a2318]/20 text-[#27833A] hover:bg-[#263323] hover:bg-[#1a2318]/30 transition"
                   >
                     {copiedLink ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-[var(--text-sub)]">
                   Send this invite link directly to {viewingMember.name} to welcome them into the community.
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between">
-                <span className="text-[10px] text-slate-500 font-mono">
+              <div className="pt-2 border-t border-[var(--border-card)] flex items-center justify-between">
+                <span className="text-[10px] text-[var(--text-sub)] font-mono">
                   Added on {new Date(viewingMember.dateAdded).toLocaleString()}
                 </span>
                 <button
                   onClick={() => setViewingMember(null)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
                 >
                   Close
                 </button>
@@ -1150,13 +1150,13 @@ export const MembersView: React.FC<MembersViewProps> = ({
       {/* 6. CSV IMPORT MODAL */}
       {isCsvModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-[#1e293b] rounded-lg max-w-lg w-full p-5 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-lg max-w-lg w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
               <div>
-                <h3 className="text-sm font-semibold text-slate-100">Import Members from CSV</h3>
-                <p className="text-[11px] text-slate-400">Paste CSV data (Name, Phone, Age, Gender, Location, Camp)</p>
+                <h3 className="text-sm font-semibold text-[var(--text-main)]">Import Members from CSV</h3>
+                <p className="text-[11px] text-[var(--text-sub)]">Paste CSV data (Name, Phone, Age, Gender, Location, Camp)</p>
               </div>
-              <button onClick={() => setIsCsvModalOpen(false)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setIsCsvModalOpen(false)} className="text-[var(--text-sub)] hover:text-[var(--text-main)]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1166,18 +1166,18 @@ export const MembersView: React.FC<MembersViewProps> = ({
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
               placeholder={`Name,Phone,Age,Gender,Location,Camp\nArun Kumar,+919842100111,28,male,Tiruppur,Tiruppur Central Hub\nDivya S,+919842200222,32,female,Palladam,Palladam Camp Hub`}
-              className="w-full p-3 rounded bg-[#090d16] border border-[#1e293b] text-slate-200 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+              className="w-full p-3 rounded bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-mono focus:outline-none focus:border-[#87936C]"
             />
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[10px] text-[var(--text-sub)]">
                 Duplicates with existing phone numbers will be safely skipped.
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsCsvModalOpen(false)}
-                  className="px-3 py-1.5 rounded bg-[#162032] border border-[#273549] text-slate-300 hover:text-white transition text-xs font-medium"
+                  className="px-3 py-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white transition text-xs font-medium"
                 >
                   Cancel
                 </button>
@@ -1185,7 +1185,7 @@ export const MembersView: React.FC<MembersViewProps> = ({
                   type="button"
                   disabled={isSubmitting || !csvText.trim()}
                   onClick={handleImportCsvSubmit}
-                  className="px-4 py-1.5 rounded bg-[#16a34a] hover:bg-[#15803d] text-white transition text-xs font-medium disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-[#263323] hover:bg-[#1a2318] hover:bg-[#15803d] text-white transition text-xs font-medium disabled:opacity-50"
                 >
                   {isSubmitting ? 'Importing...' : 'Upload & Import'}
                 </button>
