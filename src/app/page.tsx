@@ -608,7 +608,7 @@ export default function Home() {
           <div className="px-8 py-5 border-b border-[var(--border-card)] bg-[var(--bg-card)] flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20">
             <div>
               <h1 className="text-[24px] font-bold text-[var(--text-main)] tracking-tight capitalize leading-tight">
-                {activeTab === 'social' ? 'Social Media' : activeTab === 'whatsapp' ? 'WhatsApp Integration' : activeTab}
+                {activeTab === 'social' ? 'Social Media' : activeTab === 'whatsapp' ? 'WhatsApp Integration' : activeTab === 'settings' ? 'Help & Support' : activeTab}
               </h1>
               <p className="text-[13px] text-[var(--text-sub)] mt-0.5">
                 {activeTab === 'members' && 'Manage your community members and their details.'}
@@ -619,7 +619,7 @@ export default function Home() {
                 {activeTab === 'social' && 'Manage social content and share updates with your community.'}
                 {activeTab === 'analytics' && 'Understand your community\'s growth and communication performance.'}
                 {activeTab === 'whatsapp' && 'Manage your WhatsApp connection and integration settings.'}
-                {activeTab === 'settings' && 'Manage anti-spam rules, quiet hours, and frequency capping.'}
+                {activeTab === 'settings' && 'Operations guide, role authority permissions, FAQs, and dispatch safeguards.'}
                 {activeTab === 'logs' && 'Audit logs and delivery tracking of dispatched dispatches.'}
                 {activeTab === 'monitor' && 'Real-time diagnostic monitor and error management.'}
                 {activeTab === 'discounts' && 'Special camp discounts and referral perk vouchers.'}
@@ -867,13 +867,11 @@ export default function Home() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="theme-card p-6 shadow-xs">
-              <SettingsView
-                settings={data.antiSpamSettings}
-                auditLogs={data.auditLogs}
-                onUpdateSettings={handleUpdateSettings}
-              />
-            </div>
+            <SettingsView
+              settings={data.antiSpamSettings}
+              auditLogs={data.auditLogs}
+              onUpdateSettings={handleUpdateSettings}
+            />
           )}
         </main>
       </div>

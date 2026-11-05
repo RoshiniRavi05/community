@@ -14,7 +14,13 @@ import {
   MessageCircle,
   FileQuestion,
   LifeBuoy,
-  ExternalLink
+  ExternalLink,
+  Stethoscope,
+  ClipboardCheck,
+  Phone,
+  Mail,
+  Headphones,
+  Check
 } from 'lucide-react';
 import { AntiSpamSettings, AuditLog } from '@/lib/db/types';
 import { formatWhatsAppDate } from '@/lib/utils';
@@ -157,6 +163,71 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
 
+          {/* Two-Tier Role-Based Access Control Guide Card */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl p-5 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--border-card)]">
+              <div>
+                <h4 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-wider">
+                  Two-Tier Role Permissions Guide
+                </h4>
+                <p className="text-[11px] text-[var(--text-sub)] mt-0.5">
+                  How role-based access control enforces compliance across broadcast reviews and dispatches.
+                </p>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E7EBD8] dark:bg-emerald-950/40 text-[#27833A] dark:text-emerald-300 border border-[#87936C]/40 font-semibold">
+                RBAC Active
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {/* Doctor Card */}
+              <div className="p-4 rounded-xl bg-[var(--bg-app)] border border-[#87936C]/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#27833A] text-white flex items-center justify-center shrink-0">
+                      <Stethoscope className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-[var(--text-main)]">Doctor (Approver)</h5>
+                      <p className="text-[10px] text-[#27833A] font-medium font-mono">doctor@dwargasai.in</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#27833A]/10 text-[#27833A] border border-[#27833A]/30">
+                    Reviewer
+                  </span>
+                </div>
+                <ul className="text-[11px] text-[var(--text-sub)] space-y-1 list-disc list-inside pt-1">
+                  <li>Reviews all proposed medical & community messages</li>
+                  <li>Has sole authority to click the green <strong className="text-[var(--text-main)]">Approve</strong> button</li>
+                  <li>Clicking Approve unlocks the dispatch button for the Operations Manager</li>
+                </ul>
+              </div>
+
+              {/* Manager Card */}
+              <div className="p-4 rounded-xl bg-[var(--bg-app)] border border-amber-300 dark:border-amber-700/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
+                      <ClipboardCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-[var(--text-main)]">Manager (Dispatcher)</h5>
+                      <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium font-mono">manager@dwargasai.in</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                    Dispatcher
+                  </span>
+                </div>
+                <ul className="text-[11px] text-[var(--text-sub)] space-y-1 list-disc list-inside pt-1">
+                  <li>Composes broadcasts, configures recipients, and sets cadence schedules</li>
+                  <li><strong className="text-[var(--text-main)]">Send Now is LOCKED</strong> with a lock icon until Doctor grants approval</li>
+                  <li>Once Doctor approves, button turns active green to send message via WhatsApp</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           {/* Detailed FAQs Accordion / Cards */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl p-5 shadow-xs space-y-3.5">
             <h4 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-wider">
@@ -193,6 +264,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   Broadcasts scheduled between the quiet hours start and end time (default 21:00 to 08:00) are deferred until the quiet hours window concludes to respect member preferences.
                 </p>
               </details>
+            </div>
+          </div>
+
+          {/* Support Desk Contact Card */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl p-5 shadow-xs">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Headphones className="w-4 h-4 text-[#87936C]" />
+                  <h4 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-wider">
+                    Dwaragasai Technical & Operations Desk
+                  </h4>
+                </div>
+                <p className="text-[11px] text-[var(--text-sub)]">
+                  Need assistance with WhatsApp templates, webhook diagnostics, or role configuration?
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <a
+                  href="mailto:support@dwargasai.in"
+                  className="px-3 py-1.5 rounded-lg bg-[var(--bg-app)] border border-[var(--border-card)] hover:border-[#87936C] text-[var(--text-main)] font-medium flex items-center gap-1.5 transition"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#87936C]" />
+                  <span>support@dwargasai.in</span>
+                </a>
+                <div className="px-3 py-1.5 rounded-lg bg-[var(--bg-app)] border border-[var(--border-card)] text-[var(--text-sub)] font-mono text-[11px] flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-[#87936C]" />
+                  <span>+91 (080) 4123-5678</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

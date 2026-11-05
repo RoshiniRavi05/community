@@ -298,7 +298,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Help & Support */}
         <button
           onClick={() => setActiveTab('settings')}
-          className="w-full flex items-center gap-3 px-3 py-2 text-[13px] text-[#D9D6CC]/85 hover:text-white transition-colors text-left"
+          className={`w-full flex items-center gap-3 px-3 py-2 text-[13px] rounded-lg transition-colors text-left ${
+            activeTab === 'settings'
+              ? 'bg-[#3A4D35] text-white font-medium shadow-xs'
+              : 'text-[#D9D6CC]/85 hover:text-white hover:bg-white/5'
+          }`}
         >
           <HelpCircle strokeWidth={1.75} className="w-[19px] h-[19px] text-[#D9D6CC]/80" />
           <span>Help & Support</span>
