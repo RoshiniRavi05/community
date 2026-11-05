@@ -150,7 +150,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0b0f19] border border-[var(--border-card)] p-2.5 rounded shadow-lg text-[11px] text-[var(--text-main)]">
+        <div className="bg-[#263323] text-white p-2.5 rounded-lg shadow-xl text-[11px]">
           <div className="font-semibold text-[var(--text-main)] mb-1">{label}</div>
           {payload.map((entry: any, index: number) => (
             <div key={`item-${index}`} className="flex items-center gap-2 py-0.5">
@@ -173,17 +173,17 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         const isEmergencyPaused = data.antiSpamSettings?.emergencyPauseActive ?? false;
 
         return (
-          <div className={`p-4 rounded-lg border transition-all ${
+          <div className={`p-4 rounded-xl border transition-all ${
             isEmergencyPaused
-              ? 'bg-rose-950/40 border-rose-600/80 shadow-lg shadow-rose-950/30'
+              ? 'bg-[#FDF2F0] border-[#F2B8B1] shadow-sm'
               : 'bg-[var(--bg-card)] border-[var(--border-card)]'
           }`}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start sm:items-center gap-3">
                 <div className={`p-2.5 rounded-lg shrink-0 ${
                   isEmergencyPaused
-                    ? 'bg-rose-600 text-white animate-pulse'
-                    : 'bg-rose-950/50 text-rose-400 border border-rose-900/50'
+                    ? 'bg-[#C65B42] text-white'
+                    : 'bg-[#F4F0E8] text-[#87936C] border border-[#D9D6CC]'
                 }`}>
                   <AlertOctagon className="w-5 h-5" />
                 </div>
@@ -192,10 +192,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     <h3 className="text-sm font-semibold text-[var(--text-main)]">
                       Emergency Broadcast Controls
                     </h3>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wide border ${
                       isEmergencyPaused
-                        ? 'bg-rose-600 text-white font-bold'
-                        : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
+                        ? 'bg-[#FDE8E4] text-[#C65B42] border-[#F8C8C0] font-semibold'
+                        : 'bg-[#E7EBD8] text-[#27833A] border-[#87936C]/30'
                     }`}>
                       {isEmergencyPaused ? '● All Dispatches Paused' : '● System Active'}
                     </span>
@@ -221,20 +221,20 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       setIsActionLoading(false);
                     }
                   }}
-                  className={`px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 transition shadow-xs cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition shadow-xs cursor-pointer border ${
                     isEmergencyPaused
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      : 'bg-amber-600 hover:bg-amber-700 text-white'
+                      ? 'bg-[#87936C] hover:bg-[#77835c] text-white border-transparent'
+                      : 'bg-[#F4F0E8] hover:bg-[#EAE4D8] text-[#263323] border-[#D9D6CC]'
                   }`}
                 >
                   {isEmergencyPaused ? (
                     <>
-                      <Play className="w-4 h-4" />
+                      <Play className="w-4 h-4 fill-current" />
                       <span>Resume All Dispatches</span>
                     </>
                   ) : (
                     <>
-                      <Pause className="w-4 h-4" />
+                      <Pause className="w-4 h-4 text-[#87936C]" />
                       <span>Emergency Pause</span>
                     </>
                   )}
@@ -252,7 +252,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                       setIsActionLoading(false);
                     }
                   }}
-                  className="px-3.5 py-2 rounded-md text-xs font-semibold bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:hover:bg-rose-600 text-white flex items-center gap-2 transition shadow-xs cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium bg-[#C65B42] hover:bg-[#b04f38] disabled:opacity-40 text-white flex items-center gap-2 transition shadow-xs cursor-pointer"
                   title={scheduledCampaigns.length === 0 ? 'No scheduled messages queued' : 'Cancel all pending/scheduled messages immediately'}
                 >
                   <Square className="w-3.5 h-3.5 fill-white" />
@@ -389,17 +389,17 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Verified Sent, Delivered, and Read counts over selected interval
             </p>
           </div>
-          <div className="flex items-center gap-3 text-[10px]">
+          <div className="flex items-center gap-3 text-[11px]">
             <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
-              <span className="w-2.5 h-2.5 rounded-xs bg-blue-500"></span>
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#263323]"></span>
               <span>Sent</span>
             </span>
             <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
-              <span className="w-2.5 h-2.5 rounded-xs bg-[#87936C] hover:bg-[#77835c]"></span>
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#87936C]"></span>
               <span>Delivered</span>
             </span>
             <span className="flex items-center gap-1.5 text-[var(--text-sub)]">
-              <span className="w-2.5 h-2.5 rounded-xs bg-emerald-400"></span>
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#B8C7A4]"></span>
               <span>Read</span>
             </span>
           </div>
@@ -408,13 +408,13 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="label" stroke="#64748b" fontSize={10} tickLine={false} axisLine={{ stroke: '#1e293b' }} />
-              <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={{ stroke: '#1e293b' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-card)" vertical={false} opacity={0.5} />
+              <XAxis dataKey="label" stroke="var(--text-sub)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--text-sub)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="sent" name="Sent" fill="#3b82f6" radius={[2, 2, 0, 0]} maxBarSize={24} />
-              <Bar dataKey="delivered" name="Delivered" fill="#16a34a" radius={[2, 2, 0, 0]} maxBarSize={24} />
-              <Bar dataKey="read" name="Read" fill="#34d399" radius={[2, 2, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="sent" name="Sent" fill="#263323" radius={[3, 3, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="delivered" name="Delivered" fill="#87936C" radius={[3, 3, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="read" name="Read" fill="#B8C7A4" radius={[3, 3, 0, 0]} maxBarSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </div>
