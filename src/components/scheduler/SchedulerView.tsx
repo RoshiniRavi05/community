@@ -127,71 +127,70 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
   };
 
   // Status Badge Helper
-  const getStatusBadge = (camp: Campaign | CampaignStatus) => {
+  const getStatusBadge = (camp: Campaign | CampaignStatus, compact = false) => {
     const status = typeof camp === 'string' ? camp : camp.status;
-    const isDoctorApproved = typeof camp === 'object' ? camp.isDoctorApproved : false;
+    const isDoctorApproved = typeof camp === 'object' ? Boolean(camp.isDoctorApproved) : false;
+
+    const sizeClasses = compact
+      ? 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold'
+      : 'inline-flex items-center justify-center gap-1.5 min-w-[124px] h-6 px-2.5 rounded-full text-[11px] font-semibold';
 
     if (status === 'completed') {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#27833A] border border-[#87936C]/30">
-          Delivered
+        <span className={`${sizeClasses} bg-[#E7EBD8] dark:bg-[#1E271C] text-[#2D3328] dark:text-[#BAC9A9] border border-[#87936C]/40`}>
+          <Check className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-[#556947] dark:text-[#87936C] shrink-0`} />
+          <span>Delivered</span>
         </span>
       );
     }
 
     if (status === 'cancelled') {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EAE8E3] text-[#85877F] border border-[var(--border-card)]">
-          Cancelled
+        <span className={`${sizeClasses} bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700`}>
+          <span>Cancelled</span>
         </span>
       );
     }
 
     if (status === 'processing') {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EBF3FB] text-[#1E5B99] border border-[#BFDBFE]">
-          Processing
+        <span className={`${sizeClasses} bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800`}>
+          <span>Processing</span>
         </span>
       );
     }
 
     if (status === 'failed' || status === 'partially_failed') {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FDE8E4] text-[#C65B42] border border-[#F8C8C0]">
-          Failed
+        <span className={`${sizeClasses} bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800`}>
+          <span>Failed</span>
         </span>
       );
     }
 
-    // Scheduled state: differentiate doctor approved vs awaiting
-    if (status === 'scheduled') {
-      if (isDoctorApproved) {
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] dark:bg-emerald-950/40 text-[#27833A] dark:text-emerald-300 border border-[#87936C]/40">
-            <CheckCircle2 className="w-3 h-3 text-[#27833A] dark:text-emerald-400" />
-            <span>Doctor Approved</span>
-          </span>
-        );
-      }
+    // Pending Approval or unapproved scheduled state
+    if (status === 'pending_approval' || (status === 'scheduled' && !isDoctorApproved)) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#263323] border border-[#87936C]/30">
-          Scheduled
-        </span>
-      );
-    }
-
-    if (status === 'pending_approval' || (typeof camp === 'object' && !isDoctorApproved)) {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FFF3DC] dark:bg-amber-950/60 text-[#9A5B00] dark:text-amber-300 border border-[#F0D59E] dark:border-amber-800">
-          <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+        <span className={`${sizeClasses} bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 shadow-2xs`}>
+          <Clock className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-amber-600 dark:text-amber-400 shrink-0`} />
           <span>Awaiting Doctor</span>
         </span>
       );
     }
 
+    // Scheduled & Doctor Approved
+    if (status === 'scheduled' && isDoctorApproved) {
+      return (
+        <span className={`${sizeClasses} bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 shadow-2xs`}>
+          <CheckCircle2 className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-emerald-600 dark:text-emerald-400 shrink-0`} />
+          <span>Doctor Approved</span>
+        </span>
+      );
+    }
+
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FAF9F5] text-[var(--text-sub)] border border-[var(--border-card)]">
-        Draft
+      <span className={`${sizeClasses} bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700`}>
+        <span>Draft</span>
       </span>
     );
   };
@@ -375,8 +374,8 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                   <th className="py-2.5 px-3">Category</th>
                   <th className="py-2.5 px-3">Dispatch Schedule</th>
                   <th className="py-2.5 px-3">Target Audience</th>
-                  <th className="py-2.5 px-3">Approval Status</th>
-                  <th className="py-2.5 px-3 text-right">Actions</th>
+                  <th className="py-2.5 px-3 text-center">Status</th>
+                  <th className="py-2.5 px-3 text-right pr-4">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-card)]">
@@ -441,117 +440,122 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                         </td>
 
                         {/* Status with Doctor Approval indicator */}
-                        <td className="py-2.5 px-3 whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-center whitespace-nowrap">
                           {getStatusBadge(camp)}
                         </td>
 
                         {/* Actions with Role Enforcement */}
-                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* 1. DOCTOR ROLE ACTION: Approve Campaign */}
-                            {isDoctor && (
-                              (!isCampDoctorApproved || camp.status === 'pending_approval') ? (
-                                <button
-                                  onClick={() => onApproveCampaign(camp.id)}
-                                  title="Doctor Authority: Approve this campaign for dispatch"
-                                  className="px-2.5 py-1 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1 cursor-pointer"
-                                >
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  <span>Approve</span>
-                                </button>
-                              ) : (
-                                <span
-                                  title={`Approved by ${camp.approvedBy || 'Doctor'}`}
-                                  className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1"
-                                >
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  <span>Approved</span>
-                                </span>
-                              )
-                            )}
+                        <td className="py-2.5 px-3 text-right pr-4 whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Slot for Role Primary Action Button (Fixed 100px width for alignment) */}
+                            <div className="w-[100px] flex justify-end shrink-0">
+                              {/* 1. DOCTOR ROLE ACTION */}
+                              {isDoctor && (
+                                (camp.status === 'pending_approval' || (camp.status === 'scheduled' && !isCampDoctorApproved)) ? (
+                                  <button
+                                    onClick={() => onApproveCampaign(camp.id)}
+                                    title="Doctor Authority: Approve this broadcast for dispatch"
+                                    className="w-full h-7 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Approve</span>
+                                  </button>
+                                ) : (camp.status === 'scheduled' && isCampDoctorApproved) ? (
+                                  <span
+                                    title={`Approved by ${camp.approvedBy || 'Doctor'}`}
+                                    className="w-full h-7 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 text-[11px] font-semibold flex items-center justify-center gap-1"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    <span>Approved</span>
+                                  </span>
+                                ) : null
+                              )}
 
-                            {/* 2. MANAGER ROLE ACTION: Send Now (ENABLED ONLY IF DOCTOR APPROVED) */}
-                            {isManager && (
-                              isCampDoctorApproved ? (
-                                <button
-                                  onClick={() => onSendNow(camp.id)}
-                                  title="Doctor Approved: Click to dispatch now"
-                                  className="px-2.5 py-1 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1 cursor-pointer"
-                                >
-                                  <Send className="w-3 h-3" />
-                                  <span>Send Now</span>
-                                </button>
-                              ) : (
-                                <button
-                                  disabled
-                                  title="LOCKED: Requires Doctor approval (doctor@dwargasai.in) before Send Now is enabled"
-                                  className="px-2.5 py-1 rounded-md bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 text-[11px] font-medium transition cursor-not-allowed flex items-center gap-1 border border-stone-300 dark:border-stone-700 opacity-60"
-                                >
-                                  <Lock className="w-3 h-3 text-amber-500" />
-                                  <span>Send Now</span>
-                                </button>
-                              )
-                            )}
+                              {/* 2. MANAGER ROLE ACTION */}
+                              {isManager && (
+                                (camp.status === 'pending_approval' || camp.status === 'scheduled' || camp.status === 'draft') ? (
+                                  isCampDoctorApproved ? (
+                                    <button
+                                      onClick={() => onSendNow(camp.id)}
+                                      title="Doctor Approved: Click to dispatch now"
+                                      className="w-full h-7 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                                    >
+                                      <Send className="w-3.5 h-3.5 shrink-0" />
+                                      <span>Send Now</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      disabled
+                                      title="LOCKED: Requires Doctor approval (doctor@dwargasai.in) before Send Now is enabled"
+                                      className="w-full h-7 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 text-[11px] font-medium transition cursor-not-allowed flex items-center justify-center gap-1 border border-stone-200 dark:border-stone-700"
+                                    >
+                                      <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                                      <span>Send Now</span>
+                                    </button>
+                                  )
+                                ) : null
+                              )}
 
-                            {/* Fallback if user role is not logged in / default view */}
-                            {!isDoctor && !isManager && (
-                              <>
-                                {camp.status === 'pending_approval' && (
+                              {/* Fallback if user role is not logged in / default view */}
+                              {!isDoctor && !isManager && (
+                                camp.status === 'pending_approval' ? (
                                   <button
                                     onClick={() => onApproveCampaign(camp.id)}
                                     title="Approve Campaign"
-                                    className="px-2.5 py-1 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs"
+                                    className="w-full h-7 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs flex items-center justify-center gap-1"
                                   >
                                     Approve
                                   </button>
-                                )}
-
-                                {(camp.status === 'scheduled' || camp.status === 'draft') && (
+                                ) : (camp.status === 'scheduled' || camp.status === 'draft') ? (
                                   <button
                                     onClick={() => onSendNow(camp.id)}
                                     title="Dispatch Message Now"
-                                    className="px-2.5 py-1 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs"
+                                    className="w-full h-7 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs flex items-center justify-center gap-1"
                                   >
                                     Send Now
                                   </button>
-                                )}
-                              </>
-                            )}
+                                ) : null
+                              )}
+                            </div>
 
-                            {/* Common Actions: Preview, Edit, Duplicate, Cancel */}
-                            <button
-                              onClick={() => setPreviewCampaign(camp)}
-                              title="Live WhatsApp Preview"
-                              className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              onClick={() => onOpenComposer(camp)}
-                              title="Edit / Reschedule"
-                              className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
-                            >
-                              <FileEdit className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              onClick={() => onDuplicateCampaign(camp.id)}
-                              title="Duplicate for Next Week"
-                              className="p-1 rounded text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)]"
-                            >
-                              <Copy className="w-3.5 h-3.5" />
-                            </button>
-
-                            {camp.status !== 'completed' && camp.status !== 'cancelled' && (
+                            {/* Common Utility Icons (Fixed width slot: 4 icons × 24px) */}
+                            <div className="flex items-center justify-end gap-0.5 text-[var(--text-sub)] shrink-0">
                               <button
-                                onClick={() => onCancelCampaign(camp.id)}
-                                title="Cancel Campaign"
-                                className="p-1 rounded text-[var(--text-sub)] hover:text-rose-400 hover:bg-rose-950/20"
+                                onClick={() => setPreviewCampaign(camp)}
+                                title="Live WhatsApp Preview"
+                                className="w-6 h-6 rounded flex items-center justify-center hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition"
                               >
-                                <Ban className="w-3.5 h-3.5" />
+                                <Eye className="w-3.5 h-3.5" />
                               </button>
-                            )}
+
+                              <button
+                                onClick={() => onOpenComposer(camp)}
+                                title="Edit / Reschedule"
+                                className="w-6 h-6 rounded flex items-center justify-center hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition"
+                              >
+                                <FileEdit className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                onClick={() => onDuplicateCampaign(camp.id)}
+                                title="Duplicate for Next Week"
+                                className="w-6 h-6 rounded flex items-center justify-center hover:text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+
+                              {camp.status !== 'completed' && camp.status !== 'cancelled' ? (
+                                <button
+                                  onClick={() => onCancelCampaign(camp.id)}
+                                  title="Cancel Campaign"
+                                  className="w-6 h-6 rounded flex items-center justify-center hover:text-rose-400 hover:bg-rose-950/20 transition"
+                                >
+                                  <Ban className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <span className="w-6 h-6 inline-block" />
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -647,7 +651,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                               <span className="text-[10px] font-mono text-[var(--text-sub)]">
                                 {formatTimeOnly(c.scheduledAt)}
                               </span>
-                              {getStatusBadge(c)}
+                              {getStatusBadge(c, true)}
                             </div>
                             <div className="font-medium text-[var(--text-main)] text-[11px] truncate" title={c.title}>
                               {c.title}
