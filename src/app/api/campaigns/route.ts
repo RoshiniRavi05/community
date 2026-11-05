@@ -10,10 +10,11 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { action, campaign, campaignId, user = 'Admin' } = body;
+    const { action, campaign, campaignId, user = 'Admin', userRole = 'manager' } = body;
     const db = getDatabase();
 
     if (action === 'CREATE') {
+      const isDoctor = userRole === 'doctor' || (user && user.toLowerCase().includes('doctor'));
       const cadence = campaign.cadence || 'none';
       let intervalDays = 1;
       if (cadence === 'daily') intervalDays = 1;
@@ -29,6 +30,11 @@ export async function POST(req: Request) {
       const baseTimestamp = new Date(campaign.scheduledAt || Date.now()).getTime();
       const parentId = `camp_${Date.now()}`;
       const createdCampaigns: Campaign[] = [];
+
+      // If created by manager: ALWAYS requires Doctor approval before dispatch
+      const requiresApproval = isDoctor ? (campaign.requiresApproval ?? false) : true;
+      const isDoctorApproved = isDoctor ? true : false;
+      const initialStatus = requiresApproval ? 'pending_approval' : 'scheduled';
 
       for (let i = 0; i < occurrences; i++) {
         const occurrenceId = i === 0 ? parentId : `camp_${Date.now()}_${i}`;
@@ -48,7 +54,11 @@ export async function POST(req: Request) {
           cadenceOccurrences: occurrences,
           parentCampaignId: parentId,
           seriesIndex: i + 1,
-          status: campaign.requiresApproval ? 'pending_approval' : 'scheduled',
+          status: initialStatus,
+          requiresApproval,
+          isDoctorApproved,
+          approvedBy: isDoctor ? 'Dr. Dwaraga Sai (doctor@dwargasai.in)' : undefined,
+          approvedAt: isDoctor ? new Date().toISOString() : undefined,
           totalRecipients: campaign.totalRecipients || db.members.length,
           sentCount: 0,
           deliveredCount: 0,
@@ -66,7 +76,7 @@ export async function POST(req: Request) {
       logAuditAction(
         user, 
         'CAMPAIGN_CREATED', 
-        `Created campaign: "${campaign.title}" (${cadence !== 'none' ? `Cadence: ${cadence}, ${occurrences} occurrences scheduled` : 'Single broadcast'})`
+        `Created campaign: "${campaign.title}" (${cadence !== 'none' ? `Cadence: ${cadence}, ${occurrences} occurrences scheduled` : 'Single broadcast'}). Status: ${initialStatus}. Doctor approval required: ${requiresApproval}`
       );
       saveDatabase(db);
       return NextResponse.json({ success: true, campaign: createdCampaigns[0], allCreated: createdCampaigns });
@@ -95,12 +105,25 @@ export async function POST(req: Request) {
       const target = db.campaigns.find(c => c.id === campaignId);
       if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
 
+      // Only Doctor role can approve campaigns
+      if (userRole === 'manager') {
+        return NextResponse.json(
+          { error: 'Permission Denied: Only Dr. Dwaraga Sai (doctor@dwargasai.in) has authority to approve broadcasts.' },
+          { status: 403 }
+        );
+      }
+
       target.status = 'scheduled';
-      target.approvedBy = user;
+      target.isDoctorApproved = true;
+      target.approvedBy = 'Dr. Dwaraga Sai (doctor@dwargasai.in)';
       target.approvedAt = new Date().toISOString();
       target.updatedAt = new Date().toISOString();
 
-      logAuditAction(user, 'CAMPAIGN_APPROVED', `Approved campaign: "${target.title}" for sending.`);
+      logAuditAction(
+        'Dr. Dwaraga Sai (Doctor)',
+        'CAMPAIGN_DOCTOR_APPROVED',
+        `Doctor approved broadcast message: "${target.title}". Manager can now dispatch.`
+      );
       saveDatabase(db);
       return NextResponse.json({ success: true, campaign: target });
     }
@@ -143,6 +166,8 @@ export async function POST(req: Request) {
         title: `${original.title} (Copy)`,
         scheduledAt: nextWeekDate,
         status: 'draft',
+        isDoctorApproved: false,
+        requiresApproval: true,
         sentCount: 0,
         deliveredCount: 0,
         readCount: 0,
@@ -162,6 +187,17 @@ export async function POST(req: Request) {
       const target = db.campaigns.find(c => c.id === campaignId);
       if (!target) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
 
+      // STRICT ROLE-BASED CHECK:
+      // Doctor must have approved this campaign before Manager can dispatch!
+      if (!target.isDoctorApproved) {
+        return NextResponse.json(
+          {
+            error: 'Broadcast Locked: Send Now is disabled. This broadcast has NOT been approved by the Doctor (doctor@dwargasai.in) yet.'
+          },
+          { status: 403 }
+        );
+      }
+
       // Move scheduled time to right now so scheduler picks it up immediately
       target.scheduledAt = new Date().toISOString();
       target.status = 'scheduled';
@@ -170,6 +206,12 @@ export async function POST(req: Request) {
 
       const { runSchedulerExecution } = await import('@/lib/scheduler/engine');
       const execResult = await runSchedulerExecution();
+
+      logAuditAction(
+        user || 'Operations Manager',
+        'CAMPAIGN_DISPATCHED_NOW',
+        `Manager dispatched Doctor-approved broadcast: "${target.title}"`
+      );
 
       return NextResponse.json({ success: true, result: execResult, campaign: target });
     }

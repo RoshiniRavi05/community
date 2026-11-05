@@ -15,8 +15,9 @@ import { AnalyticsView } from '@/components/analytics/AnalyticsView';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { CampaignComposerModal } from '@/components/scheduler/CampaignComposerModal';
 import { CareAlarmModal } from '@/components/alarms/CareAlarmModal';
-import { Sun, Moon } from 'lucide-react';
-import { AppState, Campaign, Member, SocialMediaPost, CampEvent, DiscountOffer, AntiSpamSettings, CareAlarm } from '@/lib/db/types';
+import { LoginView } from '@/components/auth/LoginView';
+import { Sun, Moon, Stethoscope, ClipboardCheck, ArrowLeftRight, LogOut } from 'lucide-react';
+import { AppState, Campaign, Member, SocialMediaPost, CampEvent, DiscountOffer, AntiSpamSettings, CareAlarm, AuthUser } from '@/lib/db/types';
 
 export default function Home() {
   const [data, setData] = useState<AppState | null>(null);
@@ -25,6 +26,72 @@ export default function Home() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
+
+  // ── Authentication / RBAC State ──
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('dwaragasai_user');
+      if (savedUser) {
+        setCurrentUser(JSON.parse(savedUser));
+      }
+    } catch (e) {
+      console.error('Failed to parse saved user:', e);
+    } finally {
+      setAuthChecked(true);
+    }
+  }, []);
+
+  const handleLoginSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('dwaragasai_user', JSON.stringify(user));
+    } catch {}
+    showToast(`Welcome, ${user.name}! Logged in as ${user.role.toUpperCase()}.`);
+  };
+
+  const handleSwitchRole = () => {
+    const nextUser: AuthUser = currentUser?.role === 'doctor'
+      ? {
+          id: 'user_manager',
+          username: 'manager@dwargasai.in',
+          email: 'manager@dwargasai.in',
+          name: 'Operations Manager',
+          role: 'manager',
+          title: 'Community Operations (Dispatcher)',
+          avatar: 'OM'
+        }
+      : {
+          id: 'user_doctor',
+          username: 'doctor@dwargasai.in',
+          email: 'doctor@dwargasai.in',
+          name: 'Dr. Dwaraga Sai',
+          role: 'doctor',
+          title: 'Chief Medical Officer (Approver)',
+          avatar: 'DS'
+        };
+
+    setCurrentUser(nextUser);
+    try {
+      localStorage.setItem('dwaragasai_user', JSON.stringify(nextUser));
+    } catch {}
+    showToast(`Active role switched to: ${nextUser.name} (${nextUser.role.toUpperCase()})`);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('dwaragasai_user');
+    } catch {}
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'LOGOUT', user: currentUser?.name || 'User' })
+    }).catch(() => {});
+    showToast('Signed out of Dwaragasai Portal.');
+  };
 
   // Sync dark class on root <html>
   const toggleTheme = () => {
@@ -138,24 +205,47 @@ export default function Home() {
     const res = await fetch('/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'CREATE', campaign: campaignData })
+      body: JSON.stringify({
+        action: 'CREATE',
+        campaign: campaignData,
+        user: currentUser?.name || 'Operations Manager',
+        userRole: currentUser?.role || 'manager'
+      })
     });
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || 'Failed to schedule campaign');
     }
-    showToast(`Campaign "${campaignData.title}" saved.`);
+    showToast(
+      currentUser?.role === 'manager'
+        ? `Broadcast "${campaignData.title}" submitted for Doctor review.`
+        : `Broadcast "${campaignData.title}" scheduled with Doctor pre-approval.`
+    );
     await fetchData();
   };
 
   const handleApproveCampaign = async (campaignId: string) => {
-    await fetch('/api/campaigns', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'APPROVE', campaignId })
-    });
-    showToast('Campaign approved for automated dispatch.');
-    await fetchData();
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'APPROVE',
+          campaignId,
+          user: currentUser?.name || 'Dr. Dwaraga Sai',
+          userRole: currentUser?.role || 'doctor'
+        })
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(json.error || 'Only Doctor can approve campaigns.');
+        return;
+      }
+      showToast('✓ Doctor approval granted. Manager can now dispatch this broadcast.');
+      await fetchData();
+    } catch (err: any) {
+      showToast(`Error: ${err.message}`);
+    }
   };
 
   const handleCancelCampaign = async (campaignId: string) => {
@@ -184,11 +274,22 @@ export default function Home() {
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SEND_NOW', campaignId })
+        body: JSON.stringify({
+          action: 'SEND_NOW',
+          campaignId,
+          user: currentUser?.name || 'Operations Manager',
+          userRole: currentUser?.role || 'manager'
+        })
       });
       const json = await res.json();
+      if (!res.ok) {
+        showToast(json.error || 'Cannot send: Doctor approval required first.');
+        return;
+      }
       showToast(`Dispatch executed: ${json.result?.totalMessagesSent || 0} messages delivered.`);
       await fetchData();
+    } catch (err: any) {
+      showToast(`Error: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -457,9 +558,14 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[var(--bg-app)] flex flex-col items-center justify-center text-[var(--text-sub)] space-y-2 font-sans">
         <div className="w-6 h-6 border-2 border-[#87936C] border-t-[#263323] rounded-full animate-spin"></div>
-        <p className="text-xs font-medium">Loading Community Hub...</p>
+        <p className="text-xs font-medium">Loading Dwaragasai Community Portal...</p>
       </div>
     );
+  }
+
+  // ── Show Login View if unauthenticated ──
+  if (authChecked && !currentUser) {
+    return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
   const unresolvedErrorsCount = data.errors.filter(e => !e.resolved).length;
@@ -480,7 +586,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation with User profile */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -490,11 +596,14 @@ export default function Home() {
         membersCount={data.members.length}
         onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
         activeCareAlarmsCount={data.careAlarms?.filter(a => a.isActive).length ?? 0}
+        currentUser={currentUser}
+        onSwitchRole={handleSwitchRole}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[var(--bg-app)]">
-        {/* Global Page Header (matching approved dashboard design system) */}
+        {/* Global Page Header */}
         {activeTab !== 'overview' && activeTab !== 'dashboard' && (
           <div className="px-8 py-5 border-b border-[var(--border-card)] bg-[var(--bg-card)] flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20">
             <div>
@@ -518,6 +627,40 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Active Role Indicator & Quick Role Switcher */}
+              {currentUser && (
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-xs ${
+                      currentUser.role === 'doctor'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                    }`}
+                  >
+                    {currentUser.role === 'doctor' ? (
+                      <>
+                        <Stethoscope className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Doctor (Approver)</span>
+                      </>
+                    ) : (
+                      <>
+                        <ClipboardCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        <span>Manager (Dispatcher)</span>
+                      </>
+                    )}
+                  </span>
+
+                  <button
+                    onClick={handleSwitchRole}
+                    title={`Switch role to ${currentUser.role === 'doctor' ? 'Manager (manager@dwargasai.in)' : 'Doctor (doctor@dwargasai.in)'}`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-card)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition shadow-xs"
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5 text-[#87936C]" />
+                    <span className="hidden sm:inline">Switch to {currentUser.role === 'doctor' ? 'Manager' : 'Doctor'}</span>
+                  </button>
+                </div>
+              )}
+
               {/* Primary Action Button Contextual to Active Tab */}
               {activeTab === 'members' && (
                 <button
@@ -615,6 +758,7 @@ export default function Home() {
                 onSendNow={handleSendNow}
                 defaultView="table"
                 onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
+                currentUser={currentUser}
               />
             </div>
           )}
@@ -632,6 +776,7 @@ export default function Home() {
                 onSendNow={handleSendNow}
                 defaultView="weekly_calendar"
                 onOpenCareAlarms={() => setIsCareAlarmModalOpen(true)}
+                currentUser={currentUser}
               />
             </div>
           )}
@@ -744,6 +889,7 @@ export default function Home() {
           segments={data.segments}
           members={data.members}
           settings={data.antiSpamSettings}
+          currentUser={currentUser}
         />
       )}
 

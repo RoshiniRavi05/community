@@ -2,8 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import { AppState, Member, Campaign, MessageLog, AudienceSegment, SocialMediaPost, CampEvent, DiscountOffer, AutomationError, AntiSpamSettings, WhatsAppConfig, WhatsAppCommunityGroup, AuditLog, CareAlarm } from './types';
 
-const DATA_DIR = path.join(process.cwd(), '.data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY);
+const DATA_DIR = IS_SERVERLESS ? path.join('/tmp', '.data') : path.join(process.cwd(), '.data');
+const LOCAL_DB_FILE = path.join(process.cwd(), '.data', 'db.json');
+const SERVERLESS_DB_FILE = path.join('/tmp', 'dwaragasai_db.json');
+const DB_FILE = IS_SERVERLESS ? SERVERLESS_DB_FILE : LOCAL_DB_FILE;
 
 const INITIAL_MEMBERS: Member[] = [
   {
@@ -554,7 +557,31 @@ const INITIAL_SEGMENTS: AudienceSegment[] = [
 ];
 
 // Reference date for "Next 7 Days": local time is October 28, 2026
+const DEMO_PENDING_CAMPAIGN: Campaign = {
+  "id": "camp_demo_approval",
+  "title": "Community Health & Free Checkup Camp Announcement",
+  "message": "*Dwaragasai Community Health Camp Announcement*\n\nFree Health Checkup, Blood Pressure & Sugar screening this Sunday at Indiranagar Community Center from 9:00 AM to 1:00 PM.\n\nDoctor Consultation available. Please bring previous records.\n\nReply STOP to opt out.",
+  "category": "camp_event",
+  "mediaType": "none",
+  "targetSegmentId": "seg_all",
+  "scheduledAt": "2026-11-06T10:00:00Z",
+  "timezone": "Asia/Kolkata",
+  "status": "pending_approval",
+  "requiresApproval": true,
+  "isDoctorApproved": false,
+  "cadence": "none",
+  "totalRecipients": 19,
+  "sentCount": 0,
+  "deliveredCount": 0,
+  "readCount": 0,
+  "failedCount": 0,
+  "blockedCount": 0,
+  "createdAt": "2026-11-04T10:00:00Z",
+  "updatedAt": "2026-11-04T10:00:00Z"
+};
+
 const INITIAL_CAMPAIGNS: Campaign[] = [
+  DEMO_PENDING_CAMPAIGN,
   {
     id: 'camp_daily_1',
     title: 'Daily Community Briefing [Occurrence 1/7]',
@@ -1273,10 +1300,17 @@ export function getDatabase(): AppState {
   ensureDataDirectory();
 
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const data = fs.readFileSync(DB_FILE, 'utf-8');
-      memoryState = JSON.parse(data) as AppState;
+    const targetFile = (IS_SERVERLESS && fs.existsSync(SERVERLESS_DB_FILE))
+      ? SERVERLESS_DB_FILE
+      : (fs.existsSync(LOCAL_DB_FILE) ? LOCAL_DB_FILE : (fs.existsSync(DB_FILE) ? DB_FILE : null));
+    if (targetFile) {
+      const data = fs.readFileSync(targetFile, 'utf-8');
+      memoryState = JSON.parse(data.replace(/^\uFEFF/, '')) as AppState;
       let shouldSave = false;
+      if (!memoryState.campaigns.some(c => c.id === 'camp_demo_approval')) {
+        memoryState.campaigns.unshift(DEMO_PENDING_CAMPAIGN);
+        shouldSave = true;
+      }
       if (!memoryState.camps.some(c => c.id === 'camp_tiruppur_blood')) {
         memoryState.camps.unshift(INITIAL_CAMPS[0]);
         shouldSave = true;

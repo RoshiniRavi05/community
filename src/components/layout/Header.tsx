@@ -7,9 +7,14 @@ import {
   ShieldAlert,
   ShieldCheck,
   Plus,
-  BellRing
+  BellRing,
+  Stethoscope,
+  ClipboardCheck,
+  ArrowLeftRight,
+  LogOut
 } from 'lucide-react';
 import { ActiveTab } from './Sidebar';
+import { AuthUser } from '@/lib/db/types';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -21,6 +26,9 @@ interface HeaderProps {
   onOpenScheduleModal: () => void;
   onOpenCareAlarmsModal?: () => void;
   activeAlarmsCount?: number;
+  currentUser?: AuthUser | null;
+  onSwitchRole?: () => void;
+  onLogout?: () => void;
 }
 
 const TAB_TITLES: Record<string, { title: string; subtitle: string }> = {
@@ -75,9 +83,13 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncing,
   onOpenScheduleModal,
   onOpenCareAlarmsModal,
-  activeAlarmsCount = 0
+  activeAlarmsCount = 0,
+  currentUser,
+  onSwitchRole,
+  onLogout
 }) => {
   const current = TAB_TITLES[activeTab] || { title: 'Community Hub', subtitle: 'Operations Console' };
+  const isDoctor = currentUser?.role === 'doctor';
 
   return (
     <header className="h-14 border-b border-[#1e293b] bg-[#0d121f]/95 backdrop-blur-xs px-5 flex items-center justify-between sticky top-0 z-20">
@@ -91,6 +103,43 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Role Badge Indicator */}
+        {currentUser && (
+          <div className="flex items-center gap-1.5 mr-1">
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                isDoctor
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                  : 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+              }`}
+            >
+              {isDoctor ? (
+                <>
+                  <Stethoscope className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Doctor: Approver</span>
+                </>
+              ) : (
+                <>
+                  <ClipboardCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Manager: Dispatcher</span>
+                </>
+              )}
+            </span>
+
+            {/* Quick Switch Role Button for demo convenience */}
+            {onSwitchRole && (
+              <button
+                onClick={onSwitchRole}
+                title={`Switch to ${isDoctor ? 'Manager (manager@dwargasai.in)' : 'Doctor (doctor@dwargasai.in)'}`}
+                className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-[#162032] hover:bg-[#1e2c45] border border-[#273549] text-[10.5px] text-slate-300 transition"
+              >
+                <ArrowLeftRight className="w-3 h-3 text-[#87936C]" />
+                <span>Switch Role</span>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Run Dispatcher / Scheduler Sweep */}
         <button
           onClick={onTriggerScheduler}
@@ -143,6 +192,17 @@ export const Header: React.FC<HeaderProps> = ({
           <Plus className="w-3.5 h-3.5" />
           <span>New Message</span>
         </button>
+
+        {/* Logout */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Sign out of portal"
+            className="p-1.5 rounded-md bg-[#162032] hover:bg-rose-950/30 hover:text-rose-400 border border-[#273549] text-slate-400 transition"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </header>
   );

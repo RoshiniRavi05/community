@@ -13,9 +13,12 @@ import {
   CheckCircle2,
   AlertTriangle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Lock,
+  Stethoscope,
+  ClipboardCheck
 } from 'lucide-react';
-import { Campaign, AudienceSegment, Member, AntiSpamSettings, CampaignCategory, RecurrenceCadence } from '@/lib/db/types';
+import { Campaign, AudienceSegment, Member, AntiSpamSettings, CampaignCategory, RecurrenceCadence, AuthUser } from '@/lib/db/types';
 import { WhatsAppChatPreview } from '../preview/WhatsAppChatPreview';
 import { isWithinQuietHours, isAllowedDay } from '@/lib/scheduler/antispam';
 
@@ -27,6 +30,7 @@ interface CampaignComposerModalProps {
   segments: AudienceSegment[];
   members: Member[];
   settings: AntiSpamSettings;
+  currentUser?: AuthUser | null;
 }
 
 const TEMPLATES: Record<CampaignCategory, { label: string; text: string; mediaType: 'image' | 'video' | 'none'; sampleMedia?: string }> = {
@@ -76,8 +80,12 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
   initialData,
   segments,
   members,
-  settings
+  settings,
+  currentUser
 }) => {
+  const isManager = currentUser?.role === 'manager';
+  const isDoctor = currentUser?.role === 'doctor';
+
   const [title, setTitle] = useState(initialData?.title || '');
   const [category, setCategory] = useState<CampaignCategory>(initialData?.category || 'announcement');
   const [message, setMessage] = useState(initialData?.message || TEMPLATES.announcement.text);
@@ -101,7 +109,8 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
 
   const [scheduledAt, setScheduledAt] = useState(getInitialDateTime());
   const [timezone, setTimezone] = useState(initialData?.timezone || 'Asia/Kolkata');
-  const [requiresApproval, setRequiresApproval] = useState(initialData?.requiresApproval ?? false);
+  // Managers ALWAYS require Doctor approval
+  const [requiresApproval, setRequiresApproval] = useState(isManager ? true : (initialData?.requiresApproval ?? false));
   const [internalNotes, setInternalNotes] = useState(initialData?.internalNotes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -149,7 +158,6 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
     return initialData?.scheduledAt ? new Date(initialData.scheduledAt) : new Date(Date.now() + 86400000);
   });
 
-
   const handleCadenceSelect = (newCadence: RecurrenceCadence) => {
     setCadence(newCadence);
     if (newCadence === 'daily') {
@@ -186,7 +194,6 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
     });
   }, [scheduledAt, category, message, members.length, settings]);
 
-  
   const handleScheduleClick = () => {
     if (!title.trim()) {
       alert('Campaign Title is required before scheduling.');
@@ -222,6 +229,11 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
       return;
     }
 
+    if (sendImmediately && isManager) {
+      alert('Action Restricted: Broadcasts require Doctor approval before sending. Please submit for Doctor review.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let finalStatus = initialData?.status || 'scheduled';
@@ -232,7 +244,7 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
         finalScheduledAt = new Date().toISOString();
       } else if (isDraft) {
         finalStatus = 'draft';
-      } else if (requiresApproval) {
+      } else if (isManager || requiresApproval) {
         finalStatus = 'pending_approval';
       }
 
@@ -248,7 +260,8 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
         scheduledAt: finalScheduledAt,
         timezone,
         status: finalStatus,
-        requiresApproval: sendImmediately ? false : requiresApproval,
+        requiresApproval: isManager ? true : (sendImmediately ? false : requiresApproval),
+        isDoctorApproved: isDoctor ? true : false,
         internalNotes: `${internalNotes} ${selectedCamp !== 'All Camps' ? `[Camp: ${selectedCamp}]` : ''}`.trim(),
         cadence,
         cadenceIntervalDays: cadence !== 'none' ? cadenceIntervalDays : 1,
@@ -270,8 +283,18 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-[#1e293b] flex items-center justify-between bg-[#0d121f]">
           <div>
-            <h2 className="text-sm font-semibold text-slate-100">
-              Message Composer & Scheduler
+            <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+              <span>Message Composer & Scheduler</span>
+              {isManager && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-950/60 text-amber-300 border border-amber-800">
+                  Manager Mode • Doctor Approval Enforced
+                </span>
+              )}
+              {isDoctor && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800">
+                  Doctor Authority Mode
+                </span>
+              )}
             </h2>
             <p className="text-[11px] text-slate-400">
               Create, validate against anti-spam policies, and schedule community dispatches
@@ -477,11 +500,12 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
               <label className="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={requiresApproval}
+                  disabled={isManager}
+                  checked={isManager ? true : requiresApproval}
                   onChange={(e) => setRequiresApproval(e.target.checked)}
-                  className="rounded bg-[#090d16] border-[#1e293b] text-[#16a34a] focus:ring-0"
+                  className="rounded bg-[#090d16] border-[#1e293b] text-[#16a34a] focus:ring-0 disabled:opacity-75"
                 />
-                <span>Requires Admin Approval</span>
+                <span>Requires Doctor Approval {isManager && '(Mandatory for Manager)'}</span>
               </label>
             </div>
           </div>
@@ -541,16 +565,30 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
               Save Draft
             </button>
 
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit(false, true)}
-              className="px-3.5 py-1.5 rounded text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-1.5 shadow-xs"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Send Now</span>
-            </button>
+            {/* SEND NOW: Disabled for Manager, Enabled for Doctor */}
+            {isManager ? (
+              <button
+                type="button"
+                disabled
+                title="LOCKED: Messages must be reviewed & approved by the Doctor (doctor@dwargasai.in) before sending. Please click 'Submit for Doctor Review'."
+                className="px-3.5 py-1.5 rounded text-xs font-medium bg-[#162032] border border-[#273549] text-slate-500 transition flex items-center gap-1.5 cursor-not-allowed opacity-60"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                <span>Send Now (Locked)</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit(false, true)}
+                className="px-3.5 py-1.5 rounded text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-1.5 shadow-xs"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Send Now</span>
+              </button>
+            )}
 
+            {/* Main Scheduling / Submission Button */}
             <button
               type="button"
               disabled={isSubmitting}
@@ -558,217 +596,165 @@ export const CampaignComposerModal: React.FC<CampaignComposerModalProps> = ({
               className="px-4 py-1.5 rounded text-xs font-medium bg-[#16a34a] hover:bg-[#15803d] text-white transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>{requiresApproval ? 'Submit for Review' : 'Schedule Message'}</span>
+              <span>{isManager ? 'Submit for Doctor Review' : (requiresApproval ? 'Submit for Review' : 'Schedule Message')}</span>
             </button>
           </div>
         </div>
+
         {/* Little Calendar Picker Popup */}
         {showCalendarModal && (() => {
           const calYear = calViewDate.getFullYear();
           const calMonth = calViewDate.getMonth();
           const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
           const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
-          const activeDate = new Date(scheduledAt || Date.now());
 
-          const isSelected = (day: number) => {
-            return (
-              activeDate.getFullYear() === calYear &&
-              activeDate.getMonth() === calMonth &&
-              activeDate.getDate() === day
-            );
-          };
-
-          const isToday = (day: number) => {
-            const now = new Date();
-            return (
-              now.getFullYear() === calYear &&
-              now.getMonth() === calMonth &&
-              now.getDate() === day
-            );
-          };
-
-          const isPast = (day: number) => {
-            const endOfDay = new Date(calYear, calMonth, day, 23, 59, 59);
-            return endOfDay.getTime() < Date.now();
-          };
-
-          const handleSelectDay = (day: number) => {
-            const current = new Date(scheduledAt || Date.now());
-            const newDate = new Date(calYear, calMonth, day, current.getHours(), current.getMinutes(), 0);
-            setScheduledAt(toLocalISOString(newDate));
-          };
-
-          const handleTimeValChange = (val: string) => {
-            if (!val) return;
-            const [h, m] = val.split(':').map(Number);
-            const current = new Date(scheduledAt || Date.now());
-            current.setHours(h, m, 0, 0);
-            setScheduledAt(toLocalISOString(current));
-          };
-
-          const getTimeString = () => {
-            const d = new Date(scheduledAt || Date.now());
-            const h = String(d.getHours()).padStart(2, '0');
-            const m = String(d.getMinutes()).padStart(2, '0');
-            return `${h}:${m}`;
-          };
+          const currentScheduledDate = scheduledAt ? new Date(scheduledAt) : new Date();
 
           return (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
-              <div className="bg-[#111726] border border-[#1e293b] rounded-xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col">
-                {/* Calendar Header */}
-                <div className="px-4 py-3 border-b border-[#1e293b] flex items-center justify-between bg-[#0d121f]">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#16a34a]" />
-                    <div>
-                      <h3 className="text-xs font-semibold text-slate-100">Schedule Dispatch</h3>
-                      <p className="text-[10px] text-slate-400">Select date and time</p>
-                    </div>
+            <div className="fixed inset-0 z-60 bg-black/60 flex items-center justify-center p-4">
+              <div className="bg-[#111726] border border-[#1e293b] rounded-xl max-w-sm w-full p-4 space-y-3 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-[#22c55e]" />
+                    <span className="text-xs font-semibold text-slate-100">
+                      Select Dispatch Date & Time
+                    </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCalendarModal(false)}
-                    className="text-slate-400 hover:text-slate-200 p-1 rounded"
-                  >
+                  <button onClick={() => setShowCalendarModal(false)} className="text-slate-400 hover:text-white">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="p-4 space-y-3.5">
-                  {/* Month Navigation */}
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-semibold text-slate-200">
-                      {MONTH_NAMES[calMonth]} {calYear}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setCalViewDate(new Date(calYear, calMonth - 1, 1))}
-                        className="p-1 rounded bg-[#162032] hover:bg-[#1e2c45] text-slate-300 border border-[#273549] transition"
-                        title="Previous Month"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCalViewDate(new Date(calYear, calMonth + 1, 1))}
-                        className="p-1 rounded bg-[#162032] hover:bg-[#1e2c45] text-slate-300 border border-[#273549] transition"
-                        title="Next Month"
-                      >
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Calendar Grid */}
-                  <div className="bg-[#090d16] border border-[#1e293b] rounded-lg p-2.5">
-                    {/* Day Names */}
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-slate-400 mb-1.5">
-                      {DAY_NAMES.map(d => (
-                        <div key={d} className="py-0.5">{d}</div>
-                      ))}
-                    </div>
-
-                    {/* Day Cells */}
-                    <div className="grid grid-cols-7 gap-1 text-xs">
-                      {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                        <div key={`empty-${i}`} className="h-7" />
-                      ))}
-                      {Array.from({ length: daysInMonth }).map((_, i) => {
-                        const day = i + 1;
-                        const sel = isSelected(day);
-                        const today = isToday(day);
-                        const past = isPast(day);
-
-                        return (
-                          <button
-                            key={day}
-                            type="button"
-                            disabled={past}
-                            onClick={() => handleSelectDay(day)}
-                            className={`h-7 rounded flex items-center justify-center text-xs font-medium transition relative ${
-                              sel
-                                ? 'bg-[#16a34a] text-white font-semibold shadow-xs'
-                                : past
-                                ? 'text-slate-600 cursor-not-allowed opacity-40'
-                                : today
-                                ? 'text-[#22c55e] border border-[#16a34a]/50 hover:bg-[#162032]'
-                                : 'text-slate-200 hover:bg-[#162032]'
-                            }`}
-                          >
-                            <span>{day}</span>
-                            {today && !sel && (
-                              <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-[#22c55e]" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Time Section */}
-                  <div className="space-y-1.5">
-                    <label className="block text-[11px] font-medium text-slate-300">
-                      Dispatch Time
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="time"
-                        value={getTimeString()}
-                        onChange={(e) => handleTimeValChange(e.target.value)}
-                        className="flex-1 px-2.5 py-1.5 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
-                      />
-                      <button
-                        type="button"
-                        onClick={set7PMTime}
-                        className="px-2.5 py-1.5 rounded bg-[#16a34a]/20 border border-[#16a34a]/40 text-[#22c55e] text-xs font-medium hover:bg-[#16a34a]/30 transition shrink-0"
-                      >
-                        7:00 PM Preset
-                      </button>
-                    </div>
-
-                    {/* Quick Time Presets */}
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {[
-                        { label: '9:00 AM', val: '09:00' },
-                        { label: '1:00 PM', val: '13:00' },
-                        { label: '5:00 PM', val: '17:00' },
-                        { label: '7:00 PM', val: '19:00' },
-                        { label: '8:30 PM', val: '20:30' }
-                      ].map(preset => (
-                        <button
-                          key={preset.val}
-                          type="button"
-                          onClick={() => handleTimeValChange(preset.val)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono border transition ${
-                            getTimeString() === preset.val
-                              ? 'bg-[#16a34a] text-white border-[#16a34a]'
-                              : 'bg-[#162032] text-slate-300 border-[#273549] hover:bg-[#1e2c45]'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Scheduled Summary Badge */}
-                  <div className="p-2.5 rounded bg-[#162032]/80 border border-[#273549] text-[11px] text-slate-300 flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
-                    <div className="truncate">
-                      <span>Scheduled: </span>
-                      <strong className="text-white">{formatDisplayDateTime(scheduledAt)}</strong>
-                    </div>
-                  </div>
-
-                  {/* Anti-spam caution if in quiet hours */}
-                  {validationResult?.inQuietHours && (
-                    <div className="p-2 rounded bg-amber-950/40 border border-amber-800 text-amber-300 text-[10px] flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>Falls inside quiet hours (9:00 PM - 8:00 AM). Delivery may be delayed.</span>
-                    </div>
-                  )}
+                {/* Month Navigator */}
+                <div className="flex items-center justify-between px-1">
+                  <button
+                    type="button"
+                    onClick={() => setCalViewDate(new Date(calYear, calMonth - 1, 1))}
+                    className="p-1 rounded text-slate-400 hover:text-white hover:bg-[#162032]"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-semibold text-slate-200">
+                    {MONTH_NAMES[calMonth]} {calYear}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCalViewDate(new Date(calYear, calMonth + 1, 1))}
+                    className="p-1 rounded text-slate-400 hover:text-white hover:bg-[#162032]"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
+
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-400 font-medium">
+                  {DAY_NAMES.map(d => (
+                    <div key={d} className="py-0.5">{d}</div>
+                  ))}
+                </div>
+
+                {/* Day Grid */}
+                <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                  {/* Empty cells before 1st day */}
+                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                    <div key={`empty-${i}`} className="py-1.5 text-transparent">.</div>
+                  ))}
+
+                  {/* Days */}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const thisDate = new Date(calYear, calMonth, dayNum);
+                    const isSelected = 
+                      currentScheduledDate.getDate() === dayNum &&
+                      currentScheduledDate.getMonth() === calMonth &&
+                      currentScheduledDate.getFullYear() === calYear;
+                    const isToday = new Date().toDateString() === thisDate.toDateString();
+
+                    return (
+                      <button
+                        key={dayNum}
+                        type="button"
+                        onClick={() => {
+                          const nextDate = new Date(scheduledAt || Date.now());
+                          nextDate.setFullYear(calYear, calMonth, dayNum);
+                          setScheduledAt(toLocalISOString(nextDate));
+                        }}
+                        className={`py-1.5 rounded text-xs font-mono transition ${
+                          isSelected
+                            ? 'bg-[#16a34a] text-white font-bold shadow-xs'
+                            : isToday
+                            ? 'border border-[#22c55e] text-[#22c55e] hover:bg-[#162032]'
+                            : 'text-slate-200 hover:bg-[#162032]'
+                        }`}
+                      >
+                        {dayNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Time Picker Controls with Quick Presets */}
+                <div className="pt-2 border-t border-[#1e293b] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-slate-300 font-medium">Dispatch Time:</span>
+                    <input
+                      type="time"
+                      value={scheduledAt ? scheduledAt.slice(11, 16) : '19:00'}
+                      onChange={(e) => {
+                        const [h, m] = e.target.value.split(':');
+                        const d = new Date(scheduledAt || Date.now());
+                        d.setHours(Number(h) || 19, Number(m) || 0, 0, 0);
+                        setScheduledAt(toLocalISOString(d));
+                      }}
+                      className="px-2 py-1 rounded bg-[#090d16] border border-[#1e293b] text-slate-100 text-xs font-mono focus:outline-none focus:border-[#16a34a]"
+                    />
+                  </div>
+
+                  {/* Preset Pills */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-slate-400">Presets:</span>
+                    {[
+                      { label: '9:00 AM', h: 9, m: 0 },
+                      { label: '1:00 PM', h: 13, m: 0 },
+                      { label: '5:00 PM', h: 17, m: 0 },
+                      { label: '7:00 PM', h: 19, m: 0 }
+                    ].map(p => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => {
+                          const d = new Date(scheduledAt || Date.now());
+                          d.setHours(p.h, p.m, 0, 0);
+                          setScheduledAt(toLocalISOString(d));
+                        }}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono border transition ${
+                          scheduledAt && Number(scheduledAt.slice(11, 13)) === p.h && Number(scheduledAt.slice(14, 16)) === p.m
+                            ? 'bg-[#16a34a] text-white border-[#16a34a]'
+                            : 'bg-[#162032] text-slate-300 border-[#273549] hover:text-white'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scheduled Summary Badge */}
+                <div className="p-2.5 rounded bg-[#162032]/80 border border-[#273549] text-[11px] text-slate-300 flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                  <div className="truncate">
+                    <span>Scheduled: </span>
+                    <strong className="text-white">{formatDisplayDateTime(scheduledAt)}</strong>
+                  </div>
+                </div>
+
+                {/* Anti-spam caution if in quiet hours */}
+                {validationResult?.inQuietHours && (
+                  <div className="p-2 rounded bg-amber-950/40 border border-amber-800 text-amber-300 text-[10px] flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Falls inside quiet hours (9:00 PM - 8:00 AM). Delivery may be delayed.</span>
+                  </div>
+                )}
 
                 {/* Footer Buttons */}
                 <div className="px-4 py-3 border-t border-[#1e293b] flex items-center justify-end gap-2 bg-[#0d121f]">

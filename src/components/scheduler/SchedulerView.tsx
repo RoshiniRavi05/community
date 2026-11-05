@@ -20,9 +20,13 @@ import {
   Send,
   Search,
   Check,
-  Ban
+  Ban,
+  Lock,
+  Stethoscope,
+  ClipboardCheck,
+  ShieldCheck
 } from 'lucide-react';
-import { Campaign, AudienceSegment, Member, CampaignStatus, RecurrenceCadence } from '@/lib/db/types';
+import { Campaign, AudienceSegment, Member, CampaignStatus, RecurrenceCadence, AuthUser } from '@/lib/db/types';
 import { formatWhatsAppDate, formatTimeOnly } from '@/lib/utils';
 import { WhatsAppChatPreview } from '../preview/WhatsAppChatPreview';
 
@@ -37,6 +41,7 @@ interface SchedulerViewProps {
   onSendNow: (campaignId: string) => Promise<void>;
   defaultView?: 'table' | 'weekly_calendar' | 'monthly_calendar' | 'agenda';
   onOpenCareAlarms?: () => void;
+  currentUser?: AuthUser | null;
 }
 
 export const SchedulerView: React.FC<SchedulerViewProps> = ({
@@ -48,7 +53,8 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
   onCancelCampaign,
   onDuplicateCampaign,
   onSendNow,
-  defaultView = 'table'
+  defaultView = 'table',
+  currentUser
 }) => {
   const [viewMode, setViewMode] = useState<'table' | 'weekly_calendar' | 'monthly_calendar' | 'agenda'>(defaultView);
   const [search, setSearch] = useState('');
@@ -58,6 +64,9 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
   const [previewCampaign, setPreviewCampaign] = useState<Campaign | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const isDoctor = currentUser?.role === 'doctor';
+  const isManager = currentUser?.role === 'manager';
 
   // Filtered campaigns for table view
   const filteredCampaigns = useMemo(() => {
@@ -118,264 +127,312 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
   };
 
   // Status Badge Helper
-  const getStatusBadge = (status: CampaignStatus) => {
-    switch (status) {
-      case 'scheduled':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#263323] border border-[#87936C]/30">
-            Scheduled
-          </span>
-        );
-      case 'pending_approval':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FFF3DC] text-[#9A5B00] border border-[#F0D59E]">
-            Pending Approval
-          </span>
-        );
-      case 'processing':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EBF3FB] text-[#1E5B99] border border-[#BFDBFE]">
-            Processing
-          </span>
-        );
-      case 'completed':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#27833A] border border-[#87936C]/30">
-            Delivered
-          </span>
-        );
-      case 'failed':
-      case 'partially_failed':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FDE8E4] text-[#C65B42] border border-[#F8C8C0]">
-            Failed
-          </span>
-        );
-      case 'cancelled':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EAE8E3] text-[#85877F] border border-[var(--border-card)]">
-            Cancelled
-          </span>
-        );
-      case 'draft':
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EAE8E3] text-[#85877F] border border-[var(--border-card)]">
-            Draft
-          </span>
-        );
+  const getStatusBadge = (camp: Campaign | CampaignStatus) => {
+    const status = typeof camp === 'string' ? camp : camp.status;
+    const isDoctorApproved = typeof camp === 'object' ? camp.isDoctorApproved : false;
+
+    if (status === 'completed') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#27833A] border border-[#87936C]/30">
+          Delivered
+        </span>
+      );
     }
+
+    if (status === 'cancelled') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EAE8E3] text-[#85877F] border border-[var(--border-card)]">
+          Cancelled
+        </span>
+      );
+    }
+
+    if (status === 'processing') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EBF3FB] text-[#1E5B99] border border-[#BFDBFE]">
+          Processing
+        </span>
+      );
+    }
+
+    if (status === 'failed' || status === 'partially_failed') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FDE8E4] text-[#C65B42] border border-[#F8C8C0]">
+          Failed
+        </span>
+      );
+    }
+
+    // Scheduled state: differentiate doctor approved vs awaiting
+    if (status === 'scheduled') {
+      if (isDoctorApproved) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] dark:bg-emerald-950/40 text-[#27833A] dark:text-emerald-300 border border-[#87936C]/40">
+            <CheckCircle2 className="w-3 h-3 text-[#27833A] dark:text-emerald-400" />
+            <span>Doctor Approved</span>
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E7EBD8] text-[#263323] border border-[#87936C]/30">
+          Scheduled
+        </span>
+      );
+    }
+
+    if (status === 'pending_approval' || (typeof camp === 'object' && !isDoctorApproved)) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FFF3DC] dark:bg-amber-950/60 text-[#9A5B00] dark:text-amber-300 border border-[#F0D59E] dark:border-amber-800">
+          <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+          <span>Awaiting Doctor</span>
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FAF9F5] text-[var(--text-sub)] border border-[var(--border-card)]">
+        Draft
+      </span>
+    );
   };
 
-  // Toggle selection
-  const handleToggleSelectAll = () => {
-    if (selectedIds.size === filteredCampaigns.length) {
-      setSelectedIds(new Set());
-    } else {
+  // Bulk selection toggles
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
       setSelectedIds(new Set(filteredCampaigns.map(c => c.id)));
+    } else {
+      setSelectedIds(new Set());
     }
   };
 
-  const handleToggleSelectOne = (id: string) => {
+  const handleToggleSelect = (id: string) => {
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setSelectedIds(next);
   };
 
-  // Handle Delete Selected
-  const handleDeleteSelected = async () => {
-    if (selectedIds.size === 0) return;
-    if (!confirm(`Are you sure you want to cancel / remove ${selectedIds.size} selected messages?`)) return;
+  const handleBulkCancel = async () => {
+    if (!confirm(`Cancel ${selectedIds.size} selected campaigns?`)) return;
     setIsDeleting(true);
-    try {
-      for (const id of Array.from(selectedIds)) {
-        await onCancelCampaign(id);
-      }
-      setSelectedIds(new Set());
-    } finally {
-      setIsDeleting(false);
+    for (const id of Array.from(selectedIds)) {
+      await onCancelCampaign(id);
     }
+    setSelectedIds(new Set());
+    setIsDeleting(false);
   };
 
   return (
     <div className="space-y-4">
-      {/* 1. TOP TOOLBAR (Wireframe 3: Search, Delete Selected, Schedule, Calendar, +Add) */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-3.5 space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Search bar */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* ── ROLE-BASED ACCESS CONTROL BANNER ── */}
+      {currentUser && (
+        <div
+          className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs shadow-xs ${
+            isDoctor
+              ? 'bg-[#E7EBD8]/60 dark:bg-emerald-950/30 border-[#87936C]/50 text-[#2D3328] dark:text-emerald-200'
+              : 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-200'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {isDoctor ? (
+              <div className="w-7 h-7 rounded-lg bg-[#27833A] text-white flex items-center justify-center shrink-0">
+                <Stethoscope className="w-4 h-4" />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
+                <ClipboardCheck className="w-4 h-4" />
+              </div>
+            )}
+            <div>
+              <span className="font-bold">
+                {isDoctor ? '🩺 Doctor Review Portal (Approver)' : '📋 Manager Dispatch Portal (Operations)'}
+              </span>
+              <p className="text-[11px] opacity-90 mt-0.5">
+                {isDoctor
+                  ? 'You have sole authority to review and approve broadcast messages. Clicking "Approve" unlocks the "Send Now" button on the Manager side.'
+                  : 'Broadcast messages require Doctor approval before dispatch. "Send Now" remains locked until Dr. Dwaraga Sai approves the message.'}
+              </p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-1.5 shrink-0 font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-white/70 dark:bg-black/40 border border-current text-[10px]">
+              {isDoctor ? 'Approval Authority: ACTIVE' : 'Send Now: Gated by Doctor'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 1. TOP CONTROLS & VIEW SWITCHER */}
+      <div className="bg-[var(--bg-card)] p-3 rounded-lg border border-[var(--border-card)] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+          {/* Search */}
+          <div className="relative flex-1 max-w-xs">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-sub)]" />
             <input
               type="text"
-              placeholder="Search messages by title, content preview, category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[#87936C]"
+              placeholder="Search campaigns, audience..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] placeholder-[var(--text-sub)] focus:outline-none focus:ring-1 focus:ring-[#87936C]"
             />
           </div>
 
-          {/* Action buttons matching Wireframe 3 */}
-          <div className="flex items-center gap-2">
-            {/* Delete Selected (when items are selected) */}
-            {selectedIds.size > 0 && (
-              <button
-                onClick={handleDeleteSelected}
-                disabled={isDeleting}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-rose-950/40 border border-rose-800 text-rose-300 hover:bg-rose-900/60 transition text-xs font-medium"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                <span>Delete Selected ({selectedIds.size})</span>
-              </button>
-            )}
-
-            {/* View Switchers: Schedule / History, Calendar, Agenda */}
-            <div className="inline-flex rounded-md bg-[var(--bg-app)] p-0.5 border border-[var(--border-card)] text-xs">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
-                  viewMode === 'table'
-                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
-                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span>Schedule Table</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('weekly_calendar')}
-                className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
-                  viewMode === 'weekly_calendar'
-                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
-                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <CalendarIcon className="w-3.5 h-3.5" />
-                <span>Weekly Calendar</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('agenda')}
-                className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
-                  viewMode === 'agenda'
-                    ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
-                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>Agenda</span>
-              </button>
-            </div>
-
-            {/* + Add Message */}
-            <button
-              onClick={() => onOpenComposer()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#87936C] hover:bg-[#77835c] hover:bg-[#15803d] text-white text-xs font-medium shadow-xs transition"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Message</span>
-            </button>
-          </div>
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-2.5 py-1.5 rounded-md bg-[var(--bg-app)] border border-[var(--border-card)] text-xs text-[var(--text-main)] focus:outline-none"
+          >
+            <option value="all">All Statuses</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="pending_approval">Pending Approval</option>
+            <option value="processing">Processing</option>
+            <option value="completed">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="draft">Draft</option>
+          </select>
         </div>
 
-        {/* Filter bar for statuses */}
-        <div className="flex items-center justify-between pt-2 border-t border-[var(--border-card)] text-xs">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="text-[11px] text-[var(--text-sub)] font-medium">Filter Status:</span>
-            {(['all', 'scheduled', 'pending_approval', 'completed', 'draft', 'cancelled'] as const).map(st => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium capitalize transition ${
-                  statusFilter === st
-                    ? 'bg-[var(--bg-muted)] text-[var(--text-main)] border border-[var(--border-card)]'
-                    : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                {st === 'all' ? 'All Messages' : st.replace('_', ' ')}
-              </button>
-            ))}
+        <div className="flex items-center gap-2">
+          {/* Bulk actions */}
+          {selectedIds.size > 0 && (
+            <button
+              onClick={handleBulkCancel}
+              disabled={isDeleting}
+              className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium flex items-center gap-1 transition"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>Cancel ({selectedIds.size})</span>
+            </button>
+          )}
+
+          {/* View Switchers: Schedule / History, Calendar, Agenda */}
+          <div className="inline-flex rounded-md bg-[var(--bg-app)] p-0.5 border border-[var(--border-card)] text-xs">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
+                viewMode === 'table'
+                  ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
+                  : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Schedule Table</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('weekly_calendar')}
+              className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
+                viewMode === 'weekly_calendar'
+                  ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
+                  : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
+              }`}
+            >
+              <CalendarIcon className="w-3.5 h-3.5" />
+              <span>Weekly Calendar</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('agenda')}
+              className={`px-2.5 py-1 rounded transition flex items-center gap-1.5 ${
+                viewMode === 'agenda'
+                  ? 'bg-[#87936C] hover:bg-[#77835c] text-white font-medium'
+                  : 'text-[var(--text-sub)] hover:text-[var(--text-main)]'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Agenda</span>
+            </button>
           </div>
 
-          <span className="text-[11px] text-[var(--text-sub)] font-mono">
-            {filteredCampaigns.length} total messages
-          </span>
+          {/* + Add Message */}
+          <button
+            onClick={() => onOpenComposer()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-xs font-medium shadow-xs transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Message</span>
+          </button>
         </div>
       </div>
 
-      {/* 2. MAIN VIEW CONTENT */}
+      {/* 2. TABLE VIEW (Default) */}
       {viewMode === 'table' && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md overflow-hidden">
+        <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-card)] overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[var(--bg-app)] text-[10px] text-[var(--text-sub)] uppercase font-semibold border-b border-[var(--border-card)]">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-[var(--bg-app)] border-b border-[var(--border-card)] text-[var(--text-sub)] font-medium uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="py-2.5 px-3 w-8">
                     <input
                       type="checkbox"
-                      checked={selectedIds.size === filteredCampaigns.length && filteredCampaigns.length > 0}
-                      onChange={handleToggleSelectAll}
-                      className="rounded bg-[var(--bg-card)] border-[var(--border-card)] text-[#16a34a] focus:ring-0"
+                      onChange={handleSelectAll}
+                      checked={selectedIds.size > 0 && selectedIds.size === filteredCampaigns.length}
+                      className="rounded border-[var(--border-card)] text-[#87936C] focus:ring-0"
                     />
                   </th>
-                  <th className="py-2.5 px-3">Message Title</th>
-                  <th className="py-2.5 px-3">Content Preview</th>
-                  <th className="py-2.5 px-3">Scheduled Date</th>
-                  <th className="py-2.5 px-3">Scheduled Time</th>
-                  <th className="py-2.5 px-3">Audience</th>
-                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Broadcast Title</th>
+                  <th className="py-2.5 px-3">Category</th>
+                  <th className="py-2.5 px-3">Dispatch Schedule</th>
+                  <th className="py-2.5 px-3">Target Audience</th>
+                  <th className="py-2.5 px-3">Approval Status</th>
                   <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-card)]/60">
+              <tbody className="divide-y divide-[var(--border-card)]">
                 {filteredCampaigns.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-[var(--text-sub)] text-xs">
-                      No messages found matching search or filter parameters.
+                    <td colSpan={7} className="py-12 text-center text-[var(--text-sub)]">
+                      <CalendarIcon className="w-8 h-8 mx-auto mb-2 text-[var(--text-sub)] opacity-40" />
+                      <p>No broadcast campaigns found matching the filter.</p>
                     </td>
                   </tr>
                 ) : (
                   filteredCampaigns.map((camp) => {
                     const isSelected = selectedIds.has(camp.id);
-                    const d = new Date(camp.scheduledAt);
-                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    const timeStr = formatTimeOnly(camp.scheduledAt);
+                    const isCampDoctorApproved = Boolean(camp.isDoctorApproved);
 
                     return (
                       <tr
                         key={camp.id}
-                        className={`hover:bg-[var(--bg-card-hover)] transition-colors ${isSelected ? 'bg-[#87936C] hover:bg-[#77835c]/5' : ''}`}
+                        className={`hover:bg-[var(--bg-app)]/50 transition ${
+                          isSelected ? 'bg-[var(--bg-app)]' : ''
+                        }`}
                       >
+                        {/* Checkbox */}
                         <td className="py-2.5 px-3">
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => handleToggleSelectOne(camp.id)}
-                            className="rounded bg-[var(--bg-card)] border-[var(--border-card)] text-[#16a34a] focus:ring-0"
+                            onChange={() => handleToggleSelect(camp.id)}
+                            className="rounded border-[var(--border-card)] text-[#87936C] focus:ring-0"
                           />
                         </td>
 
-                        {/* Title */}
-                        <td className="py-2.5 px-3 font-medium text-[var(--text-main)] max-w-[180px] truncate">
-                          {camp.title}
+                        {/* Title & Preview snippet */}
+                        <td className="py-2.5 px-3 max-w-[280px]">
+                          <div className="font-semibold text-[var(--text-main)] truncate" title={camp.title}>
+                            {camp.title}
+                          </div>
+                          <div className="text-[11px] text-[var(--text-sub)] truncate max-w-xs">
+                            {camp.message.replace(/\*/g, '')}
+                          </div>
+                          {camp.cadence && camp.cadence !== 'none' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                              <Repeat className="w-2.5 h-2.5" />
+                              Cadence: {camp.cadence} ({camp.seriesIndex || 1}/{camp.cadenceOccurrences || 1})
+                            </span>
+                          )}
                         </td>
 
-                        {/* Content Preview */}
-                        <td className="py-2.5 px-3 text-[var(--text-sub)] max-w-[240px] truncate" title={camp.message}>
-                          {camp.message.replace(/\*/g, '').slice(0, 75)}...
+                        {/* Category */}
+                        <td className="py-2.5 px-3 text-[var(--text-sub)] whitespace-nowrap text-[11px]">
+                          {camp.category.replace('_', ' ')}
                         </td>
 
-                        {/* Scheduled Date */}
-                        <td className="py-2.5 px-3 text-[var(--text-main)] font-mono text-[11px] whitespace-nowrap">
-                          {dateStr}
-                        </td>
-
-                        {/* Scheduled Time (e.g. 7:00 PM) */}
-                        <td className="py-2.5 px-3 font-mono text-[11px] whitespace-nowrap">
-                          <span className={timeStr.includes('7:00') ? 'text-[#27833A] font-semibold' : 'text-[var(--text-main)]'}>
-                            {timeStr}
-                          </span>
+                        {/* Schedule Time */}
+                        <td className="py-2.5 px-3 whitespace-nowrap text-[11px] font-mono text-[var(--text-main)]">
+                          {formatWhatsAppDate(camp.scheduledAt)}
                         </td>
 
                         {/* Audience */}
@@ -383,34 +440,85 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                           {camp.targetSegmentId === 'seg_all' ? 'All Community' : camp.targetSegmentId}
                         </td>
 
-                        {/* Status */}
+                        {/* Status with Doctor Approval indicator */}
                         <td className="py-2.5 px-3 whitespace-nowrap">
-                          {getStatusBadge(camp.status)}
+                          {getStatusBadge(camp)}
                         </td>
 
-                        {/* Actions */}
+                        {/* Actions with Role Enforcement */}
                         <td className="py-2.5 px-3 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
-                            {camp.status === 'pending_approval' && (
-                              <button
-                                onClick={() => onApproveCampaign(camp.id)}
-                                title="Approve Campaign"
-                                className="px-2.5 py-1 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs"
-                              >
-                                Approve
-                              </button>
+                            {/* 1. DOCTOR ROLE ACTION: Approve Campaign */}
+                            {isDoctor && (
+                              (!isCampDoctorApproved || camp.status === 'pending_approval') ? (
+                                <button
+                                  onClick={() => onApproveCampaign(camp.id)}
+                                  title="Doctor Authority: Approve this campaign for dispatch"
+                                  className="px-2.5 py-1 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Approve</span>
+                                </button>
+                              ) : (
+                                <span
+                                  title={`Approved by ${camp.approvedBy || 'Doctor'}`}
+                                  className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1"
+                                >
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Approved</span>
+                                </span>
+                              )
                             )}
 
-                            {(camp.status === 'scheduled' || camp.status === 'draft') && (
-                              <button
-                                onClick={() => onSendNow(camp.id)}
-                                title="Dispatch Message Now"
-                                className="px-2.5 py-1 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs"
-                              >
-                                Send Now
-                              </button>
+                            {/* 2. MANAGER ROLE ACTION: Send Now (ENABLED ONLY IF DOCTOR APPROVED) */}
+                            {isManager && (
+                              isCampDoctorApproved ? (
+                                <button
+                                  onClick={() => onSendNow(camp.id)}
+                                  title="Doctor Approved: Click to dispatch now"
+                                  className="px-2.5 py-1 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Send className="w-3 h-3" />
+                                  <span>Send Now</span>
+                                </button>
+                              ) : (
+                                <button
+                                  disabled
+                                  title="LOCKED: Requires Doctor approval (doctor@dwargasai.in) before Send Now is enabled"
+                                  className="px-2.5 py-1 rounded-md bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 text-[11px] font-medium transition cursor-not-allowed flex items-center gap-1 border border-stone-300 dark:border-stone-700 opacity-60"
+                                >
+                                  <Lock className="w-3 h-3 text-amber-500" />
+                                  <span>Send Now</span>
+                                </button>
+                              )
                             )}
 
+                            {/* Fallback if user role is not logged in / default view */}
+                            {!isDoctor && !isManager && (
+                              <>
+                                {camp.status === 'pending_approval' && (
+                                  <button
+                                    onClick={() => onApproveCampaign(camp.id)}
+                                    title="Approve Campaign"
+                                    className="px-2.5 py-1 rounded-md bg-[#27833A] hover:bg-[#1f682e] text-white text-[11px] font-semibold transition shadow-xs"
+                                  >
+                                    Approve
+                                  </button>
+                                )}
+
+                                {(camp.status === 'scheduled' || camp.status === 'draft') && (
+                                  <button
+                                    onClick={() => onSendNow(camp.id)}
+                                    title="Dispatch Message Now"
+                                    className="px-2.5 py-1 rounded-md bg-[#87936C] hover:bg-[#77835c] text-white text-[11px] font-semibold transition shadow-xs"
+                                  >
+                                    Send Now
+                                  </button>
+                                )}
+                              </>
+                            )}
+
+                            {/* Common Actions: Preview, Edit, Duplicate, Cancel */}
                             <button
                               onClick={() => setPreviewCampaign(camp)}
                               title="Live WhatsApp Preview"
@@ -456,93 +564,90 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
         </div>
       )}
 
-      {/* 3. WEEKLY CALENDAR VIEW (Wireframe 3: Weekly Planning & 7:00 PM Slot) */}
+      {/* 3. WEEKLY CALENDAR VIEW */}
       {viewMode === 'weekly_calendar' && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4 space-y-4">
-          {/* Week Navigation */}
-          <div className="flex items-center justify-between">
+        <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-card)] p-4 space-y-4">
+          {/* Week navigation */}
+          <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setWeekOffset(w => w - 1)}
-                className="p-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white"
+                onClick={() => setWeekOffset(weekOffset - 1)}
+                className="p-1 rounded hover:bg-[var(--bg-muted)] text-[var(--text-sub)]"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
+              <span className="text-xs font-semibold text-[var(--text-main)]">
+                {formatDateRange()}
+              </span>
               <button
-                onClick={() => setWeekOffset(0)}
-                className="px-2.5 py-1 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-xs font-medium text-[var(--text-main)] hover:text-white"
-              >
-                This Week
-              </button>
-              <button
-                onClick={() => setWeekOffset(w => w + 1)}
-                className="p-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-white"
+                onClick={() => setWeekOffset(weekOffset + 1)}
+                className="p-1 rounded hover:bg-[var(--bg-muted)] text-[var(--text-sub)]"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <span className="font-semibold text-[var(--text-main)] text-xs ml-2">
-                {formatDateRange()}
-              </span>
+              {weekOffset !== 0 && (
+                <button
+                  onClick={() => setWeekOffset(0)}
+                  className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-muted)] text-[var(--text-sub)] hover:text-white"
+                >
+                  This Week
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-[var(--text-sub)]">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#87936C] hover:bg-[#77835c]"></span>
-                <span>7:00 PM Broadcast Window</span>
-              </span>
-            </div>
+            <span className="text-[11px] text-[var(--text-sub)] font-mono">
+              7 Days Broadcast Roadmap
+            </span>
           </div>
 
           {/* 7 Columns for Monday to Sunday */}
           <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
             {weekDays.map((date, idx) => {
-              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-              const dayNum = date.getDate();
+              const dayCampaigns = getCampaignsForDate(date);
               const isToday = new Date().toDateString() === date.toDateString();
-              const daysCampaigns = getCampaignsForDate(date);
 
               return (
                 <div
                   key={idx}
-                  className={`bg-[var(--bg-app)] border rounded-md p-2 flex flex-col justify-between min-h-[300px] ${
-                    isToday ? 'border-[#87936C]/60 shadow-xs' : 'border-[var(--border-card)]'
+                  className={`border rounded-lg p-2.5 min-h-[160px] flex flex-col justify-between ${
+                    isToday
+                      ? 'border-[#87936C] bg-[var(--bg-app)]'
+                      : 'border-[var(--border-card)] bg-[var(--bg-card)]'
                   }`}
                 >
-                  {/* Day Header */}
                   <div>
-                    <div className="flex items-center justify-between pb-1.5 border-b border-[var(--border-card)]">
-                      <span className={`text-xs font-semibold ${isToday ? 'text-[#27833A]' : 'text-[var(--text-main)]'}`}>
-                        {dayName}
+                    {/* Header: Day and Date */}
+                    <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-1 mb-2">
+                      <span className="text-[11px] font-semibold text-[var(--text-main)]">
+                        {date.toLocaleDateString('en-US', { weekday: 'short' })}
                       </span>
-                      <span className={`text-[11px] font-mono font-medium ${isToday ? 'px-1.5 rounded bg-[#87936C] hover:bg-[#77835c] text-white' : 'text-[var(--text-sub)]'}`}>
-                        {dayNum}
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
+                          isToday ? 'bg-[#87936C] text-white font-bold' : 'text-[var(--text-sub)]'
+                        }`}
+                      >
+                        {date.getDate()}
                       </span>
                     </div>
 
-                    {/* Prominent 7:00 PM Slot Marker (Wireframe 3) */}
-                    <div className="mt-2 py-1 px-1.5 rounded bg-[var(--bg-card)] border border-[var(--border-card)] text-[10px] text-[var(--text-sub)] flex items-center justify-between">
-                      <span className="font-mono text-[#27833A] font-semibold">7:00 PM</span>
-                      <span className="text-[9px] text-[var(--text-sub)]">Peak Window</span>
-                    </div>
-
-                    {/* Campaigns list on this day */}
-                    <div className="mt-2 space-y-1.5">
-                      {daysCampaigns.length === 0 ? (
-                        <div className="py-4 text-center text-[10px] text-slate-600">
+                    {/* Campaigns list for this day */}
+                    <div className="space-y-1.5">
+                      {dayCampaigns.length === 0 ? (
+                        <p className="text-[10px] text-[var(--text-sub)] text-center py-4 opacity-50 italic">
                           No messages
-                        </div>
+                        </p>
                       ) : (
-                        daysCampaigns.map((c) => (
+                        dayCampaigns.map((c) => (
                           <div
                             key={c.id}
                             onClick={() => setPreviewCampaign(c)}
-                            className="p-1.5 rounded bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-[var(--border-card)] text-left cursor-pointer transition space-y-1"
+                            className="p-1.5 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-left cursor-pointer hover:border-[#87936C] transition space-y-1"
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-mono text-[var(--text-sub)]">
                                 {formatTimeOnly(c.scheduledAt)}
                               </span>
-                              {getStatusBadge(c.status)}
+                              {getStatusBadge(c)}
                             </div>
                             <div className="font-medium text-[var(--text-main)] text-[11px] truncate" title={c.title}>
                               {c.title}
@@ -563,7 +668,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                     className="mt-2 w-full py-1 text-[10px] text-[var(--text-sub)] hover:text-white rounded bg-[var(--bg-muted)] border border-[var(--border-card)] flex items-center justify-center gap-1 transition"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>7 PM Message</span>
+                    <span>Add</span>
                   </button>
                 </div>
               );
@@ -574,28 +679,19 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
 
       {/* 4. AGENDA VIEW */}
       {viewMode === 'agenda' && (
-        <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-md p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-card)]">
-            <h3 className="text-xs font-semibold text-[var(--text-main)]">
-              Chronological Broadcast Agenda
-            </h3>
-            <span className="text-[11px] text-[var(--text-sub)]">
-              Next scheduled dispatches in order
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {filteredCampaigns.slice(0, 10).map((camp) => (
-              <div
-                key={camp.id}
-                className="p-3 rounded bg-[var(--bg-app)] border border-[var(--border-card)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded bg-[var(--bg-muted)] border border-[var(--border-card)] text-center font-mono shrink-0">
-                    <span className="text-[10px] text-[var(--text-sub)] block uppercase">
-                      {new Date(camp.scheduledAt).toLocaleDateString('en-US', { weekday: 'short' })}
+        <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-card)] p-4 space-y-3">
+          <h3 className="text-xs font-semibold text-[var(--text-main)] border-b border-[var(--border-card)] pb-2">
+            Chronological Upcoming Broadcast Agenda
+          </h3>
+          <div className="divide-y divide-[var(--border-card)]">
+            {campaigns.slice(0, 10).map((camp) => (
+              <div key={camp.id} className="py-2.5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 text-center">
+                    <span className="block text-[10px] uppercase font-bold text-[#87936C]">
+                      {new Date(camp.scheduledAt).toLocaleDateString('en-US', { month: 'short' })}
                     </span>
-                    <span className="text-sm font-bold text-[var(--text-main)]">
+                    <span className="block text-base font-bold text-[var(--text-main)] font-mono">
                       {new Date(camp.scheduledAt).getDate()}
                     </span>
                   </div>
@@ -603,7 +699,7 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[var(--text-main)]">{camp.title}</span>
-                      {getStatusBadge(camp.status)}
+                      {getStatusBadge(camp)}
                     </div>
                     <p className="text-[var(--text-sub)] text-[11px] mt-0.5 max-w-xl truncate">
                       {camp.message.replace(/\*/g, '')}

@@ -78,6 +78,7 @@ export interface Campaign {
   timezone: string;
   status: CampaignStatus;
   requiresApproval: boolean;
+  isDoctorApproved?: boolean;
   approvedBy?: string;
   approvedAt?: string;
   internalNotes?: string;
@@ -306,4 +307,16 @@ export interface AppState {
   whatsappConfig: WhatsAppConfig;
   auditLogs: AuditLog[];
   careAlarms?: CareAlarm[];
+}
+
+export type UserRole = 'doctor' | 'manager';
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  title: string;
+  avatar: string;
 }

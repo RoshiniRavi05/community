@@ -30,6 +30,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, settings: db.antiSpamSettings });
     }
 
+    if (action === 'RESET_DEMO_DATA') {
+      const demoCampaign = db.campaigns.find(c => c.id === 'camp_demo_approval');
+      if (demoCampaign) {
+        demoCampaign.isDoctorApproved = false;
+        demoCampaign.status = 'pending_approval';
+        demoCampaign.sentCount = 0;
+        demoCampaign.deliveredCount = 0;
+        demoCampaign.approvedBy = undefined;
+        demoCampaign.approvedAt = undefined;
+      }
+      logAuditAction(user, 'DEMO_DATA_RESET', 'Reset demo campaigns to initial approval test state');
+      saveDatabase(db);
+      return NextResponse.json({ success: true, message: 'Demo data refreshed' });
+    }
+
     if (action === 'RESOLVE_ERROR') {
       const err = db.errors.find(e => e.id === payload.errorId);
       if (err) {

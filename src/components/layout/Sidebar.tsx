@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Users,
   MessageSquare,
@@ -10,8 +10,14 @@ import {
   MessageCircle,
   HelpCircle,
   ChevronDown,
-  ShieldAlert
+  ShieldAlert,
+  Stethoscope,
+  ClipboardCheck,
+  ArrowLeftRight,
+  LogOut,
+  UserCheck
 } from 'lucide-react';
+import { AuthUser } from '@/lib/db/types';
 
 export type ActiveTab =
   | 'dashboard'
@@ -38,13 +44,21 @@ interface SidebarProps {
   membersCount?: number;
   onOpenCareAlarms?: () => void;
   activeCareAlarmsCount?: number;
+  currentUser?: AuthUser | null;
+  onSwitchRole?: () => void;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
   emergencyPauseActive = false,
+  currentUser,
+  onSwitchRole,
+  onLogout
 }) => {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
   // Normalize tab for navigation matching
   const currentTab =
     activeTab === 'overview'
@@ -52,6 +66,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       : activeTab === 'scheduler' || activeTab === 'calendar'
       ? 'messages'
       : activeTab;
+
+  const isDoctor = currentUser?.role === 'doctor';
 
   return (
     <aside className="w-[230px] bg-[#1E271C] text-white flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 font-sans relative overflow-hidden">
@@ -141,9 +157,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </svg>
           </div>
-          <span className="font-bold text-[17px] tracking-tight text-[#FFFFFF]">
-            Community Hub
-          </span>
+          <div>
+            <span className="font-bold text-[17px] tracking-tight text-[#FFFFFF] block leading-tight">
+              Dwaragasai
+            </span>
+            <span className="text-[10px] text-[#A0A89A] block leading-tight">
+              Community Management
+            </span>
+          </div>
         </div>
 
         {/* Emergency Kill-Switch notification if active */}
@@ -283,22 +304,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span>Help & Support</span>
         </button>
 
-        {/* User Profile */}
-        <div className="pt-3 border-t border-white/10 flex items-center justify-between px-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-full bg-[#677A55] text-white flex items-center justify-center font-semibold text-xs shrink-0 shadow-xs">
-              RR
-            </div>
-            <div className="min-w-0">
-              <div className="text-[13px] font-medium text-white truncate leading-tight">
-                Roshini Ravi
+        {/* User Profile Area (Role-based) */}
+        <div className="relative">
+          {showUserMenu && (
+            <div className="absolute bottom-full left-0 right-0 mb-2 p-2 rounded-xl bg-[#273523] border border-white/20 shadow-xl space-y-1 z-30 text-xs">
+              <div className="px-2 py-1 text-[11px] text-[#A0A89A] border-b border-white/10">
+                Logged in as: <strong className="text-white">{currentUser?.username}</strong>
               </div>
-              <div className="text-[11px] text-[#A0A89A] leading-tight mt-0.5">
-                Admin
+              {onSwitchRole && (
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onSwitchRole();
+                  }}
+                  className="w-full text-left px-2 py-1.5 rounded hover:bg-white/10 text-white flex items-center gap-2 transition"
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5 text-[#A8B78C]" />
+                  <span>Switch to {isDoctor ? 'Manager' : 'Doctor'}</span>
+                </button>
+              )}
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onLogout();
+                  }}
+                  className="w-full text-left px-2 py-1.5 rounded hover:bg-rose-950/40 text-rose-300 flex items-center gap-2 transition"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Sign Out</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          <div
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="pt-3 border-t border-white/10 flex items-center justify-between px-2 cursor-pointer hover:bg-white/5 rounded-lg py-1.5 transition"
+            title="Click to switch role or sign out"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className={`w-9 h-9 rounded-full text-white flex items-center justify-center font-semibold text-xs shrink-0 shadow-xs ${
+                  isDoctor ? 'bg-[#27833A]' : 'bg-[#87936C]'
+                }`}
+              >
+                {currentUser?.avatar || (isDoctor ? 'DS' : 'OM')}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[13px] font-medium text-white truncate leading-tight">
+                  {currentUser?.name || (isDoctor ? 'Dr. Dwaraga Sai' : 'Operations Manager')}
+                </div>
+                <div className="text-[10px] text-[#A0A89A] leading-tight mt-0.5 truncate flex items-center gap-1">
+                  {isDoctor ? (
+                    <span className="text-emerald-400 font-semibold">Doctor (Approver)</span>
+                  ) : (
+                    <span className="text-amber-300 font-semibold">Manager (Dispatcher)</span>
+                  )}
+                </div>
               </div>
             </div>
+            <ChevronDown className="w-4 h-4 text-[#A0A89A] shrink-0" />
           </div>
-          <ChevronDown className="w-4 h-4 text-[#A0A89A] shrink-0" />
         </div>
       </div>
     </aside>
