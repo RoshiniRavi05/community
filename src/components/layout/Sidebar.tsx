@@ -71,61 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="w-[230px] bg-[#1E271C] text-white flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 font-sans relative overflow-hidden">
-      {/* ── REALISTIC DUAL-CURVE S-WAVES (Replicating exact curves from reference) ── */}
-      <div className="absolute inset-x-0 bottom-14 top-40 pointer-events-none z-0 overflow-hidden">
-        <svg
-          className="w-full h-full"
-          viewBox="0 0 230 420"
-          preserveAspectRatio="none"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Subtle upper background wave */}
-          <path
-            d="M-30 250 C40 180, 110 260, 170 210 C200 185, 230 190, 260 205 L260 440 L-30 440 Z"
-            fill="url(#waveLightLayer)"
-          />
-          {/* Wave line 1 */}
-          <path
-            d="M-30 250 C40 180, 110 260, 170 210 C200 185, 230 190, 260 205"
-            stroke="#87936C"
-            strokeWidth="1.2"
-            strokeOpacity="0.4"
-          />
-
-          {/* Lower foreground distinct swell */}
-          <path
-            d="M-20 330 C50 250, 120 340, 180 280 C210 250, 235 255, 260 270 L260 440 L-20 440 Z"
-            fill="url(#waveDeepLayer)"
-          />
-          {/* Wave line 2 */}
-          <path
-            d="M-20 330 C50 250, 120 340, 180 280 C210 250, 235 255, 260 270"
-            stroke="#9CB080"
-            strokeWidth="1.5"
-            strokeOpacity="0.6"
-          />
-
-          {/* Low organic tail */}
-          <path
-            d="M-10 390 C60 350, 140 375, 240 320"
-            stroke="#87936C"
-            strokeWidth="0.8"
-            strokeOpacity="0.3"
-          />
-
-          <defs>
-            <linearGradient id="waveLightLayer" x1="115" y1="180" x2="115" y2="440" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#2D3B2A" stopOpacity="0.75" />
-              <stop offset="1" stopColor="#1B2418" stopOpacity="0.9" />
-            </linearGradient>
-            <linearGradient id="waveDeepLayer" x1="115" y1="240" x2="115" y2="440" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#384934" stopOpacity="0.85" />
-              <stop offset="1" stopColor="#172015" stopOpacity="0.95" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
+      
 
       {/* Main Navigation Stack */}
       <div className="flex flex-col relative z-10">

@@ -55,6 +55,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   const [messageGraphFilter, setMessageGraphFilter] = useState<'week' | 'month'>('week');
   const [memberGraphFilter, setMemberGraphFilter] = useState<'week' | 'month'>('week');
+  const [activeMessagePoint, setActiveMessagePoint] = useState<any>(null);
+  const [activeMemberPoint, setActiveMemberPoint] = useState<any>(null);
 
   // Top Calendar Picker State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -123,44 +125,209 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   // Weekly message activity data (Mon - Sun)
   const weeklyMessageData = useMemo(() => {
     return [
-      { day: 'Mon', sent: 115 },
-      { day: 'Tue', sent: 172 },
-      { day: 'Wed', sent: 135 },
-      { day: 'Thu', sent: 208 },
-      { day: 'Fri', sent: 162 },
-      { day: 'Sat', sent: 125 },
-      { day: 'Sun', sent: 150 },
+      {
+        day: 'Mon',
+        fullDay: 'Monday',
+        sent: 115,
+        delivered: '112 (97.4%)',
+        read: '84 (73.0%)',
+        campaign: 'Camp Registration Announcement',
+        summary: 'Tiruppur Health Camp signups opened for families and senior citizens.',
+      },
+      {
+        day: 'Tue',
+        fullDay: 'Tuesday',
+        sent: 172,
+        delivered: '169 (98.2%)',
+        read: '128 (74.4%)',
+        campaign: 'Doctor Verified Wellness Tips',
+        summary: 'Diabetic care instructions and seasonal health advice from Dr. Dwaraga Sai.',
+      },
+      {
+        day: 'Wed',
+        fullDay: 'Wednesday',
+        sent: 135,
+        delivered: '133 (98.5%)',
+        read: '95 (70.3%)',
+        campaign: 'Free Diagnostic Checkup Alert',
+        summary: 'Blood pressure & hemoglobin test slots notification with location directions.',
+      },
+      {
+        day: 'Thu',
+        fullDay: 'Thursday',
+        sent: 208,
+        delivered: '205 (98.5%)',
+        read: '162 (77.8%)',
+        campaign: 'Community Health Workshop Video',
+        summary: 'High-engagement preventive care video briefing broadcasted across all active circles.',
+      },
+      {
+        day: 'Fri',
+        fullDay: 'Friday',
+        sent: 162,
+        delivered: '158 (97.5%)',
+        read: '118 (72.8%)',
+        campaign: 'Specialist Consultation Schedule',
+        summary: 'Cardiology and general physician consultation timings released for weekend camps.',
+      },
+      {
+        day: 'Sat',
+        fullDay: 'Saturday',
+        sent: 125,
+        delivered: '123 (98.4%)',
+        read: '91 (72.8%)',
+        campaign: 'Weekend Camp Live Reminders',
+        summary: 'Venue gate passes, timing slots, and coordinator contact numbers for registered attendees.',
+      },
+      {
+        day: 'Sun',
+        fullDay: 'Sunday',
+        sent: 150,
+        delivered: '147 (98.0%)',
+        read: '110 (73.3%)',
+        campaign: 'Post-Camp Report & Next Steps',
+        summary: 'Follow-up prescriptions, test reports collection, and gratitude message to volunteers.',
+      },
     ];
   }, []);
 
   const monthlyMessageData = useMemo(() => {
     return [
-      { day: 'Week 1', sent: 680 },
-      { day: 'Week 2', sent: 940 },
-      { day: 'Week 3', sent: 820 },
-      { day: 'Week 4', sent: 1150 },
+      {
+        day: 'Week 1',
+        fullDay: 'Week 1 (Oct 1 - Oct 7)',
+        sent: 680,
+        delivered: '668 (98.2%)',
+        read: '490 (72.0%)',
+        campaign: 'Monthly Camp Rollout & Intake',
+        summary: 'Camp schedule overview, volunteer recruitment, and registration drive.',
+      },
+      {
+        day: 'Week 2',
+        fullDay: 'Week 2 (Oct 8 - Oct 14)',
+        sent: 940,
+        delivered: '922 (98.0%)',
+        read: '695 (73.9%)',
+        campaign: 'Nutrition & Wellness Campaign',
+        summary: 'Diet guidance, child wellness protocols, and emergency medical helpline updates.',
+      },
+      {
+        day: 'Week 3',
+        fullDay: 'Week 3 (Oct 15 - Oct 21)',
+        sent: 820,
+        delivered: '805 (98.1%)',
+        read: '590 (71.9%)',
+        campaign: 'Community Outreach & Checkups',
+        summary: 'Mobile diagnostic van schedules and village outreach announcements.',
+      },
+      {
+        day: 'Week 4',
+        fullDay: 'Week 4 (Oct 22 - Oct 28)',
+        sent: 1150,
+        delivered: '1132 (98.4%)',
+        read: '880 (76.5%)',
+        campaign: 'Comprehensive Health Summit Dispatch',
+        summary: 'Grand quarterly medical camp notifications, specialist listings, and token dispatches.',
+      },
     ];
   }, []);
 
   // Members Activity Step Chart Data
   const weeklyMemberActivityData = useMemo(() => {
     return [
-      { day: 'Mon', net: 18 },
-      { day: 'Tue', net: 38 },
-      { day: 'Wed', net: 60 },
-      { day: 'Thu', net: -18 },
-      { day: 'Fri', net: 20 },
-      { day: 'Sat', net: 10 },
-      { day: 'Sun', net: 40 },
+      {
+        day: 'Mon',
+        fullDay: 'Monday',
+        net: 18,
+        added: 24,
+        left: 6,
+        activity: 'Community WhatsApp group invite link shared in morning bulletin',
+      },
+      {
+        day: 'Tue',
+        fullDay: 'Tuesday',
+        net: 38,
+        added: 45,
+        left: 7,
+        activity: 'Tiruppur Health Camp pre-registration drive influx',
+      },
+      {
+        day: 'Wed',
+        fullDay: 'Wednesday',
+        net: 60,
+        added: 68,
+        left: 8,
+        activity: 'Specialist consultation camp announcements shared by members',
+      },
+      {
+        day: 'Thu',
+        fullDay: 'Thursday',
+        net: -18,
+        added: 12,
+        left: 30,
+        activity: 'Quarterly phone number hygiene & inactive contact pruning',
+      },
+      {
+        day: 'Fri',
+        fullDay: 'Friday',
+        net: 20,
+        added: 28,
+        left: 8,
+        activity: 'Weekend camp volunteer invitations & family additions',
+      },
+      {
+        day: 'Sat',
+        fullDay: 'Saturday',
+        net: 10,
+        added: 16,
+        left: 6,
+        activity: 'On-spot registrations at regional wellness center',
+      },
+      {
+        day: 'Sun',
+        fullDay: 'Sunday',
+        net: 40,
+        added: 46,
+        left: 6,
+        activity: 'Camp wrap-up referral sharing by attended families',
+      },
     ];
   }, []);
 
   const monthlyMemberActivityData = useMemo(() => {
     return [
-      { day: 'Week 1', net: 35 },
-      { day: 'Week 2', net: 58 },
-      { day: 'Week 3', net: -12 },
-      { day: 'Week 4', net: 45 },
+      {
+        day: 'Week 1',
+        fullDay: 'Week 1 (Oct 1 - Oct 7)',
+        net: 35,
+        added: 45,
+        left: 10,
+        activity: 'Monthly onboarding of registered camp participants',
+      },
+      {
+        day: 'Week 2',
+        fullDay: 'Week 2 (Oct 8 - Oct 14)',
+        net: 58,
+        added: 70,
+        left: 12,
+        activity: 'Nutrition webinar invitations and community viral sharing',
+      },
+      {
+        day: 'Week 3',
+        fullDay: 'Week 3 (Oct 15 - Oct 21)',
+        net: -12,
+        added: 18,
+        left: 30,
+        activity: 'End-of-month list validation and unconfirmed cleanup',
+      },
+      {
+        day: 'Week 4',
+        fullDay: 'Week 4 (Oct 22 - Oct 28)',
+        net: 45,
+        added: 55,
+        left: 10,
+        activity: 'Health summit announcement attendee registrations',
+      },
     ];
   }, []);
 
@@ -553,6 +720,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <AreaChart
                   data={messageGraphFilter === 'week' ? weeklyMessageData : monthlyMessageData}
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                  onClick={(state: any) => {
+                    if (state?.activePayload?.[0]?.payload) {
+                      setActiveMessagePoint(state.activePayload[0].payload);
+                    }
+                  }}
+                  onMouseMove={(state: any) => {
+                    if (state?.activePayload?.[0]?.payload) {
+                      setActiveMessagePoint(state.activePayload[0].payload);
+                    }
+                  }}
                 >
                   <defs>
                     <linearGradient id="sageWaveGradient" x1="0" y1="0" x2="0" y2="1">
@@ -578,11 +755,35 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     ticks={[0, 50, 100, 150, 200, 250]}
                   />
                   <Tooltip
+                    cursor={{ stroke: '#87936C', strokeWidth: 1.5, strokeDasharray: '3 3' }}
+                    wrapperStyle={{ outline: 'none', zIndex: 50, pointerEvents: 'none' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
+                        const data = payload[0].payload;
                         return (
-                          <div className="bg-[#263323] text-white px-2.5 py-1.5 rounded-md text-[11px] shadow-lg">
-                            <span className="font-semibold">{payload[0].value}</span> messages
+                          <div className="bg-[#1E271C] text-white p-3 rounded-xl shadow-2xl border border-[#3D523F] max-w-[260px] select-none">
+                            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-2">
+                              <span className="font-bold text-[12px] text-[#A5B58A]">{data.fullDay || data.day}</span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white font-medium">
+                                {data.sent} sent
+                              </span>
+                            </div>
+                            <div className="text-[12px] font-semibold text-white mb-1 leading-snug">
+                              {data.campaign}
+                            </div>
+                            <p className="text-[10px] text-white/70 leading-relaxed mb-2">
+                              {data.summary}
+                            </p>
+                            <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-white/10 text-[10px]">
+                              <div>
+                                <span className="text-white/60">Delivered: </span>
+                                <span className="font-semibold text-[#A5B58A]">{data.delivered}</span>
+                              </div>
+                              <div>
+                                <span className="text-white/60">Read: </span>
+                                <span className="font-semibold text-white">{data.read}</span>
+                              </div>
+                            </div>
                           </div>
                         );
                       }
@@ -644,6 +845,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <LineChart
                   data={memberGraphFilter === 'week' ? weeklyMemberActivityData : monthlyMemberActivityData}
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                  onClick={(state: any) => {
+                    if (state?.activePayload?.[0]?.payload) {
+                      setActiveMemberPoint(state.activePayload[0].payload);
+                    }
+                  }}
+                  onMouseMove={(state: any) => {
+                    if (state?.activePayload?.[0]?.payload) {
+                      setActiveMemberPoint(state.activePayload[0].payload);
+                    }
+                  }}
                 >
                   <CartesianGrid stroke="var(--soft-border)" strokeDasharray="3 3" vertical={false} opacity={0.6} />
                   <XAxis
@@ -663,12 +874,33 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   />
                   <ReferenceLine y={0} stroke="var(--muted-grey)" strokeWidth={1} />
                   <Tooltip
+                    cursor={{ stroke: '#87936C', strokeWidth: 1.5, strokeDasharray: '3 3' }}
+                    wrapperStyle={{ outline: 'none', zIndex: 50, pointerEvents: 'none' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
-                        const val = Number(payload[0].value);
+                        const data = payload[0].payload;
+                        const val = Number(data.net);
                         return (
-                          <div className="bg-[#263323] text-white px-2.5 py-1.5 rounded-md text-[11px] shadow-lg">
-                            <span className="font-semibold">{val > 0 ? `+${val}` : val}</span> net change
+                          <div className="bg-[#1E271C] text-white p-3 rounded-xl shadow-2xl border border-[#3D523F] max-w-[260px] select-none">
+                            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-2">
+                              <span className="font-bold text-[12px] text-[#A5B58A]">{data.fullDay || data.day}</span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white font-medium">
+                                {val > 0 ? `+${val}` : val} net
+                              </span>
+                            </div>
+                            <div className="text-[12px] font-semibold text-white mb-1 leading-snug">
+                              {data.activity}
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-white/10 text-[10px]">
+                              <div>
+                                <span className="text-white/60">Joined: </span>
+                                <span className="font-semibold text-[#A5B58A]">+{data.added}</span>
+                              </div>
+                              <div>
+                                <span className="text-white/60">Left: </span>
+                                <span className="font-semibold text-[#C65B42]">-{data.left}</span>
+                              </div>
+                            </div>
                           </div>
                         );
                       }
@@ -798,7 +1030,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <th className="pb-2 font-medium">Camp</th>
                   <th className="pb-2 font-medium">Date</th>
                   <th className="pb-2 font-medium">Location</th>
-                  <th className="pb-2 font-medium">Status</th>
                   <th className="pb-2 text-right"></th>
                 </tr>
               </thead>
@@ -831,17 +1062,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <td className="py-3 text-[var(--muted-grey)] whitespace-nowrap pr-2">
                       {camp.venue}
                     </td>
-                    <td className="py-3 whitespace-nowrap pr-2">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize ${
-                          camp.status === 'upcoming'
-                            ? 'bg-[#87936C]/20 text-[#27833A]'
-                            : 'bg-[var(--bg-muted)] text-[var(--muted-grey)]'
-                        }`}
-                      >
-                        {camp.status}
-                      </span>
-                    </td>
+                    
                     <td className="py-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => onNavigateToTab('camps')}
