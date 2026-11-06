@@ -363,7 +363,7 @@ export const SocialMediaView: React.FC<SocialMediaViewProps> = ({
                           <button
                             onClick={() => handleScheduleBroadcast(post)}
                             title="Schedule Announcement in WhatsApp"
-                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#87936C]/20 text-[#27833A] hover:bg-[#87936C]/30 text-[10px] font-medium transition"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--kpi-icon-bg)] hover:bg-[var(--bg-muted)] text-[var(--text-main)] border border-[var(--border-card)] text-[11px] font-medium transition cursor-pointer shadow-xs"
                           >
                             <Send className="w-3 h-3" />
                             <span>Schedule</span>

@@ -167,8 +167,8 @@ export const WhatsAppIntegrationView: React.FC<WhatsAppIntegrationViewProps> = (
                 <h2 className="text-sm font-semibold text-[var(--text-main)]">
                   WhatsApp Business Cloud API Integration
                 </h2>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#87936C]/20 text-[#27833A] border border-[#87936C]/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]"></span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[var(--kpi-icon-bg)] text-[var(--text-main)] border border-[var(--border-card)] transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#27833A]"></span>
                   <span>Connected (Live)</span>
                 </span>
               </div>
