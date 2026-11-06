@@ -225,36 +225,17 @@ export const SchedulerView: React.FC<SchedulerViewProps> = ({
     <div className="space-y-4">
       {/* ── ROLE-BASED ACCESS CONTROL BANNER ── */}
       {currentUser && (
-        <div
-          className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs shadow-xs ${
-            isDoctor
-              ? 'bg-[#E7EBD8]/60 dark:bg-emerald-950/30 border-[#87936C]/50 text-[#2D3328] dark:text-emerald-200'
-              : 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-200'
-          }`}
-        >
+        <div className="p-3 rounded-xl border border-[var(--border-card)] bg-[var(--bg-card)] flex items-center justify-between gap-3 text-xs shadow-xs transition-colors">
           <div className="flex items-center gap-2.5">
-            {isDoctor ? (
-              <div className="w-7 h-7 rounded-lg bg-[#27833A] text-white flex items-center justify-center shrink-0">
-                <Stethoscope className="w-4 h-4" />
-              </div>
-            ) : (
-              <div className="w-7 h-7 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
-                <ClipboardCheck className="w-4 h-4" />
-              </div>
-            )}
-            <div>
-              <span className="font-bold">
-                {isDoctor ? '🩺 Doctor Review Portal (Approver)' : '📋 Manager Dispatch Portal (Operations)'}
-              </span>
-              <p className="text-[11px] opacity-90 mt-0.5">
-                {isDoctor
-                  ? 'You have sole authority to review and approve broadcast messages. Clicking "Approve" unlocks the "Send Now" button on the Manager side.'
-                  : 'Broadcast messages require Doctor approval before dispatch. "Send Now" remains locked until Dr. Dwaraga Sai approves the message.'}
-              </p>
+            <div className="w-7 h-7 rounded-lg bg-[var(--kpi-icon-bg)] text-[var(--kpi-icon-color)] flex items-center justify-center shrink-0">
+              {isDoctor ? <Stethoscope className="w-4 h-4" /> : <ClipboardCheck className="w-4 h-4" />}
             </div>
+            <span className="font-semibold text-xs text-[var(--text-main)]">
+              {isDoctor ? 'Doctor Review Portal (Approver)' : 'Manager Dispatch Portal (Operations)'}
+            </span>
           </div>
           <div className="hidden md:flex items-center gap-1.5 shrink-0 font-medium">
-            <span className="px-2 py-0.5 rounded-full bg-white/70 dark:bg-black/40 border border-current text-[10px]">
+            <span className="px-2.5 py-1 rounded-full bg-[var(--kpi-icon-bg)] border border-[var(--border-card)] text-[11px] font-medium text-[var(--kpi-icon-color)]">
               {isDoctor ? 'Approval Authority: ACTIVE' : 'Send Now: Gated by Doctor'}
             </span>
           </div>

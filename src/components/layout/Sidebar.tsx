@@ -350,7 +350,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className={`w-9 h-9 rounded-full text-white flex items-center justify-center font-semibold text-xs shrink-0 shadow-xs ${
-                  isDoctor ? 'bg-[#27833A]' : 'bg-[#87936C]'
+                  'bg-[#87936C]'
                 }`}
               >
                 {currentUser?.avatar || (isDoctor ? 'DS' : 'OM')}
@@ -361,9 +361,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 <div className="text-[10px] text-[#A0A89A] leading-tight mt-0.5 truncate flex items-center gap-1">
                   {isDoctor ? (
-                    <span className="text-emerald-400 font-semibold">Doctor (Approver)</span>
+                    <span className="text-[#A5B58A] font-medium">Doctor (Approver)</span>
                   ) : (
-                    <span className="text-amber-300 font-semibold">Manager (Dispatcher)</span>
+                    <span className="text-[#A5ADA1] font-medium">Manager (Dispatcher)</span>
                   )}
                 </div>
               </div>

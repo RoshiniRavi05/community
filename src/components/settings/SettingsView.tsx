@@ -174,7 +174,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   How role-based access control enforces compliance across broadcast reviews and dispatches.
                 </p>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E7EBD8] dark:bg-emerald-950/40 text-[#27833A] dark:text-emerald-300 border border-[#87936C]/40 font-semibold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--kpi-icon-bg)] text-[var(--kpi-icon-color)] border border-[var(--border-card)] font-semibold">
                 RBAC Active
               </span>
             </div>
@@ -184,7 +184,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="p-4 rounded-xl bg-[var(--bg-app)] border border-[#87936C]/40 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#27833A] text-white flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--kpi-icon-bg)] text-[var(--kpi-icon-color)] flex items-center justify-center shrink-0">
                       <Stethoscope className="w-4 h-4" />
                     </div>
                     <div>
@@ -192,7 +192,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <p className="text-[10px] text-[#27833A] font-medium font-mono">doctor@dwargasai.in</p>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#27833A]/10 text-[#27833A] border border-[#27833A]/30">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[var(--kpi-icon-bg)] text-[var(--kpi-icon-color)] border border-[var(--border-card)]">
                     Reviewer
                   </span>
                 </div>

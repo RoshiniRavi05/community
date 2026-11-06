@@ -630,21 +630,15 @@ export default function Home() {
               {/* Active Role Indicator & Quick Role Switcher */}
               {currentUser && (
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-xs ${
-                      currentUser.role === 'doctor'
-                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
-                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30'
-                    }`}
-                  >
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-[var(--border-card)] bg-[var(--kpi-icon-bg)] text-[var(--text-main)] shadow-xs transition-colors">
                     {currentUser.role === 'doctor' ? (
                       <>
-                        <Stethoscope className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <Stethoscope className="w-3.5 h-3.5 text-[var(--kpi-icon-color)]" />
                         <span>Doctor (Approver)</span>
                       </>
                     ) : (
                       <>
-                        <ClipboardCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        <ClipboardCheck className="w-3.5 h-3.5 text-[var(--kpi-icon-color)]" />
                         <span>Manager (Dispatcher)</span>
                       </>
                     )}
@@ -655,7 +649,7 @@ export default function Home() {
                     title={`Switch role to ${currentUser.role === 'doctor' ? 'Manager (manager@dwargasai.in)' : 'Doctor (doctor@dwargasai.in)'}`}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border-card)] bg-[var(--bg-card)] text-[12px] font-medium text-[var(--text-main)] hover:bg-[var(--bg-muted)] transition shadow-xs"
                   >
-                    <ArrowLeftRight className="w-3.5 h-3.5 text-[#87936C]" />
+                    <ArrowLeftRight className="w-3.5 h-3.5 text-[var(--kpi-icon-color)]" />
                     <span className="hidden sm:inline">Switch to {currentUser.role === 'doctor' ? 'Manager' : 'Doctor'}</span>
                   </button>
                 </div>
