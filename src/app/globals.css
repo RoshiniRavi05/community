@@ -25,6 +25,13 @@
   --text-sub: #85877F;
   --text-inverse: #FFFFFF;
 
+  /* KPI Tokens - Light Mode */
+  --kpi-icon-bg: #E7E8D9;
+  --kpi-icon-color: #87936C;
+  --kpi-heading: #20231F;
+  --kpi-sub: #85877F;
+  --kpi-number: #20231F;
+
   /* Chart & Accent Colors */
   --accent-primary: #87936C;
   --accent-primary-hover: #75815a;
@@ -38,8 +45,8 @@
 html.dark {
   --warm-cream: #141A13;
   --white: #1C2419;
-  --dark-text: #F4F0E8;
-  --muted-grey: #9FA199;
+  --dark-text: #F2F1E9;
+  --muted-grey: #A5ADA1;
   --soft-border: #2F3D2C;
 
   --bg-app: #141A13;
@@ -49,9 +56,16 @@ html.dark {
   --bg-muted: #243021;
   --border-card: #2E3C2B;
   --border-muted: #273324;
-  --text-main: #F4F0E8;
-  --text-sub: #9FA199;
+  --text-main: #F2F1E9;
+  --text-sub: #A5ADA1;
   --text-inverse: #141A13;
+
+  /* KPI Tokens - Dark Mode */
+  --kpi-icon-bg: #29382B;
+  --kpi-icon-color: #A5B58A;
+  --kpi-heading: #F2F1E9;
+  --kpi-sub: #A5ADA1;
+  --kpi-number: #F4F2E9;
 
   --accent-primary: #87936C;
   --accent-secondary: #A3AF85;

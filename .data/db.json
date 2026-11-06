@@ -3118,6 +3118,13 @@
   },
   "auditLogs": [
     {
+      "id": "aud_1793886503037_pqvd",
+      "timestamp": "2026-11-05T13:48:23.037Z",
+      "adminUser": "Dr. Dwaraga Sai (doctor)",
+      "action": "USER_LOGIN",
+      "details": "Logged in as DOCTOR (doctor@dwargasai.in)"
+    },
+    {
       "id": "aud_1793869476330_tbbd",
       "timestamp": "2026-11-05T09:04:36.330Z",
       "adminUser": "Dr. Dwaraga Sai (doctor)",
